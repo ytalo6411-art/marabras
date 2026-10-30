@@ -22,6 +22,13 @@ Supabase.
 - [Testes](#testes)
 - [Limites dos planos gratuitos](#limites-dos-planos-gratuitos)
 - [O que ainda precisa de implementação](#o-que-ainda-precisa-de-implementação)
+- [Estado da verificação](#estado-da-verificação)
+
+> 📄 **[Relatório Final (§22)](RELATORIO-FINAL.md)** — as 12 seções do master
+> prompt: o que foi implementado, o que foi melhorado, APIs integradas,
+> funcionalidades verificadas, serviços que exigem cadastro externo, variáveis
+> de ambiente, setup do Google OAuth, conexão com o Supabase, run local,
+> deploy na Vercel, limites dos planos gratuitos e o que ainda falta.
 
 ---
 
