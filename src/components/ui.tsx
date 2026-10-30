@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -9,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { ToastContext } from './toastContext';
 import { IconCheck, IconX } from './icons';
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -279,11 +278,6 @@ interface Toast {
   variant: 'success' | 'error' | 'info';
 }
 
-interface ToastContextValue {
-  show: (message: string, variant?: Toast['variant']) => void;
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -315,12 +309,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       </div>
     </ToastContext.Provider>
   );
-}
-
-export function useToast() {
-  const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error('useToast precisa estar dentro de <ToastProvider>');
-  return ctx;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

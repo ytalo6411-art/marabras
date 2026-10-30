@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
-import { useToast, Button, Card, EmptyState, SkeletonList } from '@/components/ui';
+import { useToast } from '@/components/useToast';
+import { Button, Card, EmptyState, SkeletonList } from '@/components/ui';
 import { IconPlus, IconWater, IconTrash, IconBarcode, IconSearch } from '@/components/icons';
 import { todayISO, formatNumber } from '@/utils/format';
 import type { FoodDiary, MealEntry, MealType } from '@/types/database';

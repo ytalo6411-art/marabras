@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
-import { useToast, Button, Card, Field, Avatar, Alert } from '@/components/ui';
+import { useToast } from '@/components/useToast';
+import { Button, Card, Field, Avatar, Alert } from '@/components/ui';
 import { IconEdit, IconTarget, IconDownload, IconTrash } from '@/components/icons';
 import { formatDate } from '@/utils/format';
 import type { FitnessGoal } from '@/types/database';

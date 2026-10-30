@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
-import { useToast, Button, Card, Field, ConfirmDialog, Alert } from '@/components/ui';
+import { useToast } from '@/components/useToast';
+import { Button, Card, Field, ConfirmDialog, Alert } from '@/components/ui';
 import { IconTrash, IconMoon, IconSun } from '@/components/icons';
 
 /** Configurações: preferências, tema, privacidade e exclusão de conta. */

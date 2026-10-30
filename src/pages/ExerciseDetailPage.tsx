@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getExerciseBySlug, importExercise, type ExerciseResult } from '@/services/exercises';
-import { useToast } from '@/components/ui';
+import { useToast } from '@/components/useToast';
 import { Button, Skeleton, Alert } from '@/components/ui';
 import VideoPlayer from '@/components/VideoPlayer';
 import { IconChevronLeft, IconPlus } from '@/components/icons';
