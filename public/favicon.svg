@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ATHLETIX">
+  <rect width="64" height="64" rx="16" fill="#05070a"/>
+  <path d="M16 42V22h6.5l9.5 12.5V22H38v20h-6.5L22 29.5V42h-6Z" fill="#ff4d2e"/>
+  <circle cx="46" cy="24" r="5" fill="#c6f432"/>
+</svg>
