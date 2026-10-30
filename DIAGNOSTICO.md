@@ -243,14 +243,50 @@ Testes novos cobrem:
 4. **Seed do catálogo**: sem credenciais, `training_profiles` salva mas a geração
    mostra a mensagem de catálogo vazio (comportamento testado).
 
-### Próximos passos operacionais (fora do código)
+### Migração no banco real — aplicada e verificada (2026-10-30)
 
-```bash
-supabase link --project-ref <ref>
-supabase db push            # aplica a migração aditiva nova
-npm run seed:exercises      # garante 317 exercícios no catálogo
-npm run build && npm run preview
-```
+A migração aditiva `20260201000000_training_profile.sql` **foi aplicada** no
+projeto Supabase de produção `tazszwllacwqccfjnglk` (região `sa-east-1`, PG 17)
+e conferida com consultas reais no banco, não por inspeção de código.
+
+| Verificação | Resultado |
+| --- | --- |
+| Tabela `public.training_profiles` | criada, RLS habilitada |
+| Políticas | `training_profiles_own`, `training_profiles_admin_read` |
+| Trigger | `trg_training_profiles_updated_at` |
+| Função | `reset_training_profile()` (SECURITY DEFINER, só `authenticated`) |
+| Colunas novas em `workout_plans` | 9 (`program_id`, `program_name`, `day_label`, `generated_by`, `rationale`, `level`, `environment`, `template_slug`, `metadata`) + índice |
+| Dados existentes | preservados: 317 exercícios, 2 usuários, 1 sessão |
+
+Testes de isolamento executados no banco (todos em transação com `ROLLBACK`,
+sem persistir nada):
+
+| Cenário | Resultado |
+| --- | --- |
+| Usuário A lê `training_profiles` | vê **1** linha (só a própria) |
+| Usuário A grava o próprio questionário | grava e lê de volta (experiência, objetivos, dias) |
+| Usuário A tenta inserir linha do usuário B | bloqueado: `42501 new row violates row-level security policy` |
+| Usuário A tenta atualizar linha do usuário B | afeta 0 linhas (sem vazamento) |
+| `anon` lê perfis / planos / sessões | 0 linhas; 317 exercícios do catálogo público |
+| `anon` tenta inserir perfil | bloqueado por RLS (`42501`) |
+| `anon` executa `reset_training_profile()` | sem permissão |
+| `reset_training_profile()` pelo dono | apaga só o próprio perfil |
+| Regenerar exercícios do dia | 4 exercícios, posições `0,1,2,3`, 0 sobras |
+| Apagar o plano do dia (regeneração total) | sessão concluída **preservada**, `plan_id` vira `NULL`, 0 exercícios órfãos |
+
+Consequência prática: o app **não entra mais em modo degradado** em produção —
+`dbCapabilities` detecta o schema completo e o `SchemaMigrationNotice` não aparece.
+O caminho local (`localStorage`, `storage: 'local'`, `buildPlanRow({extended:false})`)
+continua existindo apenas como rede de segurança para quem rodar o projeto contra
+um banco sem a migração; ele não deve ser exercitado em produção.
+
+### Como aplicar em outro ambiente (sem CLI)
+
+`scripts/apply-migrations.mjs` aplica as migrações via Management API:
+`npm run db:check`, `npm run db:apply`, `npm run db:selftest`. Alternativas: CLI
+`supabase db push` ou colar o SQL no SQL Editor (`public/sql/…sql` também está
+disponível para download dentro do app).
 
 Configurar IA (opcional) na Vercel: `AI_API_KEY`, `AI_BASE_URL`, `AI_MODEL`.
 Sem essas variáveis, nada quebra — o produto apenas declara que usa regras.
+`npm run seed:exercises` mantém o catálogo de 317 exercícios.

@@ -21,7 +21,10 @@
     "seed:exercises": "node scripts/seed-exercises.mjs",
     "seed:foods": "node scripts/seed-foods.mjs",
     "verify:env": "node scripts/verify-env.mjs",
-    "typecheck:api": "tsc --noEmit --strict --moduleResolution bundler --module esnext --target es2022 --skipLibCheck --types node api/ai/*.ts api/_lib/*.ts"
+    "typecheck:api": "tsc --noEmit --strict --moduleResolution bundler --module esnext --target es2022 --skipLibCheck --types node api/ai/*.ts api/_lib/*.ts",
+    "db:check": "node scripts/apply-migrations.mjs --check",
+    "db:apply": "node scripts/apply-migrations.mjs",
+    "db:selftest": "node scripts/apply-migrations.mjs --self-test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

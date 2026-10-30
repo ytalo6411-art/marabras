@@ -45,6 +45,8 @@ import { loadExerciseCatalog, type CatalogSnapshot } from '@/services/catalog';
 import { generateProgram, validateGeneratedProgram, type GeneratedProgram } from '@/services/planGenerator';
 import { saveGeneratedProgram } from '@/services/planPersistence';
 import { getAiStatus, requestAiPlan } from '@/services/aiCoach';
+import { SchemaMigrationNotice } from '@/components/SchemaMigrationNotice';
+import { useSchemaCapabilities } from '@/components/useSchemaCapabilities';
 import type { AgeRange, Gender, TrainingGoal } from '@/types/database';
 
 const MUSCLE_CHOICES = [
@@ -86,6 +88,8 @@ export default function OnboardingPage() {
   const [generationStage, setGenerationStage] = useState<string>('');
   const [catalogState, setCatalogState] = useState<CatalogSnapshot | null>(null);
   const [hasProfile, setHasProfile] = useState(false);
+  const [savedLocally, setSavedLocally] = useState(false);
+  const schemaCapabilities = useSchemaCapabilities();
   const [avoidedInput, setAvoidedInput] = useState('');
 
   const load = useCallback(async () => {
@@ -211,6 +215,7 @@ export default function OnboardingPage() {
         setErrors([saved.error ?? 'Não foi possível salvar suas preferências.']);
         return;
       }
+      setSavedLocally(saved.storage === 'local');
       await refreshProfile();
       setHasProfile(true);
 
@@ -281,6 +286,14 @@ export default function OnboardingPage() {
         usedAi ? 'Plano gerado com IA e validado ✓' : 'Plano personalizado criado ✓',
         'success',
       );
+
+      if (saved.storage === 'local' || result.degraded) {
+        toast.show(
+          'Preferências salvas neste dispositivo. Aplique a migração para sincronizar na conta.',
+          'info',
+        );
+      }
+
       navigate('/app/workouts?tab=plano');
     } catch (error) {
       console.error('[ATHLETIX] Erro ao gerar plano:', error);
@@ -346,6 +359,19 @@ export default function OnboardingPage() {
           <Alert variant="error">{errors.join(' ')}</Alert>
         </div>
       )}
+
+      {savedLocally && (
+        <div style={{ marginBottom: 'var(--sp-4)' }}>
+          <Alert variant="info">
+            Suas respostas estão salvas neste dispositivo. Para sincronizar com sua conta, aplique a
+            migração indicada abaixo.
+          </Alert>
+        </div>
+      )}
+
+      <div style={{ marginBottom: 'var(--sp-4)' }}>
+        <SchemaMigrationNotice capabilities={schemaCapabilities} />
+      </div>
 
       <Card className="wizard__card">
         {step === 1 && (
