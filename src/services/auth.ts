@@ -1,5 +1,5 @@
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase, APP_URL } from '@/lib/supabase';
+import { supabase, APP_URL, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase';
 
 /**
  * Camada de autenticação do ATHLETIX.
@@ -21,6 +21,7 @@ export type AuthErrorCode =
   | 'user_already_exists'
   | 'weak_password'
   | 'rate_limit'
+  | 'provider_disabled'
   | 'network'
   | 'unknown';
 
@@ -70,6 +71,16 @@ export function translateAuthError(error: unknown): AuthError {
     };
   }
 
+  // O provedor OAuth não está habilitado no projeto Supabase. Não adianta
+  // tentar de novo: é uma configuração do servidor, não um erro do usuário.
+  if (/provider is not enabled|unsupported provider/i.test(message)) {
+    return {
+      code: 'provider_disabled',
+      message:
+        'O login com Google ainda não está disponível. Use e-mail e senha, ou volte mais tarde.',
+    };
+  }
+
   if (/fetch|network|failed to fetch/i.test(message)) {
     return {
       code: 'network',
@@ -91,6 +102,33 @@ export function translateAuthError(error: unknown): AuthError {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Descobre quais provedores externos estão habilitados no projeto Supabase.
+ *
+ * Usa o endpoint oficial `/auth/v1/settings`, que aceita a chave anônima
+ * (é público por design — não devolve segredo nenhum). É o único jeito
+ * seguro de saber, no navegador, se o Google está ligado.
+ *
+ * Se a consulta falhar (sem rede, projeto fora do ar), devolvemos `null`
+ * como "não sabemos" — nesse caso tentamos o login normalmente, porque o
+ * botão do Google deve funcionar mesmo sem essa verificação.
+ */
+export async function getEnabledAuthProviders(): Promise<Record<string, boolean> | null> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+      headers: { apikey: SUPABASE_ANON_KEY ?? '' },
+    });
+
+    if (!res.ok) return null;
+
+    const body = (await res.json()) as { external?: Record<string, boolean> };
+    return body.external ?? null;
+  } catch {
+    // Falha de rede não deve impedir o login: tratamos como "desconhecido".
+    return null;
+  }
+}
+
+/**
  * Inicia o login com Google.
  *
  * Usa `redirectTo` apontando para a raiz do app: o Supabase redireciona de
@@ -98,22 +136,51 @@ export function translateAuthError(error: unknown): AuthError {
  * `onAuthStateChange` dispara. O usuário cai direto no dashboard.
  *
  * `skipBrowserRedirect: false` = o SDK cuida da navegação.
+ *
+ * IMPORTANTE — por que checamos o provedor antes de redirecionar:
+ * `signInWithOAuth` monta a URL e faz `window.location.assign(...)`. Se o
+ * Google estiver desabilitado no projeto, o Supabase responde 400 com um
+ * JSON cru ("Unsupported provider: provider is not enabled") e o navegador
+ * MOSTRA ESSA PÁGINA DE ERRO — o usuário sai do app e nunca vê o
+ * tratamento de erro do ATHLETIX. Por isso consultamos `/auth/v1/settings`
+ * antes: assim devolvemos uma mensagem clara em português e o usuário
+ * permanece no app, com o login por e-mail e senha à mão.
  */
 export async function signInWithGoogle(): Promise<{ error: AuthError | null }> {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: APP_URL,
-      // Pede apenas o mínimo: e-mail e nome do perfil.
-      scopes: 'email profile',
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'select_account',
-      },
-    },
-  });
+  const providers = await getEnabledAuthProviders();
 
-  return { error: error ? translateAuthError(error) : null };
+  // `providers === null` significa "não deu para verificar" — nesse caso
+  // seguimos o fluxo normal em vez de bloquear o usuário sem motivo.
+  if (providers && providers.google === false) {
+    return {
+      error: {
+        code: 'provider_disabled',
+        message:
+          'O login com Google ainda não está disponível. Use e-mail e senha, ou volte mais tarde.',
+      },
+    };
+  }
+
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: APP_URL,
+        // Pede apenas o mínimo: e-mail e nome do perfil.
+        scopes: 'email profile',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        },
+      },
+    });
+
+    return { error: error ? translateAuthError(error) : null };
+  } catch (err) {
+    // O SDK pode lançar em vez de retornar (ex.: falha de rede no redirect).
+    // Traduzimos para não vazar mensagem crua do backend na tela.
+    return { error: translateAuthError(err) };
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
