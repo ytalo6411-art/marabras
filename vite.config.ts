@@ -20,8 +20,22 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined;
           if (id.includes('@supabase')) return 'supabase';
-          if (id.includes('react-router')) return 'router';
-          if (id.includes('react-dom') || id.includes('/react/')) return 'react';
+          // Todo o ecossistema React (react, react-dom, react-router,
+          // react-is, scheduler, @remix-run) fica no mesmo chunk.
+          // Separar alguns deles deixa o react-router importar react-is
+          // (chunk "vendor") enquanto o react importa de volta
+          // ("vendor -> react -> vendor"), o que o Vite reporta como
+          // chunk circular.
+          if (
+            id.includes('react-router') ||
+            id.includes('react-dom') ||
+            id.includes('react-is') ||
+            id.includes('scheduler') ||
+            id.includes('@remix-run') ||
+            id.includes('/react/')
+          ) {
+            return 'react';
+          }
           return 'vendor';
         },
       },
