@@ -242,6 +242,13 @@ Projeto Supabase: `athletix` — ref `tazszwllacwqccfjnglk` (região `sa-east-1`
 **24 tabelas**, políticas de RLS em todas as tabelas com dados de usuário,
 1 view (`dashboard_summary`) e 11 enums.
 
+> **Status:** as duas migrações estão **aplicadas** no projeto de produção
+> (`tazszwllacwqccfjnglk`). O isolamento por usuário foi conferido direto no
+> banco: leitura própria = 1 linha, escrita em linha de outro usuário e
+> qualquer escrita anônima são recusadas por RLS (`42501`), e apagar um plano
+> preserva as sessões concluídas (`ON DELETE SET NULL`). Detalhes e tabela
+> de verificação em `DIAGNOSTICO.md`.
+
 Migrações:
 
 1. `20260101000000_athletix_v2_initial.sql` — schema base.
