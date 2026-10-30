@@ -185,6 +185,9 @@ Cada item abaixo tem verificação objetiva registrada.
 
 ### Autenticação e conta
 - Google OAuth pronto e aguardando credencial (§7)
+- Com provedor Google desligado, o botão não expõe o usuário a uma página de
+  erro do backend: a checagem de `/auth/v1/settings` evita a navegação e
+  mostra uma mensagem em português (§7.1)
 - Cadastro e login por e-mail + senha, com validação de formulário
 - Recuperação de senha e redefinição
 - Confirmação de e-mail e reenvio
@@ -308,6 +311,32 @@ A configuração do Auth no projeto já está parcialmente aplicada:
 `site_url = http://localhost:5173`, `uri_allow_list` com as quatro URLs acima,
 `disable_signup = false`, `external_email_enabled = true`,
 `mailer_autoconfirm = false`, `jwt_exp = 3600`, rotação de refresh token ativa.
+
+### 7.1 Comportamento enquanto o Google não está configurado
+
+Sem a credencial, clicar em **Entrar com Google** **não** pode levar o usuário
+a uma página de erro crua. O SDK do Supabase monta a URL e chama
+`window.location.assign(...)` — o navegador sai do app. Com o provedor
+desabilitado, o servidor responde `400` com:
+
+```json
+{"code":400,"error_code":"validation_failed","msg":"Unsupported provider: provider is not enabled"}
+```
+
+Como a navegação já aconteceu, o tratamento de erro do ATHLETIX nunca era
+alcançado e o usuário via só o JSON do backend.
+
+Resolvido em `src/services/auth.ts`: antes de redirecionar, o app consulta o
+endpoint público `/auth/v1/settings` (aceita a chave anônima, não devolve
+segredo) e verifica `external.google`. Se o provedor estiver desligado,
+**nenhuma navegação é feita** — o usuário permanece no app e recebe
+*"O login com Google ainda não está disponível. Use e-mail e senha, ou volte
+mais tarde."* Se a consulta falhar por falta de rede, o app assume que o
+Google está disponível e tenta o login normalmente, para nunca bloquear o
+usuário sem motivo.
+
+Verificado no bundle de produção (`assets/index-ByUAaJsL.js`, deploy
+`dpl_BcN8QeBabb6vsJ1zk5K1jjq945uV`, commit `d13d41d`).
 
 ---
 
