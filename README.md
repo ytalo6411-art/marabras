@@ -173,6 +173,34 @@ ATHLETIX e o perfil é criado automaticamente no primeiro acesso.
 Sem o Google configurado, o login por e-mail e senha continua funcionando — o
 botão apenas informa que o provedor não está habilitado.
 
+#### Como o app descobre que o Google está desligado
+
+Este detalhe explica por que o botão não "quebra" a tela quando a credencial
+ainda não foi configurada.
+
+O SDK do Supabase **não** pede o consentimento do Google diretamente: ele
+monta uma URL e chama `window.location.assign(...)`, ou seja, **o navegador
+sai do app**. Se o provedor estiver desabilitado, o servidor do Supabase
+responde `400` com um JSON cru:
+
+```json
+{"code":400,"error_code":"validation_failed","msg":"Unsupported provider: provider is not enabled"}
+```
+
+Como a navegação já aconteceu, o tratamento de erro do ATHLETIX nunca é
+alcançado — o usuário veria essa página de JSON crua do backend.
+
+Por isso, antes de redirecionar, o app consulta o endpoint público
+`/auth/v1/settings` (aceita a chave anônima e não devolve segredo nenhum) e
+verifica `external.google`. Se o provedor estiver desligado, **nenhuma
+navegação é feita**: o usuário permanece no app e recebe a mensagem
+"O login com Google ainda não está disponível. Use e-mail e senha, ou volte
+mais tarde."
+
+Se a consulta falhar (sem rede), o app assume que o Google está disponível e
+tenta o login normalmente — nunca bloqueia o usuário por falta de
+verificação.
+
 ---
 
 ## Banco de dados e migrações
@@ -372,7 +400,7 @@ com o jurídico antes de publicar um fork do banco.
 npm test
 ```
 
-**61 testes** cobrindo:
+**70 testes** cobrindo:
 
 - **Fumaça do app** — o roteador, os lazy chunks e a tela de login montam sem
   explodir. É o que quebraria silenciosamente se um import ou um chunk fosse
@@ -380,6 +408,10 @@ npm test
 - **Autenticação** — tradução de erros, login Google (redirecionamento correto),
   login por e-mail, cadastro, recuperação de senha, e a garantia de que a
   mensagem crua do backend **nunca** chega ao usuário.
+- **Login com Google na tela** — regressão do bug em que o navegador saía do
+  app e mostrava o JSON de erro do Supabase. Garante que, com o provedor
+  desligado, o usuário **permanece no app**, vê uma mensagem em português e
+  nenhuma navegação para o Supabase é disparada.
 - **Catálogo de exercícios** — normalização do dataset (músculo, equipamento,
   dificuldade, presença de vídeo/thumbnail), para que uma mudança de formato na
   fonte quebre os testes em vez da UI em produção.
@@ -441,7 +473,7 @@ O que foi **executado e passou** (nada aqui é presumido):
 | `npm ci` | 562 pacotes, sucesso |
 | `npm run typecheck` | 0 erros |
 | `npm run lint` | 0 erros, 0 avisos |
-| `npm test` | **61/61** (auth 14, format 18, permissions 10, workouts 7, exercises 11, smoke 1) |
+| `npm test` | **70/70** (auth 21, format 18, permissions 10, workouts 7, exercises 11, smoke 1, login-google 2) |
 | `npm run build` | sucesso, PWA gerado, **40 entradas em precache (548,94 KiB)** |
 | Build na Vercel | `Build Completed [48s]`, `Deployment completed` |
 | Env vars no build | `✓ VITE_SUPABASE_URL` / `✓ VITE_SUPABASE_ANON_KEY` / `✓ VITE_APP_URL` |

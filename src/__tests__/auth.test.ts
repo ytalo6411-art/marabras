@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   translateAuthError,
   signInWithGoogle,
@@ -34,6 +34,8 @@ vi.mock('@/lib/supabase', () => ({
   },
   APP_URL: 'http://localhost:5173',
   isSupabaseConfigured: true,
+  SUPABASE_URL: 'https://project.supabase.co',
+  SUPABASE_ANON_KEY: 'anon-key-teste',
 }));
 
 const mocked = supabase.auth as unknown as {
@@ -79,6 +81,26 @@ describe('translateAuthError', () => {
     expect(result.code).toBe('rate_limit');
   });
 
+  it('detecta provedor OAuth não habilitado', () => {
+    const result = translateAuthError({
+      message: 'Unsupported provider: provider is not enabled',
+      status: 400,
+    });
+    expect(result.code).toBe('provider_disabled');
+    // A mensagem precisa sugerir o caminho alternativo, não mandar
+    // "tente novamente" — repetir não resolve uma configuração de servidor.
+    expect(result.message).toMatch(/e-mail/i);
+    expect(result.message).not.toMatch(/tente novamente/i);
+  });
+
+  it('traduz também a variante "provider is not enabled"', () => {
+    const result = translateAuthError({
+      message: 'Provider is not enabled',
+      status: 400,
+    });
+    expect(result.code).toBe('provider_disabled');
+  });
+
   it('detecta erro de rede', () => {
     const result = translateAuthError({ message: 'Failed to fetch', status: 0 });
     expect(result.code).toBe('network');
@@ -96,8 +118,26 @@ describe('translateAuthError', () => {
 });
 
 describe('signInWithGoogle', () => {
+  const fetchSpy = vi.fn();
+
+  /** Simula o endpoint público `/auth/v1/settings` do Supabase. */
+  function mockSettings(external: Record<string, boolean>) {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ external }),
+    });
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('fetch', fetchSpy);
+    // Padrão: Google habilitado — os testes que importam o fluxo OAuth
+    // não devem ser afetados pela nova verificação.
+    mockSettings({ google: true, email: true });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('inicia o fluxo OAuth com redirect para a APP_URL', async () => {
@@ -123,6 +163,105 @@ describe('signInWithGoogle', () => {
     const { error } = await signInWithGoogle();
 
     expect(error?.code).toBe('invalid_credentials');
+  });
+
+  it('NÃO redireciona quando o Google está desabilitado no projeto', async () => {
+    // Este é o bug reportado: sem esta checagem, o SDK chama
+    // `window.location.assign(...)`, o Supabase responde 400 com um JSON
+    // cru e o NAVEGADOR sai do app mostrando esse JSON ao usuário.
+    mockSettings({ google: false, email: true });
+
+    const { error } = await signInWithGoogle();
+
+    expect(error?.code).toBe('provider_disabled');
+    expect(error?.message).toMatch(/e-mail/i);
+    // O ponto central: nenhuma navegação para o Supabase aconteceu.
+    expect(mocked.signInWithOAuth).not.toHaveBeenCalled();
+  });
+
+  it('traduz o erro de provedor desabilitado vindo do SDK', async () => {
+    // Defesa em profundidade: mesmo que o provedor seja desabilitado
+    // entre a verificação e o redirect, a mensagem é compreensível.
+    mockSettings({ google: true, email: true });
+    mocked.signInWithOAuth.mockResolvedValue({
+      data: {},
+      error: { message: 'Unsupported provider: provider is not enabled', status: 400 },
+    });
+
+    const { error } = await signInWithGoogle();
+
+    expect(error?.code).toBe('provider_disabled');
+  });
+
+  it('segue o fluxo normal quando não dá para verificar os provedores', async () => {
+    // Sem rede não devemos bloquear o usuário: tentamos o login.
+    fetchSpy.mockRejectedValue(new Error('Failed to fetch'));
+    mocked.signInWithOAuth.mockResolvedValue({ data: {}, error: null });
+
+    const { error } = await signInWithGoogle();
+
+    expect(error).toBeNull();
+    expect(mocked.signInWithOAuth).toHaveBeenCalledOnce();
+  });
+
+  it('traduz uma exceção lançada pelo SDK em vez de vazar para a tela', async () => {
+    mockSettings({ google: true, email: true });
+    mocked.signInWithOAuth.mockRejectedValue(new Error('Failed to fetch'));
+
+    const { error } = await signInWithGoogle();
+
+    expect(error?.code).toBe('network');
+    expect(error?.message).not.toMatch(/failed to fetch/i);
+  });
+
+  it('bloqueia o redirect usando o payload REAL de /auth/v1/settings', async () => {
+    // Payload capturado do projeto de produção em 2026-10-30. Serve de
+    // guarda contra mudança de formato: se o Supabase alterar o payload,
+    // este teste avisa em vez de o app silenciosamente deixar de bloquear.
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        external: {
+          anonymous_users: false,
+          apple: false,
+          azure: false,
+          bitbucket: false,
+          discord: false,
+          facebook: false,
+          snapchat: false,
+          figma: false,
+          fly: false,
+          github: false,
+          gitlab: false,
+          google: false,
+          keycloak: false,
+          kakao: false,
+          linkedin: false,
+          linkedin_oidc: false,
+          notion: false,
+          spotify: false,
+          slack: false,
+          slack_oidc: false,
+          workos: false,
+          twich: false,
+          twitter: false,
+          email: true,
+          phone: false,
+          zoom: false,
+        },
+        disable_signup: false,
+        mailer_autoconfirm: false,
+        phone_autoconfirm: false,
+        sms_provider: 'twilio',
+        saml_enabled: false,
+        passkeys_enabled: false,
+      }),
+    });
+
+    const { error } = await signInWithGoogle();
+
+    expect(error?.code).toBe('provider_disabled');
+    expect(mocked.signInWithOAuth).not.toHaveBeenCalled();
   });
 });
 
