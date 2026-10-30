@@ -102,7 +102,7 @@ A análise completa (58 itens priorizados P0→P2) está em `ANALISE.md`.
 | Nenhum PWA | Manifest + service worker + offline + ícones |
 | Sem CI | GitHub Actions: `npm ci` → env check → typecheck → lint → test → build → asserts de artefato |
 | Build sem cache/segurança | `vercel.json` com rewrite SPA, headers de segurança, cache imutável, `Service-Worker-Allowed` |
-| Sem cobertura de testes | 60 testes automatizados |
+| Sem cobertura de testes | 61 testes automatizados |
 
 Correções técnicas aplicadas durante a reconstrução:
 
@@ -384,7 +384,7 @@ npm run dev        # http://localhost:5173
 | `npm run preview` | Serve o `dist/` em `:4173` |
 | `npm run typecheck` | `tsc -b --noEmit` |
 | `npm run lint` | `eslint . --max-warnings 0` |
-| `npm test` | Vitest (60 testes) |
+| `npm test` | Vitest (61 testes) |
 | `npm run db:types` | Regenera `src/types/database.ts` |
 
 **Aplicar o schema (projeto novo)** — no SQL Editor do Supabase, em ordem:
@@ -488,7 +488,7 @@ vercel --prod
 | `npm ci` | ✅ 562 pacotes |
 | `npm run typecheck` | ✅ 0 erros |
 | `npm run lint` | ✅ 0 erros, 0 avisos |
-| `npm test` | ✅ **60/60** (auth 14 · format 18 · permissions 10 · workouts 7 · exercises 11) |
+| `npm test` | ✅ **61/61** (auth 14 · format 18 · permissions 10 · workouts 7 · exercises 11 · smoke 1) |
 | `npm run build` | ✅ sucesso · PWA gerado · **40 entradas em precache (548,94 KiB)** |
 | Build Vercel | ✅ `Build Completed [48s]` → `Deployment completed` |
 | Env vars no build | ✅ as 3 obrigatórias `configurado` |

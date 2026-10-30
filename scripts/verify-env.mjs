@@ -9,7 +9,50 @@
  * Nunca imprime valores de segredos — apenas nomes e status.
  */
 
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 const isWarnOnly = process.argv.includes('--warn-only');
+
+/**
+ * Carrega o arquivo .env para process.env.
+ *
+ * O Vite já faz isso por conta própria ao buildar, mas este script roda
+ * isolado (npm run verify-env, postinstall) e sem o Vite no meio — sem esta
+ * etapa ele reportaria falso negativo mesmo com o .env correto em disco.
+ */
+function loadEnvFile(path) {
+  let raw;
+  try {
+    raw = readFileSync(path, 'utf8');
+  } catch {
+    return; // sem .env — segue com o ambiente do processo
+  }
+
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+
+    const eq = trimmed.indexOf('=');
+    if (eq === -1) continue;
+
+    const key = trimmed.slice(0, eq).trim();
+    if (!key || key in process.env) continue; // já definido no ambiente tem prioridade
+
+    let value = trimmed.slice(eq + 1).trim();
+    // remove aspas envolventes, se houver
+    if (
+      (value.startsWith('"') && value.endsWith('"') && value.length > 1) ||
+      (value.startsWith("'") && value.endsWith("'") && value.length > 1)
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] = value;
+  }
+}
+
+loadEnvFile(resolve(process.cwd(), '.env'));
 
 /** Variáveis obrigatórias para o app funcionar. */
 const REQUIRED = [

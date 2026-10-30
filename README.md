@@ -355,8 +355,11 @@ com o jurídico antes de publicar um fork do banco.
 npm test
 ```
 
-**60 testes** cobrindo:
+**61 testes** cobrindo:
 
+- **Fumaça do app** — o roteador, os lazy chunks e a tela de login montam sem
+  explodir. É o que quebraria silenciosamente se um import ou um chunk fosse
+  corrompido num deploy.
 - **Autenticação** — tradução de erros, login Google (redirecionamento correto),
   login por e-mail, cadastro, recuperação de senha, e a garantia de que a
   mensagem crua do backend **nunca** chega ao usuário.
@@ -421,7 +424,7 @@ O que foi **executado e passou** (nada aqui é presumido):
 | `npm ci` | 562 pacotes, sucesso |
 | `npm run typecheck` | 0 erros |
 | `npm run lint` | 0 erros, 0 avisos |
-| `npm test` | **60/60** (auth 14, format 18, permissions 10, workouts 7, exercises 11) |
+| `npm test` | **61/61** (auth 14, format 18, permissions 10, workouts 7, exercises 11, smoke 1) |
 | `npm run build` | sucesso, PWA gerado, **40 entradas em precache (548,94 KiB)** |
 | Build na Vercel | `Build Completed [48s]`, `Deployment completed` |
 | Env vars no build | `✓ VITE_SUPABASE_URL` / `✓ VITE_SUPABASE_ANON_KEY` / `✓ VITE_APP_URL` |
