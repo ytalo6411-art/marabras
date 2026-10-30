@@ -94,10 +94,14 @@ const CATEGORY_BY_TARGET = [
   ['cardiovascular', 'cardio'],
   ['full body', 'cardio'],
   ['neck', 'shoulders'],
-  ['adductors', 'mobility'],
-  ['abductors', 'mobility'],
+  ['calf', 'calves'],
+  ['gastrocnemius', 'calves'],
+  ['soleus', 'calves'],
+  ['tibialis', 'calves'],
+  ['adductors', 'quads'],
+  ['abductors', 'glutes'],
   ['stretch', 'stretching'],
-  ['mobility', 'mobility'],
+  ['mobility', 'stretching'],
 ];
 
 function categoryFor(target) {
