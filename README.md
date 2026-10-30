@@ -339,11 +339,14 @@ com o jurídico antes de publicar um fork do banco.
 npm test
 ```
 
-**49 testes** cobrindo:
+**60 testes** cobrindo:
 
 - **Autenticação** — tradução de erros, login Google (redirecionamento correto),
   login por e-mail, cadastro, recuperação de senha, e a garantia de que a
   mensagem crua do backend **nunca** chega ao usuário.
+- **Catálogo de exercícios** — normalização do dataset (músculo, equipamento,
+  dificuldade, presença de vídeo/thumbnail), para que uma mudança de formato na
+  fonte quebre os testes em vez da UI em produção.
 - **RLS e permissões** — cliente anônimo não lê perfis, sessões, diário alimentar,
   `admin_users` nem `audit_logs`; escrita não autorizada é recusada.
   *Os testes de integração detectam o Supabase inacessível e são pulados com

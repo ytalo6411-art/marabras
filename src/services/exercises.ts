@@ -2,18 +2,20 @@
  * Integração com fontes abertas de exercícios.
  *
  * Fontes usadas:
- *  • Free Exercise DB (yuhonas/free-exercise-db) — MIT, ~130 exercícios com
- *    vídeo demonstrativo (MP4) e thumbnail. Hospedado no GitHub, sem limite
- *    de requisições documentado.
+ *  • Free Exercise DB with Videos (harshvishu/free-exercise-db-with-videos) —
+ *    MIT, 317 exercícios com vídeo demonstrativo real (MP4, masculino e
+ *    feminino), thumbnail, passos, cues de execução, erros comuns e
+ *    orientação de respiração. Servido do GitHub raw.
  *  • wger — AGPLv3, API REST oficial, base completa de exercícios com
- *    traduções, imagens e很好的 estrutura de grupos musculares.
+ *    traduções, imagens e estrutura de grupos musculares.
  *
  * Estratégia: tenta o banco local (Supabase) primeiro — é a fonte mais rápida
  * e já tem busca por full-text. Quando não houver resultado local, consulta
  * as APIs externas e devolve os resultados com a origem identificada.
  *
- * Nenhum dado nutricional ou de treino é inventado: o campo `source` sempre
- * identifica a origem real do registro.
+ * Nenhum dado de treino é inventado: o campo `source` sempre identifica a
+ * origem real do registro, e os vídeos são carregados sob demanda (sem
+ * download para o Supabase Storage).
  */
 
 import { supabase } from '@/lib/supabase';
@@ -21,7 +23,7 @@ import type { Exercise, ExerciseCategory, SourceType } from '@/types/database';
 
 const FREE_EXERCISE_DB =
   import.meta.env.VITE_FREEEXERCISEDB_BASE_URL ||
-  'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main';
+  'https://raw.githubusercontent.com/harshvishu/free-exercise-db-with-videos/main';
 
 const WGER_BASE = import.meta.env.VITE_WGER_BASE_URL || 'https://wger.de/api/v2';
 
@@ -29,19 +31,30 @@ const WGER_BASE = import.meta.env.VITE_WGER_BASE_URL || 'https://wger.de/api/v2'
    Tipos das APIs externas
    ───────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * Registro do catálogo "Free Exercise DB with Videos".
+ *
+ * Formato real do dataset (github.com/harshvishu/free-exercise-db-with-videos,
+ * MIT): cada exercício traz `videos.male` / `videos.female` com o MP4
+ * demonstrativo, `thumbnails`, `steps`, `formCues`, `commonMistakes` e
+ * `breathing`.
+ */
 interface FreeExerciseDbEntry {
-  id: number;
+  id: string;
   name: string;
-  slug: string;
-  muscles: string[];
-  primaryMuscle: string;
-  secondaryMuscles: string[];
-  equipment: string;
-  category: string;
-  instructions: string;
-  level: string;
-  videoUrl?: string;
-  imageUrl?: string;
+  bodyPart: string;
+  target: string;
+  secondaryMuscles?: string[];
+  equipment?: string;
+  difficulty?: string;
+  shortDescription?: string;
+  instructions?: string;
+  steps?: string[];
+  formCues?: string[];
+  commonMistakes?: string[];
+  breathing?: string;
+  videos?: { male?: string; female?: string };
+  thumbnails?: { male?: string; female?: string };
 }
 
 interface WgerExercise {
@@ -108,14 +121,21 @@ function normalizeEquipment(raw: string | undefined): string[] {
     'body weight': 'bodyweight',
     bodyweight: 'bodyweight',
     barbell: 'barbell',
+    'ez barbell': 'barbell',
     dumbbell: 'dumbbell',
     'dumbbells': 'dumbbell',
     kettlebell: 'kettlebell',
     band: 'band',
     'resistance band': 'band',
+    rope: 'band',
     machine: 'machine',
+    'leverage machine': 'machine',
+    'sled machine': 'machine',
+    'smith machine': 'machine',
     cable: 'cable',
     bench: 'bench',
+    'stability ball': 'bench',
+    weighted: 'bench',
     'pull-up bar': 'pullup_bar',
     'pull up bar': 'pullup_bar',
     'medicine ball': 'medicine_ball',
@@ -126,51 +146,137 @@ function normalizeEquipment(raw: string | undefined): string[] {
 }
 
 /** Traduz os nomes de músculo do wger para o vocabulário do ATHLETIX. */
+/**
+ * Traduz o vocabulário de músculos das fontes externas para o do ATHLETIX.
+ *
+ * A chave é o nome do músculo na fonte; o valor é o `primary_muscle` /
+ * `secondary_muscles` gravados no banco.
+ */
 const MUSCLE_MAP: Record<string, string> = {
+  // Tronco
   chest: 'chest',
+  pectorals: 'pectoralis_major',
+  'pectoralis major': 'pectoralis_major',
+  'upper pectorals': 'upper_pectoralis',
+  'upper chest': 'upper_pectoralis',
   back: 'back',
+  lats: 'lats',
+  'latissimus dorsi': 'lats',
+  'middle back': 'middle_back',
+  'upper back': 'upper_back',
+  rhomboids: 'rhomboids',
+  rhoboids: 'rhomboids',
+  traps: 'traps',
+  trapezius: 'traps',
+  'upper trapezius': 'traps',
+  'middle trapezius': 'traps',
+  'lower trapezius': 'traps',
+  'erector spinae': 'erector_spinae',
+  'spinal erectors': 'erector_spinae',
+  erectors: 'erector_spinae',
+  'lower back': 'lower_back',
+
+  // Ombros
   shoulders: 'shoulders',
+  deltoids: 'deltoids',
+  delts: 'deltoids',
+  'anterior deltoid': 'anterior_deltoid',
+  'posterior deltoid': 'posterior_deltoid',
+  'rear deltoids': 'posterior_deltoid',
+
+  // Braços
   biceps: 'biceps',
+  'biceps brachii': 'biceps',
+  brachialis: 'brachialis',
   triceps: 'triceps',
-  'abs': 'abs',
-  'abdominals': 'abs',
-  quadriceps: 'quads',
-  quads: 'quads',
+  'triceps brachii': 'triceps',
+  forearms: 'forearms',
+  'forearm extensors': 'forearms',
+  brachioradialis: 'forearms',
+
+  // Core
+  abs: 'abdominals',
+  abdominals: 'abdominals',
+  'rectus abdominis': 'rectus_abdominis',
+  obliques: 'obliques',
+  'lower abs': 'abdominals',
+  'lower abdominals': 'abdominals',
+  'transverse abdominis': 'transverse_abdominis',
+  core: 'core',
+  'core stabilizers': 'core',
+
+  // Pernas
+  quadriceps: 'quadriceps',
+  quads: 'quadriceps',
+  'rectus femoris': 'quadriceps',
+  'vastus medialis': 'quadriceps',
   hamstrings: 'hamstrings',
   glutes: 'glutes',
+  'gluteus maximus': 'glutes',
+  'gluteus medius': 'gluteus_medius',
+  'gluteus minimus': 'gluteus_minimus',
+  adductors: 'adductors',
+  abductors: 'abductors',
+  'hip flexors': 'hip_flexors',
+  iliopsoas: 'hip_flexors',
+  piriformis: 'piriformis',
+  'tensor fasciae latae': 'tensor_fasciae_latae',
   calves: 'calves',
+  gastrocnemius: 'gastrocnemius',
+  soleus: 'soleus',
+  tibialis: 'tibialis_anterior',
+  'ankle stabilizers': 'ankle_stabilizers',
+
+  // Outros
+  'cardiovascular system': 'cardiovascular',
   cardio: 'cardio',
+  'full body': 'full_body',
   mobility: 'mobility',
+  'serratus anterior': 'serratus_anterior',
+  'rotator cuff': 'rotator_cuff',
+  infraspinatus: 'infraspinatus',
+  'teres major': 'teres_major',
 };
 
 /** Normaliza para o formato de URL de mídia do Free Exercise DB. */
-function mediaUrl(path: string | undefined): string | undefined {
-  if (!path) return undefined;
-  if (path.startsWith('http')) return path;
-  return `${FREE_EXERCISE_DB}/${path.replace(/^\/+/, '')}`;
-}
-
 function fromFreeExerciseDb(entry: FreeExerciseDbEntry): ExerciseResult {
+  const primary = entry.target?.toLowerCase() ?? '';
+
   return {
     key: `fedb-${entry.id}`,
     name: entry.name,
-    slug: entry.slug,
-    primaryMuscle: MUSCLE_MAP[entry.primaryMuscle?.toLowerCase()] ?? entry.primaryMuscle ?? 'chest',
+    slug: slugifyName(entry.name, entry.id),
+    primaryMuscle: MUSCLE_MAP[primary] ?? (primary.replace(/[^a-z0-9]+/g, '_') || 'chest'),
     secondaryMuscles: (entry.secondaryMuscles ?? [])
-      .map((m) => MUSCLE_MAP[m.toLowerCase()] ?? m)
+      .map((m) => {
+        const k = m.toLowerCase();
+        return MUSCLE_MAP[k] ?? k.replace(/[^a-z0-9]+/g, '_');
+      })
       .filter(Boolean),
     equipment: normalizeEquipment(entry.equipment),
-    difficulty: DIFFICULTY_MAP[entry.level?.toLowerCase()] ?? 'beginner',
+    difficulty: DIFFICULTY_MAP[entry.difficulty?.toLowerCase() ?? ''] ?? 'beginner',
+    description: entry.shortDescription || undefined,
     instructions: entry.instructions || undefined,
-    videoUrl: mediaUrl(entry.videoUrl),
-    thumbnailUrl: mediaUrl(entry.imageUrl),
-    imageUrl: mediaUrl(entry.imageUrl),
+    videoUrl: entry.videos?.male ?? entry.videos?.female,
+    thumbnailUrl: entry.thumbnails?.male ?? entry.thumbnails?.female,
+    imageUrl: entry.thumbnails?.male ?? entry.thumbnails?.female,
     source: 'free_exercise_db',
-    sourceUrl: 'https://github.com/yuhonas/free-exercise-db',
-    attribution: 'Free Exercise DB — MIT License',
+    sourceUrl: 'https://github.com/harshvishu/free-exercise-db-with-videos',
+    attribution: 'Free Exercise DB with Videos — MIT License',
     license: 'MIT',
     inDatabase: false,
   };
+}
+
+/** Slug estável e único, derivado do nome + id do dataset. */
+function slugifyName(name: string, id: string): string {
+  const base = name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `${base}-${id}`;
 }
 
 function fromWger(entry: WgerExercise): ExerciseResult {
@@ -354,12 +460,15 @@ function fromDatabase(row: Exercise): ExerciseResult {
 let freeDbPromise: Promise<ExerciseResult[]> | null = null;
 
 /**
- * Baixa o índice do Free Exercise DB uma vez por sessão.
- * O arquivo é pequeno (~130 itens) e servido do GitHub raw.
+ * Baixa o catálogo do Free Exercise DB with Videos uma vez por sessão.
+ *
+ * O arquivo tem ~730 KB com 317 exercícios e é servido do GitHub raw.
+ * Como o app consulta primeiro o banco local (que já tem o catálogo
+ * semeado), esta chamada é apenas o fallback.
  */
 function loadFreeExerciseDb(): Promise<ExerciseResult[]> {
   if (!freeDbPromise) {
-    freeDbPromise = fetch(`${FREE_EXERCISE_DB}/exercises.json`)
+    freeDbPromise = fetch(`${FREE_EXERCISE_DB}/data/exercises.json`)
       .then((res) => {
         if (!res.ok) throw new Error(`Free Exercise DB: HTTP ${res.status}`);
         return res.json();
