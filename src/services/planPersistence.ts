@@ -25,6 +25,7 @@ import type {
   PlanGenerationProfile,
 } from '@/services/planGenerator';
 import { regenerateDay, validateGeneratedProgram } from '@/services/planGenerator';
+import { getSchemaCapabilities } from '@/services/dbCapabilities';
 import type { CatalogExercise } from '@/services/catalog';
 import type { MovementPattern } from '@/data/exerciseTaxonomy';
 
@@ -49,6 +50,62 @@ export interface SaveProgramResult {
   ok: boolean;
   saved?: SavedProgram;
   error?: string;
+  /**
+   * true quando o plano foi gravado sem os metadados de programa porque a
+   * migração ainda não está aplicada no banco. O plano funciona; a UI avisa.
+   */
+  degraded?: boolean;
+}
+
+/**
+ * Linha de `workout_plans` para um dia do programa.
+ *
+ * `extended = false` quando o banco ainda não tem a migração: nesse caso os
+ * metadados de programa não podem ser gravados e a explicação vai para a
+ * `description`, que já existe no schema original.
+ */
+export function buildPlanRow(params: {
+  userId: string;
+  program: GeneratedProgram;
+  day: GeneratedDay;
+  programId: string;
+  templateSlug?: string | null;
+  extended: boolean;
+}): Record<string, unknown> {
+  const { userId, program, day, programId, templateSlug, extended } = params;
+
+  const base = {
+    user_id: userId,
+    name: planNameFor(day),
+    description: day.rationale,
+    focus: GOAL_TO_FOCUS[program.goal],
+    modality: null,
+    days_of_week: day.weekday === null ? [] : [day.weekday],
+    estimated_minutes: day.estimatedMinutes,
+    is_active: true,
+    is_template: false,
+  };
+
+  if (!extended) return base;
+
+  return {
+    ...base,
+    program_id: programId,
+    program_name: limitText(program.name, 120),
+    day_label: day.label,
+    generated_by: templateSlug ? 'template' : program.source,
+    rationale: day.rationale,
+    level: program.level,
+    environment: program.environment as TrainingEnvironment,
+    template_slug: templateSlug ?? null,
+    metadata: {
+      patterns: day.exercises.map((exercise) => exercise.pattern),
+      goal: program.goal,
+      level: program.level,
+      seed: program.seed,
+      source: program.source,
+    },
+  };
 }
 
 function limitText(value: string, max: number): string {
@@ -102,38 +159,25 @@ export async function saveGeneratedProgram(params: {
   const programId = crypto.randomUUID();
   const planIds: string[] = [];
 
+  // Modo degradado quando a migração ainda não foi aplicada: o plano é salvo,
+  // só sem os metadados de programa. Melhor entregar o treino do que bloquear.
+  const { capabilities } = await getSchemaCapabilities();
+  const extended = capabilities.planProgramColumns;
+
   try {
     for (const day of program.days) {
-      const metadata = {
-        patterns: day.exercises.map((exercise) => exercise.pattern),
-        goal: program.goal,
-        level: program.level,
-        seed: program.seed,
-        source: program.source,
-      };
-
       const { data: plan, error: planError } = await supabase
         .from('workout_plans')
-        .insert({
-          user_id: userId,
-          name: planNameFor(day),
-          description: day.rationale,
-          focus: GOAL_TO_FOCUS[program.goal],
-          modality: null,
-          days_of_week: day.weekday === null ? [] : [day.weekday],
-          estimated_minutes: day.estimatedMinutes,
-          is_active: true,
-          is_template: false,
-          program_id: programId,
-          program_name: limitText(program.name, 120),
-          day_label: day.label,
-          generated_by: templateSlug ? 'template' : program.source,
-          rationale: day.rationale,
-          level: program.level,
-          environment: program.environment as TrainingEnvironment,
-          template_slug: templateSlug ?? null,
-          metadata,
-        })
+        .insert(
+          buildPlanRow({
+            userId,
+            program,
+            day,
+            programId,
+            templateSlug,
+            extended,
+          }),
+        )
         .select('*')
         .single();
 
@@ -159,12 +203,13 @@ export async function saveGeneratedProgram(params: {
     }
 
     // Se era uma substituição, remove o programa antigo só depois do novo estar pronto.
-    if (params.replaceProgramId) {
+    if (params.replaceProgramId && extended) {
       await supabase.from('workout_plans').delete().eq('program_id', params.replaceProgramId);
     }
 
     return {
       ok: true,
+      degraded: !extended,
       saved: { programId, planIds, name: program.name },
     };
   } catch (error) {
@@ -431,16 +476,26 @@ export async function regeneratePlanDay(params: {
     await supabase.from('workout_exercises').delete().in('id', oldIds);
   }
 
+  const { capabilities } = await getSchemaCapabilities();
+
   await supabase
     .from('workout_plans')
-    .update({
-      description: day.rationale,
-      estimated_minutes: day.estimatedMinutes,
-      metadata: {
-        ...metadata,
-        patterns: day.exercises.map((exercise) => exercise.pattern),
-      },
-    })
+    .update(
+      capabilities.planProgramColumns
+        ? {
+            description: day.rationale,
+            estimated_minutes: day.estimatedMinutes,
+            metadata: {
+              ...metadata,
+              patterns: day.exercises.map((exercise) => exercise.pattern),
+            },
+          }
+        : {
+            // Sem a migração, só os campos originais são atualizados.
+            description: day.rationale,
+            estimated_minutes: day.estimatedMinutes,
+          },
+    )
     .eq('id', plan.id);
 
   return { ok: true, day };
@@ -448,6 +503,12 @@ export async function regeneratePlanDay(params: {
 
 /** Remove um programa inteiro (todos os dias). */
 export async function deleteProgram(programId: string): Promise<{ ok: boolean; error?: string }> {
+  const { capabilities } = await getSchemaCapabilities();
+
+  if (!capabilities.planProgramColumns) {
+    return { ok: false, error: 'Exclua os dias individualmente em Treinos (migração pendente).' };
+  }
+
   const { error } = await supabase.from('workout_plans').delete().eq('program_id', programId);
   if (error) return { ok: false, error: 'Não foi possível excluir o programa agora.' };
   return { ok: true };

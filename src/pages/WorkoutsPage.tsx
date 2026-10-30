@@ -44,6 +44,8 @@ import { answersFromRow, loadTrainingProfile, toPlanProfile } from '@/services/t
 import { loadExerciseCatalog, type CatalogSnapshot } from '@/services/catalog';
 import { generateProgram, validateGeneratedProgram } from '@/services/planGenerator';
 import { deleteProgram, saveGeneratedProgram } from '@/services/planPersistence';
+import { SchemaMigrationNotice } from '@/components/SchemaMigrationNotice';
+import { useSchemaCapabilities } from '@/components/useSchemaCapabilities';
 
 type Tab = 'plano' | 'modelos' | 'historico';
 
@@ -82,7 +84,9 @@ export default function WorkoutsPage() {
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
+  const [deletedDegraded, setDeletedDegraded] = useState<string | null>(null);
   const [deleteProgramTarget, setDeleteProgramTarget] = useState<string | null>(null);
+  const schemaCapabilities = useSchemaCapabilities();
   const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null);
   const [sessionNotes, setSessionNotes] = useState('');
   const [deleteSessionTarget, setDeleteSessionTarget] = useState<WorkoutSession | null>(null);
@@ -214,7 +218,15 @@ export default function WorkoutsPage() {
         return;
       }
 
-      toast.show('Plano criado com sucesso ✓', 'success');
+      if (result.degraded) {
+        toast.show(
+          'Plano criado. Aplique a migração para agrupar os dias em um programa semanal.',
+          'info',
+        );
+      } else {
+        toast.show('Plano criado com sucesso ✓', 'success');
+      }
+
       changeTab('plano');
       await load();
     } finally {
@@ -258,6 +270,7 @@ export default function WorkoutsPage() {
     const result = await deleteProgram(deleteProgramTarget);
     setDeleteProgramTarget(null);
     if (!result.ok) {
+      setDeletedDegraded(result.error ?? 'Erro ao excluir programa.');
       toast.show(result.error ?? 'Erro ao excluir programa.', 'error');
       return;
     }
@@ -318,6 +331,19 @@ export default function WorkoutsPage() {
           <Alert variant="error">{generationError}</Alert>
         </div>
       )}
+
+      {deletedDegraded && (
+        <div style={{ marginBottom: 'var(--sp-4)' }}>
+          <Alert variant="warning">{deletedDegraded}</Alert>
+        </div>
+      )}
+
+      <div style={{ marginBottom: 'var(--sp-4)' }}>
+        <SchemaMigrationNotice
+          capabilities={schemaCapabilities}
+          compact={hasPlan && tab !== 'plano'}
+        />
+      </div>
 
       {loading ? (
         <SkeletonList count={3} height={110} />

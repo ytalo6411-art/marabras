@@ -243,6 +243,27 @@ Testes novos cobrem:
 4. **Seed do catálogo**: sem credenciais, `training_profiles` salva mas a geração
    mostra a mensagem de catálogo vazio (comportamento testado).
 
+### Migração pendente: comportamento do app
+
+O ambiente de desenvolvimento desta sessão **não tem credenciais do Supabase**
+(sem `.env`, sem CLI `supabase`, sem `psql`) e a rede do sandbox só alcança
+github/npm/pypi — `*.supabase.co` e `api.supabase.com` respondem `000`. Por isso
+a migração **não pôde ser aplicada aqui**; ela foi validada como SQL válido
+(16 comandos, parser PostgreSQL/pglast) e com divisor de comandos testado.
+
+Para não bloquear o uso, o app passou a:
+
+1. **detectar** o schema real (`src/services/dbCapabilities.ts`);
+2. **salvar o questionário localmente** quando `training_profiles` não existe,
+   deixando claro na interface que ainda não sincronizou com a conta;
+3. **gerar e salvar o plano** sem as colunas novas (`buildPlanRow({ extended:false })`),
+   degradando apenas o agrupamento em programa semanal;
+4. **mostrar o comando e o SQL** para aplicar a migração (`SchemaMigrationNotice`),
+   com botões de copiar e baixar.
+
+Ferramentas entregues: `scripts/apply-migrations.mjs` (+ `npm run db:check`,
+`db:apply`, `db:selftest`) que aplica as migrações via Management API sem CLI.
+
 ### Próximos passos operacionais (fora do código)
 
 ```bash

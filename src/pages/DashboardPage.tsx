@@ -33,6 +33,8 @@ import {
   type ActivityStreak,
 } from '@/services/trainingOverview';
 import { answersFromRow, loadTrainingProfile } from '@/services/trainingProfile';
+import { SchemaMigrationNotice } from '@/components/SchemaMigrationNotice';
+import { useSchemaCapabilities } from '@/components/useSchemaCapabilities';
 import { GOAL_LABELS, LEVEL_LABELS, levelFromExperience } from '@/data/exerciseTaxonomy';
 
 /**
@@ -52,6 +54,7 @@ export default function DashboardPage() {
   const [trainingProfile, setTrainingProfile] = useState<TrainingProfile | null>(null);
   const [streak, setStreak] = useState<ActivityStreak>({ current: 0, last7: [], activeDates: [] });
   const [loading, setLoading] = useState(true);
+  const schemaCapabilities = useSchemaCapabilities();
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -237,6 +240,10 @@ export default function DashboardPage() {
           </div>
         </div>
       </Card>
+
+      <div style={{ marginBottom: 'var(--sp-4)' }}>
+        <SchemaMigrationNotice capabilities={schemaCapabilities} compact />
+      </div>
 
       {remaining > 0 && sessionsThisWeek > 0 && (
         <p className="text-sm text-muted" style={{ marginBottom: 'var(--sp-4)' }}>

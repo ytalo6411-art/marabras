@@ -264,11 +264,55 @@ Migrações:
 
 ### Aplicar as migrações
 
+**Opção A — CLI do Supabase** (padrão do projeto)
+
 ```bash
 supabase link --project-ref tazszwllacwqccfjnglk
 supabase db push          # aplica supabase/migrations/*.sql
 supabase db reset         # recria localmente do zero (com seed)
 ```
+
+**Opção B — sem CLI** (só precisa de um Personal Access Token)
+
+```bash
+# 1. Gere o token em https://supabase.com/dashboard/account/tokens
+# 2. Confira o que falta (somente leitura):
+SUPABASE_ACCESS_TOKEN=sbp_xxx node scripts/apply-migrations.mjs \
+  --project-ref tazszwllacwqccfjnglk --check
+
+# 3. Aplique:
+SUPABASE_ACCESS_TOKEN=sbp_xxx node scripts/apply-migrations.mjs \
+  --project-ref tazszwllacwqccfjnglk
+```
+
+O script executa os arquivos em ordem, imprime o estado do schema antes e depois
+(`training_profiles`, `workout_plans.program_id`, `workout_plans.metadata`,
+exercícios ativos) e nunca grava nem exibe o token por inteiro. As migrações são
+idempotentes — reexecutar é seguro.
+
+**Opção C — SQL Editor do Dashboard**
+
+Copie o conteúdo de `supabase/migrations/20260201000000_training_profile.sql`
+(também servido em `/sql/20260201000000_training_profile.sql`) e cole no SQL
+Editor. A interface mostra esse aviso, com botão **Copiar SQL**, quando detecta
+que a migração está pendente.
+
+### O app funciona antes da migração (modo local)
+
+Se o banco ainda não tem `training_profiles` / as colunas de programa, o
+ATHLETIX **não quebra**:
+
+| Recurso | Antes da migração | Depois |
+| --- | --- | --- |
+| Questionário | salvo **neste dispositivo** (localStorage) | salvo na conta |
+| Geração de plano | funciona normalmente | funciona normalmente |
+| Dias agrupados em programa | cada dia é um plano avulso | agrupados por `program_id` |
+| Regenerar um dia | usa os padrões dos exercícios atuais | usa os metadados salvos |
+| Aviso na interface | mostra o comando/SQL para aplicar | desaparece |
+
+Nada é apagado: ao aplicar a migração, o próximo salvamento vai para o banco e o
+rascunho local é removido. A detecção fica em `src/services/dbCapabilities.ts`
+(cache de 5 min por sessão, sem trafegar dados).
 
 Os arquivos em `supabase/migrations/` estão na **ordem correta de aplicação**
 (tabelas → funções → triggers → RLS). O seed do catálogo de exercícios está em
@@ -442,7 +486,7 @@ com o jurídico antes de publicar um fork do banco.
 npm test
 ```
 
-**121 testes** cobrindo:
+**149 testes** cobrindo:
 
 - **Fumaça do app** — o roteador, os lazy chunks e a tela de login montam sem
   explodir. É o que quebraria silenciosamente se um import ou um chunk fosse
@@ -476,7 +520,13 @@ npm test
   banco, filtros e alternativas.
 - **IA** — contrato de resposta, rejeição de plano fora de faixa e fallback
   transparente para o treinador por regras.
+- **Modo degradado** — detecção de schema pendente (não confunde com erro de
+  permissão/rede), rascunho local válido e inválido, linha do plano com e sem
+  migração, e o aviso da interface (aparece só quando falta schema).
 - **Formatadores** — datas, durações, números e percentuais em pt-BR.
+
+Também roda no CI: `node scripts/apply-migrations.mjs --self-test`, que valida o
+divisor de comandos SQL (blocos `$$`, strings com `;` e comentários).
 
 ---
 

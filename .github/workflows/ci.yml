@@ -37,6 +37,11 @@ jobs:
       - name: Typecheck das Vercel Functions (api/)
         run: npm run typecheck:api
 
+      # Valida offline o divisor de comandos usado para aplicar as migrações
+      # quando o servidor exige um comando por requisição.
+      - name: Autoteste do aplicador de migrações
+        run: node scripts/apply-migrations.mjs --self-test
+
       - name: Lint
         run: npm run lint
 

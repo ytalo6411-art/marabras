@@ -25,6 +25,7 @@ import type {
   TrainingProfile,
 } from '@/types/database';
 import { toGenerationProfile, type PlanGenerationProfile } from '@/services/planGenerator';
+import { getSchemaCapabilities, isMissingSchemaError } from '@/services/dbCapabilities';
 import { ENVIRONMENT_EQUIPMENT, levelFromExperience } from '@/data/exerciseTaxonomy';
 
 /* ─── Formato do questionário ──────────────────────────────────────────────── */
@@ -281,10 +282,98 @@ export interface SaveTrainingProfileResult {
   ok: boolean;
   error?: string;
   data?: TrainingProfile;
+  /**
+   * 'database' = salvo na conta; 'local' = salvo neste dispositivo porque a
+   * migração ainda não foi aplicada no banco.
+   */
+  storage: 'database' | 'local';
 }
 
-/** Carrega o perfil de treino do usuário autenticado. */
+const LOCAL_DRAFT_PREFIX = 'athletix:training-draft:';
+
+function localDraftKey(userId: string): string {
+  return `${LOCAL_DRAFT_PREFIX}${userId}`;
+}
+
+/** Rascunho local (usado só enquanto a tabela não existe no banco). */
+export function saveLocalDraft(userId: string, answers: QuestionnaireAnswers): boolean {
+  if (typeof localStorage === 'undefined') return false;
+  try {
+    localStorage.setItem(localDraftKey(userId), JSON.stringify(answers));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function loadLocalDraft(userId: string): QuestionnaireAnswers | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(localDraftKey(userId));
+    if (!raw) return null;
+    const parsed = questionnaireSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? (parsed.data as QuestionnaireAnswers) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearLocalDraft(userId: string): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.removeItem(localDraftKey(userId));
+  } catch {
+    // Ignora: não é crítico.
+  }
+}
+
+/** Converte as respostas no formato da tabela (usado no banco e no modo local). */
+export function answersToRow(userId: string, answers: QuestionnaireAnswers): TrainingProfile {
+  const now = new Date().toISOString();
+
+  return {
+    user_id: userId,
+    experience: answers.experience,
+    age_range: answers.ageRange,
+    goals: answers.goals,
+    goal_priority: answers.goalPriority,
+    environment: answers.environment,
+    equipment: effectiveEquipment(answers),
+    sessions_per_week: answers.sessionsPerWeek,
+    minutes_per_session: answers.minutesPerSession,
+    preferred_days: answers.preferredDays,
+    session_length_preference: answers.sessionLengthPreference,
+    priority_muscles: answers.priorityMuscles,
+    avoided_exercises: answers.avoidedExercises,
+    preferred_training: answers.preferredTraining,
+    split_preference: answers.splitPreference,
+    guidance_preference: answers.guidancePreference,
+    limitations: answers.limitations,
+    needs_professional_guidance: answers.needsProfessionalGuidance,
+    safety_acknowledged: answers.safetyAcknowledged,
+    questionnaire: answers as unknown as TrainingProfile['questionnaire'],
+    schema_version: 1,
+    completed_at: now,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
+/**
+ * Carrega o perfil de treino do usuário autenticado.
+ *
+ * Se a tabela ainda não existir (migração pendente), devolve o rascunho salvo
+ * neste dispositivo — a pessoa continua vendo o próprio questionário em vez de
+ * uma tela vazia.
+ */
 export async function loadTrainingProfile(userId: string): Promise<TrainingProfile | null> {
+  const { capabilities } = await getSchemaCapabilities();
+
+  if (!capabilities.trainingProfiles) {
+    const draft = loadLocalDraft(userId);
+    return draft ? answersToRow(userId, draft) : null;
+  }
+
   const { data, error } = await supabase
     .from('training_profiles')
     .select('*')
@@ -292,12 +381,19 @@ export async function loadTrainingProfile(userId: string): Promise<TrainingProfi
     .maybeSingle();
 
   if (error) {
-    // Tabela ausente (migração não aplicada) não deve quebrar a navegação.
     console.warn('[ATHLETIX] Não foi possível ler training_profiles:', error.message);
+    if (isMissingSchemaError(error.message)) {
+      const draft = loadLocalDraft(userId);
+      return draft ? answersToRow(userId, draft) : null;
+    }
     return null;
   }
 
-  return (data as TrainingProfile | null) ?? null;
+  if (data) return data as TrainingProfile;
+
+  // Banco sem linha, mas existe rascunho local (ex.: respondeu antes da migração).
+  const draft = loadLocalDraft(userId);
+  return draft ? answersToRow(userId, draft) : null;
 }
 
 /**
@@ -312,8 +408,23 @@ export async function saveTrainingProfile(
   if (!parsed.success) {
     return {
       ok: false,
+      storage: 'database',
       error: parsed.error.issues[0]?.message ?? 'Respostas inválidas.',
     };
+  }
+
+  const { capabilities } = await getSchemaCapabilities();
+
+  // Migração pendente: guarda neste dispositivo e segue com a geração do plano.
+  if (!capabilities.trainingProfiles) {
+    const saved = saveLocalDraft(userId, answers);
+    return saved
+      ? { ok: true, storage: 'local' }
+      : {
+          ok: false,
+          storage: 'local',
+          error: 'Não foi possível salvar suas preferências neste dispositivo (armazenamento indisponível).',
+        };
   }
 
   const payload = {
@@ -349,15 +460,22 @@ export async function saveTrainingProfile(
 
   if (error) {
     console.error('[ATHLETIX] Falha ao salvar training_profiles:', error.message);
-    const missingTable = /relation .*training_profiles.* does not exist|schema cache/i.test(error.message);
+
+    if (isMissingSchemaError(error.message)) {
+      // Schema mudou entre a checagem e a escrita: cai para o modo local.
+      const saved = saveLocalDraft(userId, answers);
+      if (saved) return { ok: true, storage: 'local' };
+    }
 
     return {
       ok: false,
-      error: missingTable
-        ? 'O banco ainda não tem a tabela de personalização. Aplique a migração supabase/migrations/20260201000000_training_profile.sql no Supabase e tente de novo.'
-        : 'Não foi possível salvar suas preferências. Verifique a conexão e tente novamente.',
+      storage: 'database',
+      error: 'Não foi possível salvar suas preferências. Verifique a conexão e tente novamente.',
     };
   }
+
+  // Sincronizado no banco: o rascunho local não é mais necessário.
+  clearLocalDraft(userId);
 
   // Sincroniza dados básicos do perfil (opcionais).
   const profilePatch: Record<string, unknown> = { onboarding_completed: true };
@@ -376,13 +494,24 @@ export async function saveTrainingProfile(
     console.warn('[ATHLETIX] Preferências salvas, mas o perfil não foi sincronizado:', profileError.message);
   }
 
-  return { ok: true, data: data as TrainingProfile };
+  return { ok: true, storage: 'database', data: data as TrainingProfile };
 }
 
 /** Remove as preferências de personalização (LGPD — direito de exclusão). */
 export async function deleteTrainingProfile(
   userId?: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  if (userId) clearLocalDraft(userId);
+
+  const { capabilities } = await getSchemaCapabilities();
+  if (!capabilities.trainingProfiles) {
+    // Nada no banco além do flag em `profiles`.
+    if (userId) {
+      await supabase.from('profiles').update({ onboarding_completed: false }).eq('id', userId);
+    }
+    return { ok: true };
+  }
+
   const { error } = await supabase.rpc('reset_training_profile');
 
   if (error && userId) {
