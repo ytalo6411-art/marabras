@@ -13,6 +13,8 @@ const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const ExercisesPage = lazy(() => import('@/pages/ExercisesPage'));
 const ExerciseDetailPage = lazy(() => import('@/pages/ExerciseDetailPage'));
 const WorkoutsPage = lazy(() => import('@/pages/WorkoutsPage'));
+const OnboardingPage = lazy(() => import('@/pages/OnboardingPage'));
+const CoachPage = lazy(() => import('@/pages/CoachPage'));
 const WorkoutBuilderPage = lazy(() => import('@/pages/WorkoutBuilderPage'));
 const WorkoutSessionPage = lazy(() => import('@/pages/WorkoutSessionPage'));
 const NutritionPage = lazy(() => import('@/pages/NutritionPage'));
@@ -104,6 +106,8 @@ export default function App() {
               <Route path="exercises" element={<ExercisesPage />} />
               <Route path="exercises/:slug" element={<ExerciseDetailPage />} />
               <Route path="workouts" element={<WorkoutsPage />} />
+              <Route path="onboarding" element={<OnboardingPage />} />
+              <Route path="coach" element={<CoachPage />} />
               <Route path="workouts/new" element={<WorkoutBuilderPage />} />
               <Route path="workouts/:id" element={<WorkoutBuilderPage />} />
               <Route path="session/:id" element={<WorkoutSessionPage />} />

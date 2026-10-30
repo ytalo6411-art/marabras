@@ -48,6 +48,36 @@ Supabase.
 - Busca com *debounce*, filtro por músculo e dificuldade, paginação.
 - Detalhe com vídeo sob demanda, atribuição e licença visíveis.
 
+### Personalização (novo)
+- **Questionário de 7 etapas** em `/app/onboarding` (perfil → objetivos → local e
+  equipamentos → disponibilidade → preferências → segurança → revisão), com barra
+  de progresso, voltar, validação por etapa e resumo editável.
+- Respostas persistidas em `training_profiles` (RLS own-only) + sincronização com
+  `profiles`. O usuário pode **refazer** o questionário e **excluir** as
+  preferências a qualquer momento (Perfil → Personalização).
+- Gênero, altura e peso são **opcionais** e **não** determinam exercícios.
+  Limitações geram adaptações de seleção, nunca diagnóstico ou reabilitação.
+
+### Gerador de planos
+- Motor **determinístico** em `src/services/planGenerator.ts`: objetivo, nível,
+  frequência, tempo por sessão, equipamentos, prioridades, exercícios evitados e
+  limitações. Divisões corpo inteiro, AB, ABC, ABCD, ABCDE e PPL ×2.
+- Seleção por **padrão de movimento** (empurrar/puxar/agachar/dobrar/core…),
+  séries, repetições, descanso e orientação de execução por objetivo.
+- Alternativas para cada exercício e **justificativa** de cada dia.
+- O plano é validado por **Zod** (formato + catálogo real) antes de gravar.
+- `/app/workouts` organizada em **Meu plano** (programa semanal e próximo treino),
+  **Modelos** (catálogo filtrável) e **Histórico** (editar observação/excluir).
+- `metadata` em cada plano guarda os padrões do dia → **regenerar uma sessão**
+  sem perder o restante do programa; **trocar um exercício** individualmente.
+
+### Treinador (`/app/coach`)
+- Explica por que o plano foi montado, mostra alternativas por padrão de
+  movimento e permite regenerar/trocar.
+- **IA opcional, sempre honesta**: se `AI_API_KEY` não estiver configurada no
+  servidor, a interface diz "treinador por regras" e responde com as regras do
+  próprio plano. Nenhuma chave de IA vai ao navegador.
+
 ### Treinos
 - Criar, editar, duplicar e excluir planos; organizar por dia da semana.
 - Seletor de exercícios com busca; séries, reps, carga e descanso por exercício.
@@ -68,6 +98,8 @@ Supabase.
 ### Evolução
 - Gráfico de volume (SVG próprio, sem dependência), barras de sessões semanais,
   medidas corporais e recordes pessoais.
+- **Comparação de períodos** (últimos 30 dias × 30 anteriores) com aviso explícito
+  de que uma variação isolada não é tendência definitiva.
 
 ### Painel administrativo (`/admin`)
 - Estatísticas da plataforma, listagem de usuários, catálogo de exercícios,
@@ -207,14 +239,24 @@ verificação.
 
 Projeto Supabase: `athletix` — ref `tazszwllacwqccfjnglk` (região `sa-east-1`).
 
-**23 tabelas**, **35 políticas de RLS**, **59 índices**, **19 triggers**, 1 view
-(`dashboard_summary`), 11 enums.
+**24 tabelas**, políticas de RLS em todas as tabelas com dados de usuário,
+1 view (`dashboard_summary`) e 11 enums.
+
+Migrações:
+
+1. `20260101000000_athletix_v2_initial.sql` — schema base.
+2. `20260201000000_training_profile.sql` — **aditiva**: cria `training_profiles`
+   (RLS own-only + leitura de admin), adiciona metadados de programa em
+   `workout_plans` (`program_id`, `day_label`, `generated_by`, `rationale`,
+   `level`, `environment`, `template_slug`, `metadata`), trigger de `updated_at`
+   e a RPC `reset_training_profile()` (LGPD). **Nenhum dado ou política existente
+   é removido.**
 
 ### Estrutura
 
 | Área | Tabelas |
 |---|---|
-| Usuário | `profiles`, `user_preferences`, `fitness_goals`, `body_measurements` |
+| Usuário | `profiles`, `user_preferences`, `fitness_goals`, `body_measurements`, `training_profiles` |
 | Exercícios | `exercises`, `exercise_categories`, `exercise_history`, `personal_records` |
 | Treinos | `workout_plans`, `workout_exercises`, `workout_sessions`, `workout_sets`, `saved_workouts` |
 | Nutrição | `nutrition_profiles`, `food_database`, `food_diary`, `meal_entries`, `hydration_logs` |
@@ -400,7 +442,7 @@ com o jurídico antes de publicar um fork do banco.
 npm test
 ```
 
-**70 testes** cobrindo:
+**121 testes** cobrindo:
 
 - **Fumaça do app** — o roteador, os lazy chunks e a tela de login montam sem
   explodir. É o que quebraria silenciosamente se um import ou um chunk fosse
@@ -420,7 +462,50 @@ npm test
   *Os testes de integração detectam o Supabase inacessível e são pulados com
   aviso explícito, para que a suíte continue rodando offline.*
 - **Regras de treino** — payload do plano/exercício e cálculo de volume.
+- **Gerador de planos** — número de dias = frequência, equipamento respeitado,
+  nível máximo, sem exercício repetido no dia, determinismo por semente,
+  exercícios evitados, limitações que removem padrões e prioridade muscular.
+- **Validação do plano** — rejeita exercício fora do catálogo, repetido no dia e
+  plano vazio.
+- **Questionário** — regras de cada etapa, defaults seguros, tradução de
+  respostas para o gerador e reconstrução a partir do banco.
+- **Questionário de ponta a ponta** — renderiza a etapa 1, bloqueia avanço sem
+  resposta, percorre as 7 etapas, confere o resumo e mostra erro claro quando o
+  catálogo não está semeado (sem criar plano fictício).
+- **Catálogo central** — normalização de nomes, deduplicação com prioridade do
+  banco, filtros e alternativas.
+- **IA** — contrato de resposta, rejeição de plano fora de faixa e fallback
+  transparente para o treinador por regras.
 - **Formatadores** — datas, durações, números e percentuais em pt-BR.
+
+---
+
+## IA opcional (server-side)
+
+O ATHLETIX funciona **sem** IA. O gerador determinístico é o caminho padrão.
+Para habilitar a camada de IA:
+
+1. Configure na Vercel (Environment Variables, sem prefixo `VITE_`):
+   `AI_API_KEY`, e opcionalmente `AI_BASE_URL` (padrão
+   `https://api.openai.com/v1`) e `AI_MODEL` (padrão `gpt-4o-mini`).
+2. Opcionalmente defina `SUPABASE_URL` / `SUPABASE_ANON_KEY` no servidor; se não
+   definir, as funções usam as variáveis `VITE_` equivalentes.
+3. Faça o deploy. `GET /api/ai/status` passa a responder
+   `{ "configured": true, "model": "..." }`.
+
+Como funciona:
+
+- `POST /api/ai/plan` valida o JWT do usuário, limita requisições (8/h),
+  envia o perfil **sanitizado** e uma lista fechada de exercícios com IDs do
+  banco, e descarta qualquer exercício inventado.
+- `POST /api/ai/chat` responde ao treinador (30 perguntas/h).
+- A resposta é validada no servidor **e de novo no cliente** (Zod) antes de
+  virar plano.
+- Sem `AI_API_KEY`, os endpoints respondem `503` e a UI mostra "plano por
+  regras" — nunca afirma ter usado IA.
+
+Segredos nunca vão para o bundle: o `.env.example` separa explicitamente as
+variáveis `VITE_` (públicas) das server-side.
 
 ---
 

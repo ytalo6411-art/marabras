@@ -14,6 +14,7 @@ import {
   IconSun,
   IconLogout,
   IconShield,
+  IconSparkles,
 } from './icons';
 
 interface NavItem {
@@ -28,6 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/app', label: 'Início', icon: IconHome, primary: true },
   { to: '/app/exercises', label: 'Exercícios', icon: IconDumbbell, primary: true },
   { to: '/app/workouts', label: 'Treinos', icon: IconChart, primary: true },
+  { to: '/app/coach', label: 'Treinador', icon: IconSparkles },
   { to: '/app/nutrition', label: 'Nutrição', icon: IconNutrition, primary: true },
   { to: '/app/progress', label: 'Evolução', icon: IconChart },
   { to: '/app/profile', label: 'Perfil', icon: IconUser },

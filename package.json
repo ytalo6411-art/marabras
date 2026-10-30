@@ -17,13 +17,18 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:types": "supabase gen types typescript --local > src/types/database.ts",
-    "postinstall": "node scripts/verify-env.mjs --warn-only"
+    "postinstall": "node scripts/verify-env.mjs --warn-only",
+    "seed:exercises": "node scripts/seed-exercises.mjs",
+    "seed:foods": "node scripts/seed-foods.mjs",
+    "verify:env": "node scripts/verify-env.mjs",
+    "typecheck:api": "tsc --noEmit --strict --moduleResolution bundler --module esnext --target es2022 --skipLibCheck --types node api/ai/*.ts api/_lib/*.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
+    "zod": "^3.25.76",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

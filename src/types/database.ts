@@ -30,6 +30,49 @@ export type GoalStatus = 'active' | 'completed' | 'paused' | 'archived';
 export type SourceType =
   | 'wger' | 'free_exercise_db' | 'repdb' | 'usda' | 'open_food_facts' | 'manual';
 
+/* ─── Personalização (onboarding) ──────────────────────────────────────────── */
+
+export type TrainingExperience = 'never' | 'beginner' | 'intermediate' | 'advanced';
+export type TrainingEnvironment =
+  | 'gym' | 'home_equipment' | 'home_bodyweight' | 'outdoor' | 'other';
+export type TrainingGoal =
+  | 'hypertrophy' | 'strength' | 'conditioning' | 'endurance'
+  | 'mobility' | 'fat_loss' | 'active_routine' | 'sport_performance';
+export type PreferredTraining =
+  | 'strength_training' | 'calisthenics' | 'cardio' | 'mixed' | 'mobility';
+export type SessionLengthPreference = 'short' | 'moderate' | 'long';
+export type SplitPreference = 'full_body' | 'split' | 'coach_choice';
+export type GuidancePreference = 'video' | 'text' | 'both';
+export type AgeRange =
+  | '16_17' | '18_24' | '25_34' | '35_44' | '45_54' | '55_64' | '65_plus';
+
+export interface TrainingProfile {
+  user_id: string;
+  experience: TrainingExperience | null;
+  age_range: AgeRange | null;
+  goals: TrainingGoal[];
+  goal_priority: TrainingGoal | null;
+  environment: TrainingEnvironment | null;
+  equipment: Equipment[];
+  sessions_per_week: number | null;
+  minutes_per_session: number | null;
+  preferred_days: number[];
+  session_length_preference: SessionLengthPreference | null;
+  priority_muscles: string[];
+  avoided_exercises: string[];
+  preferred_training: PreferredTraining[];
+  split_preference: SplitPreference | null;
+  guidance_preference: GuidancePreference | null;
+  limitations: string[];
+  needs_professional_guidance: boolean;
+  safety_acknowledged: boolean;
+  questionnaire: Json;
+  schema_version: number;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Profile {
   id: string;
   email: string;
@@ -135,6 +178,20 @@ export interface WorkoutPlan {
   estimated_minutes: number | null;
   is_active: boolean;
   is_template: boolean;
+  /** Agrupa os planos de um mesmo programa semanal gerado (ex.: split ABC). */
+  program_id: string | null;
+  program_name: string | null;
+  /** Rótulo do dia dentro do programa: 'A', 'B', 'Corpo inteiro'… */
+  day_label: string | null;
+  /** Origem do plano — a UI nunca diz "IA" quando a origem é 'rules'. */
+  generated_by: 'manual' | 'rules' | 'ai' | 'template' | null;
+  /** Explicação curta de por que este treino foi montado assim. */
+  rationale: string | null;
+  level: DifficultyLevel | null;
+  environment: TrainingEnvironment | null;
+  template_slug: string | null;
+  /** Metadados do dia (padrões de movimento, objetivo, nível) para regenerar a sessão. */
+  metadata: Json;
   created_at: string;
   updated_at: string;
 }
