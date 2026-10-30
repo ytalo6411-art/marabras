@@ -1,11 +1,21 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
-import { Button, Card, Field, Avatar, Alert } from '@/components/ui';
-import { IconEdit, IconTarget, IconDownload, IconTrash } from '@/components/icons';
+import { Button, Card, Field, Avatar, Alert, ConfirmDialog } from '@/components/ui';
+import { IconEdit, IconTarget, IconDownload, IconTrash, IconSparkles, IconRefresh } from '@/components/icons';
 import { formatDate } from '@/utils/format';
-import type { FitnessGoal } from '@/types/database';
+import type { FitnessGoal, TrainingProfile } from '@/types/database';
+import { deleteTrainingProfile, loadTrainingProfile } from '@/services/trainingProfile';
+import {
+  ENVIRONMENT_LABELS,
+  GOAL_LABELS,
+  LEVEL_LABELS,
+  LIMITATION_LABELS,
+  levelFromExperience,
+  muscleLabel,
+} from '@/data/exerciseTaxonomy';
 
 /** Perfil do usuário: dados pessoais, avatar e objetivos. */
 export default function ProfilePage() {
@@ -25,6 +35,9 @@ export default function ProfilePage() {
 
   const [newGoal, setNewGoal] = useState({ title: '', goalType: 'strength', targetValue: '' });
 
+  const [trainingRow, setTrainingRow] = useState<TrainingProfile | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+
   useEffect(() => {
     if (!profile) return;
     setFullName(profile.full_name ?? '');
@@ -43,7 +56,21 @@ export default function ProfilePage() {
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .then(({ data }) => setGoals(data ?? []));
+
+    void loadTrainingProfile(user.id).then(setTrainingRow);
   }, [user]);
+
+  async function handleResetPreferences() {
+    if (!user) return;
+    const result = await deleteTrainingProfile(user.id);
+    setConfirmReset(false);
+    if (!result.ok) {
+      toast.show(result.error ?? 'Não foi possível remover as preferências.', 'error');
+      return;
+    }
+    setTrainingRow(null);
+    toast.show('Preferências de treino removidas', 'success');
+  }
 
   /** Determina se o usuário é menor de idade a partir da data de nascimento. */
   function isMinor(birth: string): boolean {
@@ -130,6 +157,10 @@ export default function ProfilePage() {
         'food_diary',
         'hydration_logs',
         'personal_records',
+        'training_profiles',
+        'user_preferences',
+        'exercise_history',
+        'workout_sets',
       ];
 
       const dump: Record<string, unknown> = {};
@@ -353,6 +384,74 @@ export default function ProfilePage() {
           </div>
         </div>
       </Card>
+
+      {/* Personalização do treino */}
+      <Card style={{ marginBottom: 'var(--sp-4)' }}>
+        <div className="card-header">
+          <h2 className="card-title">
+            <IconSparkles size={18} style={{ verticalAlign: '-3px', marginRight: 6 }} />
+            Personalização do treino
+          </h2>
+          <Link to="/app/onboarding?restart=1" className="btn btn-secondary btn-sm">
+            <IconEdit size={15} />
+            {trainingRow ? 'Editar respostas' : 'Responder questionário'}
+          </Link>
+        </div>
+
+        {trainingRow?.completed_at ? (
+          <>
+            <div className="row row-wrap" style={{ gap: 6, marginBottom: 'var(--sp-3)' }}>
+              <span className="badge badge-accent">
+                {GOAL_LABELS[trainingRow.goal_priority ?? 'active_routine']}
+              </span>
+              <span className="badge">{LEVEL_LABELS[levelFromExperience(trainingRow.experience)]}</span>
+              {trainingRow.environment && (
+                <span className="badge">{ENVIRONMENT_LABELS[trainingRow.environment]}</span>
+              )}
+              <span className="badge">{trainingRow.sessions_per_week ?? 3}× / semana</span>
+              <span className="badge">{trainingRow.minutes_per_session ?? 45} min</span>
+            </div>
+
+            {trainingRow.priority_muscles.length > 0 && (
+              <p className="text-sm text-muted">
+                Grupos prioritários: {trainingRow.priority_muscles.map(muscleLabel).join(', ')}.
+              </p>
+            )}
+
+            {trainingRow.limitations.length > 0 && (
+              <p className="text-sm text-muted">
+                Adaptações: {trainingRow.limitations.map((value) => LIMITATION_LABELS[value] ?? value).join(', ')}.
+              </p>
+            )}
+
+            <div className="row row-wrap" style={{ marginTop: 'var(--sp-3)' }}>
+              <Link to="/app/workouts" className="btn btn-secondary btn-sm">
+                <IconRefresh size={15} />
+                Ver meu plano
+              </Link>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmReset(true)}>
+                <IconTrash size={15} />
+                Excluir minhas preferências
+              </Button>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted">
+            Você ainda não respondeu ao questionário de personalização. Com ele, o ATHLETIX monta
+            um plano compatível com seus objetivos, equipamentos e tempo disponível.
+          </p>
+        )}
+      </Card>
+
+      <ConfirmDialog
+        open={confirmReset}
+        title="Excluir preferências de treino"
+        message="O questionário e as adaptações serão removidos. Seus planos e o histórico de sessões continuam salvos."
+        confirmLabel="Excluir preferências"
+        danger
+        onConfirm={() => void handleResetPreferences()}
+        onCancel={() => setConfirmReset(false)}
+      />
 
       {/* Privacidade */}
       <Card>

@@ -73,3 +73,9 @@ blob-report/
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Código-fonte de dados da aplicação (não são datasets locais):
+# taxonomia de exercícios, modelos de treino e catálogo de emergência.
+# Sem esta exceção, o build quebra em um clone limpo.
+!/src/data/
+!/src/data/**

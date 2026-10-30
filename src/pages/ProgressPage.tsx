@@ -17,6 +17,9 @@ export default function ProgressPage() {
   const [measurements, setMeasurements] = useState<BodyMeasurement[]>([]);
   const [records, setRecords] = useState<(PersonalRecord & { exercise?: Exercise })[]>([]);
   const [loading, setLoading] = useState(true);
+  // Timestamp da última carga (usado nas janelas de comparação, sem chamar
+  // funções impuras durante a renderização).
+  const [loadedAt, setLoadedAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -54,7 +57,10 @@ export default function ProgressPage() {
           (prRes.data ?? []).map((r) => ({ ...r, exercise: exMap.get(r.exercise_id) })),
         );
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoadedAt(Date.now());
+        setLoading(false);
+      });
   }, [user]);
 
   if (loading) {
@@ -95,6 +101,20 @@ export default function ProgressPage() {
               Sessões por semana
             </h2>
             <WeeklyChart sessions={sessions} />
+          </Card>
+        )}
+
+        {/* Comparação de períodos */}
+        {sessions.length > 0 && (
+          <Card>
+            <h2 className="card-title" style={{ marginBottom: 'var(--sp-2)' }}>
+              Comparação de períodos
+            </h2>
+            <p className="text-sm text-muted" style={{ marginBottom: 'var(--sp-3)' }}>
+              Últimos 30 dias comparados aos 30 dias anteriores. Uma variação isolada não
+              representa tendência definitiva — olhe o conjunto.
+            </p>
+            <PeriodComparison sessions={sessions} now={loadedAt} />
           </Card>
         )}
 
@@ -140,6 +160,82 @@ export default function ProgressPage() {
         </Card>
       </div>
     </>
+  );
+}
+
+/**
+ * Comparação simples entre dois períodos de 30 dias.
+ *
+ * Usa apenas sessões com `completed_at` dentro da janela. Se não houver dados no
+ * período anterior, mostramos "sem base de comparação" em vez de um percentual
+ * inventado.
+ */
+function PeriodComparison({ sessions, now }: { sessions: WorkoutSession[]; now: number | null }) {
+  const day = 86_400_000;
+
+  if (!now) {
+    return <p className="text-sm text-muted">Calculando comparação…</p>;
+  }
+
+  const inWindow = (offsetStart: number, offsetEnd: number) =>
+    sessions.filter((session) => {
+      if (!session.completed_at) return false;
+      const time = new Date(session.completed_at).getTime();
+      return time >= now - offsetStart * day && time < now - offsetEnd * day;
+    });
+
+  const current = inWindow(30, 0);
+  const previous = inWindow(60, 30);
+
+  const totalVolume = (list: WorkoutSession[]) =>
+    list.reduce((sum, session) => sum + Number(session.total_volume_kg ?? 0), 0);
+
+  const totalMinutes = (list: WorkoutSession[]) =>
+    list.reduce((sum, session) => sum + Number(session.duration_seconds ?? 0), 0) / 60;
+
+  const rows = [
+    { label: 'Sessões', current: current.length, previous: previous.length, unit: '' },
+    { label: 'Volume (kg)', current: totalVolume(current), previous: totalVolume(previous), unit: 'kg' },
+    { label: 'Tempo total (min)', current: totalMinutes(current), previous: totalMinutes(previous), unit: 'min' },
+  ];
+
+  return (
+    <div className="table-wrap">
+      <table className="data">
+        <thead>
+          <tr>
+            <th>Métrica</th>
+            <th>Últimos 30 dias</th>
+            <th>30 dias anteriores</th>
+            <th>Variação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const hasPrevious = row.previous > 0;
+            const diff = hasPrevious ? Math.round(((row.current - row.previous) / row.previous) * 100) : null;
+
+            return (
+              <tr key={row.label}>
+                <td>{row.label}</td>
+                <td>{formatNumber(row.current)}</td>
+                <td>{formatNumber(row.previous)}</td>
+                <td>
+                  {diff === null ? (
+                    <span className="text-xs text-dim">sem base de comparação</span>
+                  ) : (
+                    <span className={`badge ${diff >= 0 ? 'badge-lime' : 'badge-warning'}`}>
+                      {diff >= 0 ? '+' : ''}
+                      {diff}%
+                    </span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

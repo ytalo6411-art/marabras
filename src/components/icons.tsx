@@ -312,3 +312,17 @@ export const IconGoogle = (p: IconProps) => (
     />
   </svg>
 );
+
+export const IconRefresh = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M21 12a9 9 0 1 1-3.2-6.9" />
+    <path d="M21 4v5h-5" />
+  </Base>
+);
+
+export const IconSend = (p: IconProps) => (
+  <Base {...p}>
+    <path d="m21 3-9 18-2.5-7.5L2 11l19-8Z" />
+    <path d="m21 3-10.5 10.5" />
+  </Base>
+);

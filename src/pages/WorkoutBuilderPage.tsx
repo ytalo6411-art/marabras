@@ -148,11 +148,15 @@ export default function WorkoutBuilderPage() {
   }
 
   async function updateItem(itemId: string, patch: Partial<WorkoutExercise>) {
+    const previous = items;
     setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, ...patch } : i)));
-    try {
-      await supabase.from('workout_exercises').update(patch).eq('id', itemId);
-    } catch {
-      // revert não implementado — o update otimista foi aplicado
+
+    const { error } = await supabase.from('workout_exercises').update(patch).eq('id', itemId);
+
+    if (error) {
+      // Reverte o update otimista para a UI não mostrar um valor que não foi salvo.
+      setItems(previous);
+      toast.show('Não foi possível salvar essa alteração.', 'error');
     }
   }
 
