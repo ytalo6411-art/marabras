@@ -148,7 +148,7 @@ conta Google Cloud pode criar.
 
 | Campo | Valor |
 |---|---|
-| **Authorized JavaScript origins** | `http://localhost:5173` e `https://athletix.vercel.app` |
+| **Authorized JavaScript origins** | `http://localhost:5173` e `https://athletix-lilac.vercel.app` |
 | **Authorized redirect URIs** | `https://tazszwllacwqccfjnglk.supabase.co/auth/v1/callback` |
 
 > O redirect do Google **precisa** ser exatamente a URL de callback do Supabase.
@@ -161,9 +161,9 @@ conta Google Cloud pode criar.
   - *Client ID*: o ID do passo 2
   - *Client Secret*: o secret do passo 2
 - **Authentication → URL Configuration**:
-  - *Site URL*: `https://athletix.vercel.app` (ou `http://localhost:5173` em dev)
+  - *Site URL*: `https://athletix-lilac.vercel.app` (ou `http://localhost:5173` em dev)
   - *Redirect URLs*: inclua `http://localhost:5173/**`, `http://localhost:4173/**`,
-    `https://athletix.vercel.app/**` e o callback do Supabase.
+    `https://athletix-lilac.vercel.app/**` e o callback do Supabase.
 
 ### 4. Confirmar que está funcionando
 
@@ -288,11 +288,11 @@ Na Vercel: **Add New → Project** → importe `ytalo6411-art/marabras`. O frame
 |---|---|---|
 | `VITE_SUPABASE_URL` | `https://tazszwllacwqccfjnglk.supabase.co` | ✅ já configurada |
 | `VITE_SUPABASE_ANON_KEY` | `sb_publishable_H1FWYc65L5D8qF3Dh902ew_pIgt2dCX` | ✅ já configurada |
-| `VITE_APP_URL` | `https://athletix.vercel.app` | ✅ já configurada |
+| `VITE_APP_URL` | `https://athletix-lilac.vercel.app` | ✅ já configurada |
 | `VITE_USDA_API_KEY` | *(opcional)* chave da USDA | ⚠️ não configurada |
 
 > As três variáveis obrigatórias já foram cadastradas nos projetos Vercel
-> `marabas` e `projeto-maramba`, em **Production**, **Preview** e
+> `athletix`, `marabas` e `projeto-maramba`, em **Production**, **Preview** e
 > **Development**. O log de build confirma:
 > `✓ VITE_SUPABASE_URL configurado / ✓ VITE_SUPABASE_ANON_KEY configurado`.
 >
@@ -303,10 +303,27 @@ Na Vercel: **Add New → Project** → importe `ytalo6411-art/marabras`. O frame
 > No Vercel, Production / Preview / Development têm listas de variáveis
 > separadas — preencha **Production** e **Preview**.
 
+### 2.1 Endereços de produção
+
+| Domínio | Projeto | Papel |
+|---|---|---|
+| **`https://athletix-lilac.vercel.app`** | `athletix` | **principal — configurado no Supabase** |
+| `https://marabas.vercel.app` | `marabas` | espelho |
+| `https://projeto-maramba.vercel.app` | `projeto-maramba` | espelho |
+
+> O endereço público é o **domínio do projeto** (`athletix-lilac.vercel.app`).
+> Os aliases automáticos `athletix-<hash>-ytalo6411-1557.vercel.app` e
+> `athletix-git-main-…` respondem com o **muro de SSO da Vercel**, porque a
+> proteção `all_except_custom_domains` só libera os domínios de projeto.
+> Não use esses aliases como URL pública.
+>
+> `athletix.vercel.app` **não resolve** — o nome está reservado para outro
+> projeto da conta.
+
 ### 3. Atualizar o Supabase
 
 Depois do primeiro deploy, volte ao Supabase → **Authentication → URL Configuration**
-e troque o *Site URL* por `https://athletix.vercel.app`, adicionando o domínio às
+e troque o *Site URL* por `https://athletix-lilac.vercel.app`, adicionando o domínio às
 *Redirect URLs*. Depois ative o Google (seção acima) com a origem de produção.
 
 ### 4. Deploy

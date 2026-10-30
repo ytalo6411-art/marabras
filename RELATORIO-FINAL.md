@@ -258,7 +258,7 @@ Google (email/senha funciona) e sem USDA (Open Food Facts cobre a busca).
 |---|---|---|
 | `VITE_SUPABASE_URL` | `https://tazszwllacwqccfjnglk.supabase.co` | ✅ Vercel `marabas` e `projeto-maramba` (Production/Preview/Development) |
 | `VITE_SUPABASE_ANON_KEY` | `sb_publishable_H1FWYc65L5D8qF3Dh902ew_pIgt2dCX` | ✅ idem |
-| `VITE_APP_URL` | `https://athletix.vercel.app` | ✅ idem |
+| `VITE_APP_URL` | `https://athletix-lilac.vercel.app` | ✅ idem |
 
 O log de build da Vercel confirma:
 `✓ VITE_SUPABASE_URL configurado` · `✓ VITE_SUPABASE_ANON_KEY configurado` · `✓ VITE_APP_URL configurado`.
@@ -291,7 +291,7 @@ oficial do Supabase. Falta apenas a credencial.
 1. **Google Cloud** → criar/selecionar um projeto → **APIs & Services → Credentials**
    → **Create Credentials → OAuth client ID → Web application**.
 2. Em **Authorized JavaScript origins**, adicionar:
-   - `https://athletix.vercel.app`
+   - `https://athletix-lilac.vercel.app`
    - `http://localhost:5173`
 3. Em **Authorized redirect URIs**, adicionar:
    - `https://tazszwllacwqccfjnglk.supabase.co/auth/v1/callback`
@@ -299,8 +299,8 @@ oficial do Supabase. Falta apenas a credencial.
    - Client ID e Client Secret do passo 1
    - Ligar **"Use Google OAuth"** (`external_google_enabled: true`)
 5. **Supabase** → Authentication → **URL Configuration**:
-   - Site URL: `https://athletix.vercel.app`
-   - Redirect URLs: incluir `https://athletix.vercel.app/**`,
+   - Site URL: `https://athletix-lilac.vercel.app`
+   - Redirect URLs: incluir `https://athletix-lilac.vercel.app/**`,
      `https://athletix-git-main-ytalo6411-1557.vercel.app/**` e
      `http://localhost:5173/**`
 
@@ -412,13 +412,17 @@ node scripts/seed-foods.mjs --api-key="$VITE_USDA_API_KEY"
 
 ## 10. Deploy na Vercel
 
-**Já feito.** Os dois projetos estão conectados ao repositório e recebem
-deploy automático a cada push na branch.
+**Já feito.** Os três projetos estão conectados ao repositório e recebem
+deploy automático a cada push na `main`.
 
-| Projeto | ID | Alias de produção |
-|---|---|---|
-| `marabas` | `prj_DrOTVB1HKRIhDOpw5IH4zZCTlf5n` | `marabas.vercel.app` |
-| `projeto-maramba` | `prj_rBhOaMCICxhuL6YyXmb2UZpXxxtd` | `projeto-maramba.vercel.app` |
+| Projeto | ID | Domínio público | Papel |
+|---|---|---|---|
+| **`athletix`** | `prj_wt5QeqWxEgE1b6goDmqqJHtMpkkH` | **`https://athletix-lilac.vercel.app`** | **principal — é o configurado no Supabase** |
+| `marabas` | `prj_DrOTVB1HKRIhDOpw5IH4zZCTlf5n` | `marabas.vercel.app` | espelho |
+| `projeto-maramba` | `prj_rBhOaMCICxhuL6YyXmb2UZpXxxtd` | `projeto-maramba.vercel.app` | espelho |
+
+Os três publicam exatamente o mesmo build e têm as mesmas variáveis de
+ambiente — qualquer um dos domínios pode ser usado como referência.
 
 - `vercel.json` define `buildCommand: npm run build`, `outputDirectory: dist`,
   framework `vite`, rewrite SPA (excluindo api/assets/icons/sw/workbox/manifest/
@@ -427,10 +431,10 @@ deploy automático a cada push na branch.
   HSTS), cache imutável para assets e `Service-Worker-Allowed: /`.
 - **Env vars**: as três obrigatórias já configuradas em Production, Preview e
   Development nos dois projetos.
-- **Último deploy** `dpl_AhygcpgoBypKmfAsytg1PybQJkVU` → `Build Completed [48s]`,
-  `Deployment completed`, `dist/sw.js` e `dist/workbox-15d4b42e.js` gerados,
-  **sem** aviso de chunk circular.
-- **CI do PR**: `Verificar (typecheck, lint, testes, build)` ✅ 23 s ·
+- **Último deploy de produção** `dpl_9hj4v4G3EKeSFRSN6WeGrjRgUjEh` →
+  `Build Completed`, `Deployment completed`, `dist/sw.js` e
+  `dist/workbox-15d4b42e.js` gerados, **sem** aviso de chunk circular.
+- **CI**: `Verificar (typecheck, lint, testes, build)` ✅ ·
   `Vercel – marabas` ✅ · `Vercel – projeto-maramba` ✅ ·
   `Vercel Preview Comments` ✅.
 
@@ -442,10 +446,19 @@ vercel link
 vercel --prod
 ```
 
-> O `athletix.vercel.app` é o alias de produção **configurado no Supabase**
-> (Site URL + Redirect URLs). Os aliases `marabas.vercel.app` e
-> `projeto-maramba.vercel.app` existem; o primeiro já servia a aplicação
-> anterior, que estava fora do ar.
+> **`https://athletix-lilac.vercel.app` é o endereço de produção** — é o domínio
+> do projeto Vercel `athletix` (`prj_wt5QeqWxEgE1b6goDmqqJHtMpkkH`) e o que
+> está configurado no Supabase (Site URL + Redirect URLs).
+>
+> Os aliases automáticos `athletix-<hash>-…` e `athletix-git-main-…` ficam
+> atrás do SSO da Vercel (proteção `all_except_custom_domains`), por isso o
+> domínio do projeto é o endereço público.
+>
+> O `athletix.vercel.app` **não resolve** — esse nome está reservado para
+> outro projeto da conta. Não use-o.
+>
+> Também publicam a mesma aplicação, em domínios próprios:
+> `marabas.vercel.app` e `projeto-maramba.vercel.app`.
 
 ---
 
