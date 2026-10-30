@@ -70,3 +70,6 @@ test-results/
 playwright-report/
 blob-report/
 .playwright/
+
+# TypeScript incremental build info
+*.tsbuildinfo

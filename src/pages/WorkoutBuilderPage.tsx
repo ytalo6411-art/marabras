@@ -64,9 +64,15 @@ export default function WorkoutBuilderPage() {
       .finally(() => setLoading(false));
   }, [id, user]);
 
+  // Ids dos exercícios usados — valor estável para o efeito abaixo.
+  const exerciseIdsKey = useMemo(
+    () => items.map((i) => i.exercise_id).filter(Boolean).join(','),
+    [items],
+  );
+
   // Carrega os detalhes dos exercícios usados.
   useEffect(() => {
-    const exerciseIds = items.map((i) => i.exercise_id).filter(Boolean);
+    const exerciseIds = exerciseIdsKey ? exerciseIdsKey.split(',') : [];
     if (exerciseIds.length === 0) return;
 
     supabase
@@ -77,7 +83,7 @@ export default function WorkoutBuilderPage() {
         const map = new Map((data ?? []).map((e) => [e.id, e]));
         setItems((prev) => prev.map((i) => ({ ...i, exercise: map.get(i.exercise_id) ?? null })));
       });
-  }, [items.map((i) => i.exercise_id).join(',')]);
+  }, [exerciseIdsKey]);
 
   // Busca candidatos no seletor.
   useEffect(() => {

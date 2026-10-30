@@ -72,119 +72,7 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 -- ══════════════════════════════════════════════════════════════════════════════
--- 2. FUNÇÕES AUXILIARES
--- ══════════════════════════════════════════════════════════════════════════════
-
--- Retorna o role do usuário autenticado (looked up de admin_users).
--- SECURITY DEFINER evita recursão de RLS ao consultar admin_users.
-create or replace function public.current_user_role()
-returns public.user_role
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select coalesce(
-    (select role from public.admin_users where user_id = auth.uid()),
-    'user'::public.user_role
-  );
-$$;
-
-create or replace function public.is_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from public.admin_users
-    where user_id = auth.uid() and role = 'admin' and active = true
-  );
-$$;
-
--- Trigger: cria profile + preferences automaticamente no primeiro login.
--- É o que faz "entrar com Google e já ter perfil" funcionar sem passo extra.
-create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  insert into public.profiles (id, email, full_name, avatar_url)
-  values (
-    new.id,
-    coalesce(new.email, ''),
-    coalesce(new.raw_user_meta_data ->> 'full_name',
-             new.raw_user_meta_data ->> 'name',
-             split_part(coalesce(new.email, ''), '@', 1)),
-    new.raw_user_meta_data ->> 'avatar_url'
-  )
-  on conflict (id) do nothing;
-
-  insert into public.user_preferences (user_id)
-  values (new.id)
-  on conflict (user_id) do nothing;
-
-  -- Preferências de notificação herdadas de raw_user_meta_data (Google).
-  update public.user_preferences
-  set notify_workout_reminders = coalesce(
-        (new.raw_user_meta_data ->> 'notify_workout_reminders')::boolean,
-        true
-      )
-  where user_id = new.id;
-
-  return new;
-end;
-$$;
-
--- Trigger: mantém updated_at sempre atualizado.
-create or replace function public.set_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
-
--- Trigger: registra alterações em tabelas auditadas.
-create or replace function public.audit_row_change()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_table text := tg_table_name;
-  v_action text;
-  v_row_id  uuid;
-begin
-  v_action := lower(tg_op);
-
-  if tg_op = 'DELETE' then
-    v_row_id := coalesce((to_jsonb(old) ->> 'id')::uuid, (to_jsonb(old) ->> 'user_id')::uuid);
-  else
-    v_row_id := coalesce((to_jsonb(new) ->> 'id')::uuid, (to_jsonb(new) ->> 'user_id')::uuid);
-  end if;
-
-  insert into public.audit_logs (user_id, table_name, action, row_id, metadata)
-  values (
-    auth.uid(),
-    v_table,
-    v_action,
-    v_row_id,
-    jsonb_build_object('op', tg_op)
-  );
-
-  return coalesce(new, old);
-end;
-$$;
-
--- ══════════════════════════════════════════════════════════════════════════════
--- 3. TABELAS
+-- 2. TABELAS
 -- ══════════════════════════════════════════════════════════════════════════════
 
 -- ─── 3.1 profiles ────────────────────────────────────────────────────────────
@@ -641,8 +529,116 @@ create table if not exists public.audit_logs (
 
 create index if not exists idx_audit_logs_user on public.audit_logs(user_id, created_at desc);
 create index if not exists idx_audit_logs_table on public.audit_logs(table_name, created_at desc);
-
+-- 3. FUNÇÕES AUXILIARES
 -- ══════════════════════════════════════════════════════════════════════════════
+
+-- Retorna o role do usuário autenticado (looked up de admin_users).
+-- SECURITY DEFINER evita recursão de RLS ao consultar admin_users.
+create or replace function public.current_user_role()
+returns public.user_role
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select role from public.admin_users where user_id = auth.uid()),
+    'user'::public.user_role
+  );
+$$;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.admin_users
+    where user_id = auth.uid() and role = 'admin' and active = true
+  );
+$$;
+
+-- Trigger: cria profile + preferences automaticamente no primeiro login.
+-- É o que faz "entrar com Google e já ter perfil" funcionar sem passo extra.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, full_name, avatar_url)
+  values (
+    new.id,
+    coalesce(new.email, ''),
+    coalesce(new.raw_user_meta_data ->> 'full_name',
+             new.raw_user_meta_data ->> 'name',
+             split_part(coalesce(new.email, ''), '@', 1)),
+    new.raw_user_meta_data ->> 'avatar_url'
+  )
+  on conflict (id) do nothing;
+
+  insert into public.user_preferences (user_id)
+  values (new.id)
+  on conflict (user_id) do nothing;
+
+  -- Preferências de notificação herdadas de raw_user_meta_data (Google).
+  update public.user_preferences
+  set notify_workout_reminders = coalesce(
+        (new.raw_user_meta_data ->> 'notify_workout_reminders')::boolean,
+        true
+      )
+  where user_id = new.id;
+
+  return new;
+end;
+$$;
+
+-- Trigger: mantém updated_at sempre atualizado.
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+-- Trigger: registra alterações em tabelas auditadas.
+create or replace function public.audit_row_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_table text := tg_table_name;
+  v_action text;
+  v_row_id  uuid;
+begin
+  v_action := lower(tg_op);
+
+  if tg_op = 'DELETE' then
+    v_row_id := coalesce((to_jsonb(old) ->> 'id')::uuid, (to_jsonb(old) ->> 'user_id')::uuid);
+  else
+    v_row_id := coalesce((to_jsonb(new) ->> 'id')::uuid, (to_jsonb(new) ->> 'user_id')::uuid);
+  end if;
+
+  insert into public.audit_logs (user_id, table_name, action, row_id, metadata)
+  values (
+    auth.uid(),
+    v_table,
+    v_action,
+    v_row_id,
+    jsonb_build_object('op', tg_op)
+  );
+
+  return coalesce(new, old);
+end;
+$$;
 -- 4. TRIGGERS
 -- ══════════════════════════════════════════════════════════════════════════════
 
@@ -686,8 +682,6 @@ begin
     );
   end loop;
 end $$;
-
--- ══════════════════════════════════════════════════════════════════════════════
 -- 5. ROW LEVEL SECURITY
 --
 -- Regras gerais:
@@ -898,8 +892,6 @@ create policy admin_users_admin_write on public.admin_users
 drop policy if exists audit_logs_admin_read on public.audit_logs;
 create policy audit_logs_admin_read on public.audit_logs
   for select using (public.is_admin());
-
--- ══════════════════════════════════════════════════════════════════════════════
 -- 6. PROCEDURE SEGURA PARA CONCEDER ADMIN
 --
 -- NÃO use isso pelo app. Execute manualmente no SQL Editor do Supabase
@@ -930,8 +922,6 @@ $$;
 
 revoke execute on function public.grant_admin(text) from public, anon, authenticated;
 grant execute on function public.grant_admin(text) to service_role;
-
--- ══════════════════════════════════════════════════════════════════════════════
 -- 7. VIEWS DE APOIO
 -- ══════════════════════════════════════════════════════════════════════════════
 

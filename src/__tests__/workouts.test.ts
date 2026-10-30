@@ -14,7 +14,8 @@ import type { WorkoutPlan, WorkoutExercise } from '@/types/database';
 function buildPlanPayload(input: {
   name: string;
   description: string | null;
-  workout_type: string;
+  focus: WorkoutPlan['focus'];
+  modality: WorkoutPlan['modality'];
   days_of_week: number[];
   estimated_minutes: number | null;
   is_active: boolean;
@@ -22,7 +23,8 @@ function buildPlanPayload(input: {
   return {
     name: input.name.trim(),
     description: input.description?.trim() || null,
-    workout_type: input.workout_type,
+    focus: input.focus,
+    modality: input.modality,
     days_of_week: input.days_of_week,
     estimated_minutes: input.estimated_minutes,
     is_active: input.is_active,
@@ -48,7 +50,8 @@ describe('payload de plano de treino', () => {
     const payload = buildPlanPayload({
       name: '  Peito e tríceps  ',
       description: '   ',
-      workout_type: 'strength',
+      focus: 'strength',
+      modality: null,
       days_of_week: [1, 3],
       estimated_minutes: 50,
       is_active: true,
@@ -62,7 +65,8 @@ describe('payload de plano de treino', () => {
     const payload = buildPlanPayload({
       name: 'Full Body',
       description: null,
-      workout_type: 'strength',
+      focus: 'strength',
+      modality: 'functional',
       days_of_week: [1, 2, 3, 4, 5],
       estimated_minutes: null,
       is_active: true,
@@ -75,7 +79,8 @@ describe('payload de plano de treino', () => {
     const payload = buildPlanPayload({
       name: 'Corrida',
       description: null,
-      workout_type: 'cardio',
+      focus: 'cardio',
+      modality: 'running',
       days_of_week: [2],
       estimated_minutes: 40,
       is_active: true,

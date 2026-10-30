@@ -41,7 +41,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons/*.png'],
+      includeAssets: ['favicon.svg', 'icons/*.png', 'offline.html'],
       manifest: {
         name: 'ATHLETIX',
         short_name: 'ATHLETIX',
@@ -66,8 +66,12 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Navegação offline cai na página estática /offline.html; sem
+        // rede e sem cache, o usuário ainda recebe uma mensagem clara
+        // em vez de um erro de navegador.
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
+        additionalManifestEntries: [{ url: '/offline.html', revision: '1' }],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

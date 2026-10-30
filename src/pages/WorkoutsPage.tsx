@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
@@ -15,7 +15,7 @@ export default function WorkoutsPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'plans' | 'history'>('plans');
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
@@ -37,11 +37,11 @@ export default function WorkoutsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user]);
 
   useEffect(() => {
     void load();
-  }, [user]);
+  }, [load]);
 
   async function deletePlan(id: string) {
     if (!confirm('Excluir este plano de treino? Essa ação não pode ser desfeita.')) return;

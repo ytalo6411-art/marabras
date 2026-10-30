@@ -22,7 +22,7 @@
     "exactOptionalPropertyTypes": false,
     "forceConsistentCasingInFileNames": true,
 
-    "types": ["vite/client", "vite-plugin-pwa/client"],
+    "types": ["vite/client", "vite-plugin-pwa/client", "vitest/globals", "node"],
 
     "baseUrl": ".",
     "paths": {
