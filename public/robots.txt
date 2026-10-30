@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Áreas privadas ou de autenticação — não devem ser indexadas.
+Disallow: /app/admin
+Disallow: /app/settings
+Disallow: /app/profile
+Disallow: /auth/
+
+Sitemap: /sitemap.xml

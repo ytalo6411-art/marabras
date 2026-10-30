@@ -1,0 +1,13 @@
+name: probe-r2-media
+on: [workflow_dispatch]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -sS -o /dev/null -w "video_http=%{http_code} size=%{size_download}\n" --max-time 40 \
+            "https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/barbell-bench-press.mp4" || echo "curl_failed_video"
+          curl -sS -o /dev/null -w "poster_http=%{http_code} size=%{size_download}\n" --max-time 40 \
+            "https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-posters/male/barbell-bench-press.jpg" || echo "curl_failed_poster"
+          curl -sS -o /dev/null -w "rawjson_http=%{http_code} size=%{size_download}\n" --max-time 40 \
+            "https://raw.githubusercontent.com/harshvishu/free-exercise-db-with-videos/main/data/exercises.json" || echo "curl_failed_json"
