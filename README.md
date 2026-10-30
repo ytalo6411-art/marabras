@@ -277,13 +277,22 @@ Na Vercel: **Add New → Project** → importe `ytalo6411-art/marabras`. O frame
 
 ### 2. Variáveis de ambiente (obrigatórias em produção)
 
-| Nome | Valor |
-|---|---|
-| `VITE_SUPABASE_URL` | `https://tazszwllacwqccfjnglk.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | a chave publishable do projeto |
-| `VITE_APP_URL` | `https://athletix.vercel.app` |
-| `VITE_USDA_API_KEY` | *(opcional)* chave da USDA |
+| Nome | Valor | Status |
+|---|---|---|
+| `VITE_SUPABASE_URL` | `https://tazszwllacwqccfjnglk.supabase.co` | ✅ já configurada |
+| `VITE_SUPABASE_ANON_KEY` | `sb_publishable_H1FWYc65L5D8qF3Dh902ew_pIgt2dCX` | ✅ já configurada |
+| `VITE_APP_URL` | `https://athletix.vercel.app` | ✅ já configurada |
+| `VITE_USDA_API_KEY` | *(opcional)* chave da USDA | ⚠️ não configurada |
 
+> As três variáveis obrigatórias já foram cadastradas nos projetos Vercel
+> `marabas` e `projeto-maramba`, em **Production**, **Preview** e
+> **Development**. O log de build confirma:
+> `✓ VITE_SUPABASE_URL configurado / ✓ VITE_SUPABASE_ANON_KEY configurado`.
+>
+> Só a chave **publishable** (`sb_publishable_…`) é usada no frontend — ela é
+> pública por design e protegida pelo RLS. A `service_role` **nunca** deve ser
+> prefixada com `VITE_`; nenhum segredo é gravado no bundle do navegador.
+>
 > No Vercel, Production / Preview / Development têm listas de variáveis
 > separadas — preencha **Production** e **Preview**.
 
@@ -396,6 +405,34 @@ Os itens abaixo **não** estão prontos e não devem ser tratados como funcionai
 
 ---
 
+## Estado da verificação
+
+O que foi **executado e passou** (nada aqui é presumido):
+
+| Verificação | Resultado |
+|---|---|
+| `npm ci` | 562 pacotes, sucesso |
+| `npm run typecheck` | 0 erros |
+| `npm run lint` | 0 erros, 0 avisos |
+| `npm test` | **60/60** (auth 14, format 18, permissions 10, workouts 7, exercises 11) |
+| `npm run build` | sucesso, PWA gerado, **40 entradas em precache (548,94 KiB)** |
+| Build na Vercel | `Build Completed [48s]`, `Deployment completed` |
+| Env vars no build | `✓ VITE_SUPABASE_URL` / `✓ VITE_SUPABASE_ANON_KEY` / `✓ VITE_APP_URL` |
+| Rotas estáticas (`vite preview`) | `index.html`, `og-image.svg`, `manifest.webmanifest`, `offline.html`, `sw.js`, `icons/icon-512.png` → HTTP 200 |
+| Rewrite de SPA | `/app/dashboard` → HTTP 200 |
+| Segredos no bundle | nenhum `sb_secret_*`, nenhum JWT `service_role`; apenas a chave publishable |
+| Banco (Supabase, ao vivo) | 11 enums · 23 tabelas · 35 policies RLS · 59 índices · 19 triggers · 1 view |
+| Isolamento RLS (ao vivo) | cada tabela privada filtra por `auth.uid()`; catálogo público por `is_active` |
+| Auto-promoção a admin | `INSERT` direto → `42501` (policy RLS bloqueia); `admin_users` permaneceu vazio |
+| Catálogo de exercícios (ao vivo) | **317/317** com vídeo, thumbnail e categoria correta |
+| CI do PR | `Verificar (typecheck, lint, testes, build)` ✅ · `Vercel – marabas` ✅ · `Vercel – projeto-maramba` ✅ · `Vercel Preview Comments` ✅ |
+
+> Os 10 testes de `permissions.test.ts` exercitam o RLS real do Supabase; quando
+> a rede para o projeto não está disponível, eles são **pulados com aviso** em
+> vez de dar falso positivo.
+
+---
+
 ## Estrutura
 
 ```
@@ -407,11 +444,12 @@ src/
   stores/        auth.ts (Zustand)
   styles/        global.css (design system)
   types/         database.ts
-  __tests__/     auth, format, permissions, workouts
+  __tests__/     auth, format, permissions, workouts, exercises
 supabase/
   migrations/    schema completo (tabelas → RLS)
   seed/          catálogo de exercícios + alimentos
 scripts/         verify-env.mjs, seed-exercises.mjs, seed-foods.mjs
+public/          favicon.svg, og-image.svg, offline.html, icons/
 ```
 
 ---
