@@ -24,6 +24,13 @@ async function fixture(page:Page){
   if(table==='food_diary')body=null;
   if(table==='meal_entries')body=[];
   if(table==='food_database')body=[];
+  if(table==='athlete_profiles')body=req.method()==='GET'?[]:{user_id:userId,...(req.postDataJSON()??{})};
+  if(table==='athlete_directory')body=[{user_id:'other-user',handle:'marina',display_name:'Marina Souza',bio:'Corredora',goals:'10 km',avatar_url:null,show_workouts:true,show_progress:false}];
+  if(table==='shared_workouts')body=[{id:'shared-1',user_id:'other-user',title:'Treino de força — iniciante',description:'Rotina de 3 dias',snapshot:{days:[{label:'A',name:'Corpo inteiro',exercises:[{name:'Agachamento livre',slug:'squat',sets:3,reps:'8–12',restSeconds:90,primaryMuscle:'quadriceps'}]}]},is_public:true,like_count:2,comment_count:1,created_at:new Date().toISOString()}];
+  if(table==='workout_likes')body=[];
+  if(table==='workout_comments')body=[{id:'c1',user_id:'other-user',body:'Boa rotina!',created_at:new Date().toISOString()}];
+  if(table==='athlete_blocks')body=[];
+  if(table==='content_reports')body=req.method()==='POST'?{id:'r1'}:[];
   if(req.headers().prefer?.includes('return=representation')&&req.method()==='POST'&&!Array.isArray(body))body=[body];
   return route.fulfill({status:req.method()==='POST'?201:200,json:body,headers:{'content-range':'0-0/1'}});
  });
@@ -110,4 +117,51 @@ test('catálogo e telas principais não têm overflow de 320 a 1440', async ({ p
       expect(overflow, `overflow em ${route} @ ${width}px`).toBeLessThanOrEqual(1);
     }
   }
+});
+
+test('comunidade: feed, detalhe do treino, comentário e denúncia', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await fixture(page);
+
+  await page.goto('/app/community');
+  await expect(page.getByRole('heading', { name: 'Comunidade' })).toBeVisible();
+  await expect(page.getByText('Treino de força — iniciante')).toBeVisible();
+
+  // Abre a publicação e vê os exercícios reais do snapshot.
+  await page.getByRole('link', { name: /Ver treino/ }).first().click();
+  await expect(page.getByRole('link', { name: /Agachamento livre/ })).toBeVisible();
+  await expect(page.getByText('3 × 8–12 · descanso 90s')).toBeVisible();
+  await expect(page.getByText('Boa rotina!')).toBeVisible();
+
+  // Denunciar abre modal com motivo e envio real.
+  await page.getByRole('button', { name: 'Denunciar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Denunciar publicação' })).toBeVisible();
+  await page.getByLabel('Motivo').selectOption('spam');
+  await page.getByRole('button', { name: 'Enviar denúncia' }).click();
+  await expect(page.getByText('Denúncia enviada. Nossa equipe vai analisar.')).toBeVisible();
+
+  expect(errors).toEqual([]);
+});
+
+test('comunidade: busca de atletas e navegação inferior com 5 destinos', async ({ page }) => {
+  await fixture(page);
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/app/community');
+
+  await page.getByRole('tab', { name: 'Atletas' }).click();
+  await page.getByLabel('Buscar atletas').fill('marina');
+  await expect(page.getByText('Marina Souza')).toBeVisible();
+
+  // Barra inferior: 5 destinos, sem overflow e com alvo de toque adequado.
+  const nav = page.getByRole('navigation', { name: 'Navegação principal' }).last();
+  await expect(nav).toBeVisible();
+  const items = nav.getByRole('link');
+  await expect(items).toHaveCount(5);
+  for (let i = 0; i < 5; i++) {
+    const box = await items.nth(i).boundingBox();
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(box!.width).toBeGreaterThanOrEqual(44);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
 });

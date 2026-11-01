@@ -16,6 +16,7 @@ import {
   IconLogout,
   IconShield,
   IconSparkles,
+  IconUsers,
 } from './icons';
 
 interface NavItem {
@@ -26,14 +27,17 @@ interface NavItem {
   primary?: boolean;
 }
 
+// Os 5 destinos principais ficam na barra inferior do mobile; o restante vive
+// no menu "Explorar", acessível pelo cabeçalho.
 const NAV_ITEMS: NavItem[] = [
   { to: '/app', label: 'Início', icon: IconHome, primary: true },
-  { to: '/app/exercises', label: 'Exercícios', icon: IconDumbbell, primary: true },
   { to: '/app/workouts', label: 'Treinos', icon: IconChart, primary: true },
-  { to: '/app/coach', label: 'Treinador', icon: IconSparkles },
+  { to: '/app/exercises', label: 'Exercícios', icon: IconDumbbell, primary: true },
   { to: '/app/nutrition', label: 'Nutrição', icon: IconNutrition, primary: true },
+  { to: '/app/profile', label: 'Perfil', icon: IconUser, primary: true },
+  { to: '/app/community', label: 'Comunidade', icon: IconUsers },
+  { to: '/app/coach', label: 'Treinador', icon: IconSparkles },
   { to: '/app/progress', label: 'Evolução', icon: IconChart },
-  { to: '/app/profile', label: 'Perfil', icon: IconUser },
   { to: '/app/settings', label: 'Configurações', icon: IconSettings },
 ];
 

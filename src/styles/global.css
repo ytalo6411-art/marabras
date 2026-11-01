@@ -705,7 +705,19 @@ h1, h2, h3, h4, h5 {
   font-size: 0.66rem;
   font-weight: 600;
   min-height: 44px;
+  /* 5 destinos em 320px: o rótulo precisa caber sem cortar nem vazar. */
+  min-width: 0;
+  padding: 0 2px;
+  text-align: center;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
   transition: color var(--dur) var(--ease);
+}
+
+@media (max-width: 359px) {
+  .bottom-nav__item {
+    font-size: 0.6rem;
+  }
 }
 
 .bottom-nav__item[aria-current='page'] {
@@ -2449,4 +2461,20 @@ label.row:has(input[type="checkbox"]) { min-height:44px; gap:10px; }
   .avatar-editor {
     align-items: flex-start;
   }
+}
+
+/* Ícone dentro de campo de busca (alinhado, sem roubar área de toque). */
+.input-group {
+  position: relative;
+}
+
+.input-group__icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+  pointer-events: none;
 }

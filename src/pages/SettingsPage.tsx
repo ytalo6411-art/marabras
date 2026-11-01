@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
 import { Button, Card, Field, Alert } from '@/components/ui';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
+import { CommunityPrivacyCard } from '@/components/CommunityPrivacyCard';
 import { IconTrash, IconMoon, IconSun } from '@/components/icons';
 import { useTheme } from '@/components/themeContext';
 
@@ -207,6 +208,12 @@ export default function SettingsPage() {
       </Card>
 
       {/* Exclusão */}
+      {user && (
+        <div style={{ marginBottom: 'var(--sp-4)' }}>
+          <CommunityPrivacyCard userId={user.id} />
+        </div>
+      )}
+
       <Card style={{ borderColor: 'rgba(248, 113, 113, 0.3)' }}>
         <h2 className="card-title" style={{ marginBottom: 'var(--sp-3)' }}>
           Zona de risco

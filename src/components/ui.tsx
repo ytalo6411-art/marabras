@@ -151,7 +151,8 @@ export function EmptyState({
   text,
   action,
 }: {
-  icon?: string;
+  /** Aceita ícone vetorial (preferido) ou texto. */
+  icon?: ReactNode;
   title: string;
   text?: string;
   action?: ReactNode;

@@ -163,5 +163,83 @@ await check(async()=>{
   assert.equal((await db.query('select count(*)::int n from auth.users where id=$1',[A])).rows[0].n,1);
   assert.equal((await db.query('select count(*)::int n from public.workout_plans where id=$1',[PLAN])).rows[0].n,1);
 });
-console.log(`PASS: ${assertions} security scenarios; two isolated users + anon; actual migrations, grants, cross-tenant IDs, public-row writes, admin boundaries, malicious JSON, quotas/replay across separate transactions, account deletion cascade.`);
+// ─── Comunidade: privacidade por padrão e anti-IDOR ──────────────────────────
+const W1='10000000-0000-4000-8000-000000000010';
+await db.exec(`insert into public.athlete_profiles(user_id,handle,display_name) values('${A}','alice','Alice');`);
+
+await check(async()=>{
+  // Perfil nasce privado: B não vê A mesmo sabendo o id.
+  assert.equal((await as(B,'select * from public.athlete_profiles where user_id=$1',[A])).rows.length,0);
+  assert.equal((await as(B,'select * from public.athlete_directory where user_id=$1',[A])).rows.length,0);
+  await rejects(null,'select * from public.athlete_profiles');
+  // B não cria perfil em nome de A.
+  await rejects(B,"insert into public.athlete_profiles(user_id,handle,display_name) values($1,'steal','X')",[A]);
+});
+
+await check(async()=>{
+  // A torna público: agora B vê, mas só as colunas da view.
+  await as(A,'update public.athlete_profiles set is_public=true, show_workouts=true where user_id=$1',[A]);
+  assert.equal((await as(B,'select * from public.athlete_directory where user_id=$1',[A])).rows.length,1);
+  const cols=(await db.query("select column_name from information_schema.columns where table_name='athlete_directory'")).rows.map(r=>r.column_name);
+  for(const forbidden of ['email','weight_kg','height_cm','birth_date','phone','is_minor']){
+    assert.ok(!cols.includes(forbidden),`view pública não pode expor ${forbidden}`);
+  }
+  // B não edita o perfil de A.
+  assert.equal((await as(B,"update public.athlete_profiles set display_name='hacked' where user_id=$1",[A])).affectedRows,0);
+});
+
+await check(async()=>{
+  await as(A,"insert into public.shared_workouts(id,user_id,title,snapshot) values($1,$2,'Treino A','{\"days\":[]}'::jsonb)",[W1,A]);
+  assert.equal((await as(B,'select id from public.shared_workouts where id=$1',[W1])).rows.length,1);
+  // B não edita nem apaga publicação de A, mesmo com o id correto.
+  assert.equal((await as(B,"update public.shared_workouts set title='hacked' where id=$1",[W1])).affectedRows,0);
+  assert.equal((await as(B,'delete from public.shared_workouts where id=$1',[W1])).affectedRows,0);
+  // B não publica em nome de A.
+  await rejects(B,"insert into public.shared_workouts(user_id,title,snapshot) values($1,'fake','{}'::jsonb)",[A]);
+  await rejects(null,'select * from public.shared_workouts');
+});
+
+await check(async()=>{
+  // Tornar o perfil privado esconde as publicações imediatamente.
+  await as(A,'update public.athlete_profiles set is_public=false where user_id=$1',[A]);
+  assert.equal((await as(B,'select id from public.shared_workouts where id=$1',[W1])).rows.length,0);
+  assert.equal((await as(A,'select id from public.shared_workouts where id=$1',[W1])).rows.length,1);
+  await as(A,'update public.athlete_profiles set is_public=true where user_id=$1',[A]);
+});
+
+await check(async()=>{
+  // Curtir/comentar é permitido; contadores são do servidor.
+  await as(B,'insert into public.workout_likes(workout_id,user_id) values($1,$2)',[W1,B]);
+  assert.equal((await as(A,'select like_count from public.shared_workouts where id=$1',[W1])).rows[0].like_count,1);
+  // Nem o dono pode inflar os próprios contadores (coluna sem grant de UPDATE).
+  await rejects(A,'update public.shared_workouts set like_count=999 where id=$1',[W1]);
+  assert.equal((await as(B,"update public.shared_workouts set title='hacked' where id=$1",[W1])).affectedRows,0);
+  await as(B,"insert into public.workout_comments(workout_id,user_id,body) values($1,$2,'Bom treino')",[W1,B]);
+  assert.equal((await as(A,'select comment_count from public.shared_workouts where id=$1',[W1])).rows[0].comment_count,1);
+  // Comentário ofensivo: A não edita o texto de B, mas B pode apagar o seu.
+  assert.equal((await as(A,"update public.workout_comments set body='x' where workout_id=$1",[W1])).affectedRows,0);
+  // Like em nome de terceiro é recusado.
+  await rejects(B,'insert into public.workout_likes(workout_id,user_id) values($1,$2)',[W1,A]);
+});
+
+await check(async()=>{
+  // Bloqueio corta a visibilidade nos dois sentidos.
+  await as(B,'insert into public.athlete_blocks(blocker_id,blocked_id) values($1,$2)',[B,A]);
+  assert.equal((await as(B,'select id from public.shared_workouts where id=$1',[W1])).rows.length,0);
+  assert.equal((await as(B,'select user_id from public.athlete_directory where user_id=$1',[A])).rows.length,0);
+  assert.equal((await as(A,'select id from public.shared_workouts where id=$1',[W1])).rows.length,1);
+  await rejects(B,'insert into public.athlete_blocks(blocker_id,blocked_id) values($1,$1)',[B]);
+  await as(B,'delete from public.athlete_blocks where blocker_id=$1 and blocked_id=$2',[B,A]);
+});
+
+await check(async()=>{
+  // Denúncia: só o autor e o admin leem.
+  await as(B,"insert into public.content_reports(reporter_id,workout_id,reason) values($1,$2,'spam')",[B,W1]);
+  assert.equal((await as(B,'select count(*)::int n from public.content_reports')).rows[0].n,1);
+  assert.equal((await as(A,'select count(*)::int n from public.content_reports')).rows[0].n,0);
+  await rejects(B,"insert into public.content_reports(reporter_id,workout_id,reason) values($1,$2,'spam')",[A,W1]);
+  await rejects(null,'select * from public.content_reports');
+});
+
+console.log(`PASS: ${assertions} security scenarios; two isolated users + anon; actual migrations, grants, cross-tenant IDs, public-row writes, admin boundaries, malicious JSON, quotas/replay across separate transactions, account deletion cascade, community privacy and anti-IDOR.`);
 await db.close();

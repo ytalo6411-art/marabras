@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
 import {
@@ -22,7 +22,7 @@ import {
   IconChevronRight,
   IconPlay,
   IconClock,
-  IconTarget,
+  IconTarget, IconShare,
 } from '@/components/icons';
 import { formatRelative } from '@/utils/format';
 import { LEVEL_LABELS, ENVIRONMENT_LABELS, EQUIPMENT_LABELS } from '@/data/exerciseTaxonomy';
@@ -32,6 +32,9 @@ import {
   type WorkoutTemplate,
 } from '@/data/workoutTemplates';
 import type { TrainingProfile, WorkoutPlan, WorkoutSession } from '@/types/database';
+import { PublishWorkoutDialog } from '@/components/PublishWorkoutDialog';
+import type { PlanWithExercises } from '@/services/planPersistence';
+import { loadMyAthleteProfile } from '@/services/community';
 import {
   deleteSession,
   groupPrograms,
@@ -43,7 +46,7 @@ import {
 import { answersFromRow, loadTrainingProfile, toPlanProfile } from '@/services/trainingProfile';
 import { loadExerciseCatalog, type CatalogSnapshot } from '@/services/catalog';
 import { generateProgram, validateGeneratedProgram } from '@/services/planGenerator';
-import { deleteProgram, saveGeneratedProgram } from '@/services/planPersistence';
+import { deleteProgram, loadPlanWithExercises, saveGeneratedProgram } from '@/services/planPersistence';
 import { SchemaMigrationNotice } from '@/components/SchemaMigrationNotice';
 import { useSchemaCapabilities } from '@/components/useSchemaCapabilities';
 
@@ -68,8 +71,39 @@ export default function WorkoutsPage() {
   const { user, profile } = useAuthStore();
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const initialTab = searchParams.get('tab');
+  const [publishGroup, setPublishGroup] = useState<{ name: string; plans: PlanWithExercises[] } | null>(null);
+  const [publishLoading, setPublishLoading] = useState<string | null>(null);
+  const [canPublish, setCanPublish] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    void loadMyAthleteProfile(user.id).then((profile) => {
+      if (active) setCanPublish(Boolean(profile?.is_public && profile.show_workouts));
+    });
+    return () => { active = false; };
+  }, [user]);
+
+  /** Carrega os dias reais do programa antes de abrir o diálogo de publicação. */
+  async function openPublish(groupName: string, planIds: string[]) {
+    if (publishLoading) return;
+    setPublishLoading(groupName);
+    try {
+      const loaded = await Promise.all(planIds.map((planId) => loadPlanWithExercises(planId)));
+      const plans = loaded.filter((plan): plan is PlanWithExercises => plan !== null);
+      if (plans.length === 0) {
+        setGenerationError('Não foi possível carregar os exercícios deste programa.');
+        return;
+      }
+      setPublishGroup({ name: groupName, plans });
+    } finally {
+      setPublishLoading(null);
+    }
+  }
+
   const [tab, setTab] = useState<Tab>(
     initialTab === 'modelos' || initialTab === 'historico' ? initialTab : 'plano',
   );
@@ -403,17 +437,31 @@ export default function WorkoutsPage() {
                       </div>
                     </div>
 
-                    {group.programId && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteProgramTarget(group.programId)}
-                        aria-label={`Excluir programa ${group.name}`}
-                      >
-                        <IconTrash size={15} />
-                        Excluir
-                      </Button>
-                    )}
+                    <div className="row row-wrap" style={{ gap: 6 }}>
+                      {canPublish && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => void openPublish(group.name, group.plans.map((p) => p.id))}
+                          loading={publishLoading === group.name}
+                          aria-label={`Publicar programa ${group.name} na comunidade`}
+                        >
+                          <IconShare size={15} />
+                          Publicar
+                        </Button>
+                      )}
+                      {group.programId && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteProgramTarget(group.programId)}
+                          aria-label={`Excluir programa ${group.name}`}
+                        >
+                          <IconTrash size={15} />
+                          Excluir
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="plan-days">
@@ -685,6 +733,20 @@ export default function WorkoutsPage() {
           />
         </Field>
       </Modal>
+
+      {publishGroup && user && (
+        <PublishWorkoutDialog
+          open
+          userId={user.id}
+          plans={publishGroup.plans}
+          defaultTitle={publishGroup.name}
+          onClose={() => setPublishGroup(null)}
+          onPublished={(id) => {
+            setPublishGroup(null);
+            navigate(`/app/community/${id}`);
+          }}
+        />
+      )}
 
       <ConfirmDialog
         open={Boolean(deleteProgramTarget)}
