@@ -2502,3 +2502,21 @@ label.row:has(input[type="checkbox"]) { min-height:44px; gap:10px; }
   text-decoration: none;
 }
 .community-athlete-card:hover .card-title { text-decoration: underline; }
+
+/* Lista de erros comuns do exercício: marcador próprio, texto que quebra linha. */
+.exercise-mistakes { list-style: none; }
+.exercise-mistakes li {
+  position: relative;
+  padding-left: 18px;
+  overflow-wrap: anywhere;
+}
+.exercise-mistakes li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warning);
+}
