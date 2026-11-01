@@ -22,6 +22,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleting,setDeleting] = useState(false);
 
   useEffect(() => {
     if (!preferences) return;
@@ -52,6 +53,7 @@ export default function SettingsPage() {
         .eq('user_id', user.id);
 
       if (error) throw error;
+      if (theme === 'system') { localStorage.setItem('athletix-theme', window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); }
       await refreshProfile();
       toast.show('Preferências salvas', 'success');
     } catch {
@@ -67,22 +69,22 @@ export default function SettingsPage() {
    * todos os dados relacionados automaticamente.
    */
   async function deleteAccount() {
-    if (!user) return;
+    if (!user || deleting) return;
     if (deleteConfirm !== 'EXCLUIR') return;
+    setDeleting(true);
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      const { error } = await supabase.rpc('delete_own_account');
       if (error) {
-        // O `admin` exige service_role (não disponível no client).
-        // Fallback: solicitar exclusão via função server-side.
-        toast.show('A exclusão exige confirmação. Entre em contato com o suporte.', 'error');
+        toast.show('Não foi possível excluir a conta. Tente novamente ou fale com o suporte.', 'error');
+        setDeleting(false);
         return;
       }
       toast.show('Conta excluída', 'success');
       await signOut();
     } catch {
       toast.show('Não foi possível excluir a conta agora. Fale com o suporte.', 'error');
-    }
+    } finally { setDeleting(false); }
   }
 
   return (
@@ -264,7 +266,7 @@ export default function SettingsPage() {
         }
         confirmLabel="Excluir conta"
         danger
-        onConfirm={deleteAccount}
+        onConfirm={() => { void deleteAccount(); }}
         onCancel={() => {
           setShowDelete(false);
           setDeleteConfirm('');

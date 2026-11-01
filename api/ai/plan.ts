@@ -118,6 +118,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       })
       .filter((day) => day.exercises.length > 0);
 
+    if (days.length !== request.profile.sessionsPerWeek) {
+      return jsonError(res, 422, 'A IA não respeitou a frequência semanal.');
+    }
     if (days.length === 0) {
       return jsonError(res, 422, 'A IA não sugeriu exercícios válidos do catálogo.');
     }

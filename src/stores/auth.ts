@@ -28,6 +28,7 @@ interface AuthState {
   loading: boolean;
   error: AuthError | null;
   configured: boolean;
+  profileError: string | null;
 
   initialize: () => Promise<void>;
   signInGoogle: () => Promise<AuthError | null>;
@@ -56,6 +57,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loading: false,
   error: null,
   configured: isSupabaseConfigured,
+  profileError: null,
 
   /**
    * Resolve a sessão e carrega o perfil.
@@ -96,6 +98,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   refreshProfile: async () => {
+    set({ profileError: null });
     const user = get().user;
     if (!user) return;
 
@@ -144,8 +147,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       await get().refreshUnreadCount();
     } catch {
-      // Falha ao carregar o perfil não deve derrubar o app — o usuário
-      // continua autenticado e as telas degradam com segurança.
+      set({ profileError: 'Não foi possível carregar seu perfil. Tente novamente.' });
     }
   },
 
@@ -207,7 +209,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     set({ loading: true });
-    await supabaseSignOut();
+    const { error } = await supabaseSignOut();
+    if (error) { set({ loading: false, error }); return; }
     set({
       session: null,
       user: null,

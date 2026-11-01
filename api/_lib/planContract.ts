@@ -42,6 +42,7 @@ export const planRequestSchema = z.object({
   profile: profileSchema,
   candidates: z.array(candidateSchema).min(1).max(200),
   seed: z.string().min(1).max(120),
+  locale: z.enum(['pt-BR','en','es','fr']).default('pt-BR'),
 });
 
 export type PlanRequest = z.infer<typeof planRequestSchema>;
@@ -90,14 +91,15 @@ Regras obrigatórias:
 6. Respeite limitações: adapte a seleção, sem prescrever reabilitação nem diagnóstico. Se houver sinal de alerta, inclua um aviso em "warnings" recomendando avaliação profissional.
 7. Volume e descanso coerentes com o objetivo: força (4-6 reps, 120-180s), hipertrofia (8-12 reps, 60-90s), condicionamento/perda de gordura (12-15 reps, 30-60s), resistência (12-20 reps, 30-60s), mobilidade (30-45s, 20-30s).
 8. Gere exatamente o número de dias pedido (sessionsPerWeek), com cerca de minutosPerSession minutos cada.
-9. Escreva em português do Brasil, direto e sem exageros.
+9. Escreva no idioma indicado em locale, direto e sem exageros.
 10. Responda APENAS com JSON válido neste formato:
 {"name":string,"rationale":[string],"warnings":[string],"days":[{"label":string,"name":string,"weekday":number|null,"rationale":string,"exercises":[{"exerciseId":string,"sets":number,"reps":string,"restSeconds":number,"durationSeconds":number|null,"notes":string|null}]}]}`;
 
 export function buildPlanMessages(request: PlanRequest) {
   const profile = request.profile;
+  const language = { 'pt-BR':'português do Brasil',en:'English',es:'español',fr:'français' }[request.locale];
 
-  const user = `Perfil do usuário (JSON):
+  const user = `Idioma obrigatório: ${language}. Perfil do usuário (JSON):
 ${JSON.stringify(profile, null, 2)}
 
 Candidatos disponíveis (id | nome | músculo | equipamento | nível | padrão):
@@ -117,6 +119,7 @@ Gere o programa semanal considerando objetivo "${profile.goal}", nível "${profi
 }
 
 export const chatRequestSchema = z.object({
+  locale: z.enum(['pt-BR','en','es','fr']).default('pt-BR'),
   token: z.string().min(20),
   question: z.string().min(2).max(600),
   context: z.record(z.unknown()).default({}),

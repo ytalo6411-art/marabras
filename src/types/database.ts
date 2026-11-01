@@ -214,6 +214,8 @@ export interface WorkoutExercise {
 }
 
 export interface WorkoutSession {
+  exercise_snapshot?: unknown;
+  client_state?: unknown;
   id: string;
   user_id: string;
   plan_id: string | null;

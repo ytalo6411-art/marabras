@@ -1,4 +1,4 @@
-# ATHLETIX V2
+# ATHLETIX — PROMAX V10
 
 Plataforma esportiva completa: biblioteca de exercícios com vídeos demonstrativos,
 montagem e execução de treinos, diário nutricional com fonte verificável, evolução
@@ -8,6 +8,28 @@ Supabase.
 **Stack:** Vite 6 · React 18 · TypeScript (strict) · Supabase JS · Zustand · PWA
 
 ---
+
+## Estado desta entrega (01/11/2026)
+
+Esta seção prevalece sobre descrições históricas abaixo. O relatório verificável está em **[PROMAX-V10.md](PROMAX-V10.md)**.
+
+- Execução de treino com séries salvas, retomada, descanso e conclusão explícita; iniciar não conclui.
+- Nutrição visual sem câmera obrigatória, porções/substituições e busca textual/código opcional.
+- Interface principal em pt-BR, en, es e fr; conteúdo externo sem tradução revisada é identificado.
+- Migração aditiva V10 aplicada ao Supabase existente, preservando os 317 exercícios, 8 alimentos e 2 sessões encontrados na verificação.
+- IA continua opcional e depende de chave server-side; o motor determinístico não depende dela.
+- Fotografias e fontes: **[public/CREDITS.md](public/CREDITS.md)**. Valores nutricionais são estimativas de referência.
+
+```bash
+npm ci
+npm run typecheck && npm run typecheck:api
+npm run lint && npm test && npm run test:db && npm run test:i18n
+npm run browser:prepare  # sandbox Linux; CI usa playwright install
+npm run test:browser
+npm run build
+```
+
+Os testes de navegador interceptam Supabase com fixtures exclusivamente de teste. Não usam credenciais reais nem alteram contas de produção. O teste de banco executa as migrações em PostgreSQL isolado via PGlite; extensões opcionais de busca são omitidas nesse ambiente.
 
 ## Sumário
 

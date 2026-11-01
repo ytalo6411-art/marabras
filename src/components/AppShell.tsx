@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import LanguageSelector from '@/components/LanguageSelector';
 import { useAuthStore } from '@/stores/auth';
-import { Avatar, Button } from '@/components/ui';
+import { Avatar, Button, Modal } from '@/components/ui';
 import {
   IconHome,
   IconDumbbell,
@@ -9,7 +10,6 @@ import {
   IconChart,
   IconUser,
   IconSettings,
-  IconBell,
   IconMoon,
   IconSun,
   IconLogout,
@@ -78,10 +78,13 @@ function useTheme() {
 }
 
 export default function AppShell() {
-  const { profile, isAdmin, signOut, unreadCount } = useAuthStore();
+  const { profile, isAdmin, signOut, profileError, refreshProfile } = useAuthStore();
   const { theme, toggle } = useTheme();
   useRouteFocus();
 
+  const [menuOpen,setMenuOpen] = useState(false);
+  const location = useLocation();
+  useEffect(() => setMenuOpen(false),[location.pathname]);
   const primaryItems = NAV_ITEMS.filter((i) => i.primary);
 
   return (
@@ -90,6 +93,7 @@ export default function AppShell() {
         Pular para o conteúdo
       </a>
 
+      {menuOpen && <button className="btn btn-ghost btn-sm" style={{position:'fixed',top:10,right:64,zIndex:101}} onClick={toggle} aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>{theme === 'dark' ? <IconSun size={18}/> : <IconMoon size={18}/>}</button>}
       <header className="app-header">
         <div className="container app-header__inner">
           <NavLink to="/app" className="brand" aria-label="ATHLETIX — início">
@@ -101,37 +105,8 @@ export default function AppShell() {
           </NavLink>
 
           <div className="header-actions">
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={toggle}
-              aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-              title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
-            >
-              {theme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
-            </button>
-
-            <NavLink
-              to="/app/notifications"
-              className="btn btn-ghost btn-sm"
-              aria-label={`Notificações${unreadCount ? ` (${unreadCount} não lidas)` : ''}`}
-              style={{ position: 'relative' }}
-            >
-              <IconBell size={18} />
-              {unreadCount > 0 && (
-                <span
-                  aria-hidden="true"
-                  style={{
-                    position: 'absolute',
-                    top: 4,
-                    right: 4,
-                    width: 7,
-                    height: 7,
-                    borderRadius: '50%',
-                    background: 'var(--accent)',
-                  }}
-                />
-              )}
-            </NavLink>
+            <LanguageSelector />
+            <button className="btn btn-ghost mobile-menu-button" aria-label="Abrir menu" onClick={() => setMenuOpen(true)}>☰</button>
 
             <NavLink to="/app/profile" aria-label="Meu perfil">
               <Avatar name={profile?.full_name} src={profile?.avatar_url} />
@@ -177,10 +152,12 @@ export default function AppShell() {
 
         {/* Conteúdo */}
         <main id="main-content" tabIndex={-1} style={{ minWidth: 0 }}>
+          {profileError && <div className="alert alert-warning" role="alert"><span>{profileError}</span><button className="btn btn-secondary" onClick={() => void refreshProfile()}>Tentar novamente</button></div>}
           <Outlet />
         </main>
       </div>
 
+      <Modal open={menuOpen} onClose={() => setMenuOpen(false)} title="Explorar ATHLETIX"><nav className="mobile-menu" aria-label="Todas as seções">{NAV_ITEMS.map(item => <NavLink key={item.to} to={item.to} end={item.to === '/app'} onClick={() => setMenuOpen(false)}><item.icon size={20}/>{item.label}</NavLink>)}{isAdmin && <NavLink to="/app/admin">Painel admin</NavLink>}<NavLink to="/app/support">Ajuda e suporte</NavLink></nav></Modal>
       {/* Navegação inferior — mobile */}
       <nav className="bottom-nav" aria-label="Navegação principal">
         {primaryItems.map((item) => (

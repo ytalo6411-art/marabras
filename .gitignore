@@ -79,3 +79,6 @@ blob-report/
 # Sem esta exceção, o build quebra em um clone limpo.
 !/src/data/
 !/src/data/**
+
+# Reviewed image candidates are scratch assets, not shipped product files.
+image-search/

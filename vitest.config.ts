@@ -7,6 +7,8 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  optimizeDeps: { exclude: ['@/i18n/jsx-runtime', '@/i18n/jsx-dev-runtime'] },
+  esbuild: { jsx: 'automatic', jsxImportSource: '@/i18n' },
   test: {
     environment: 'jsdom',
     globals: true,

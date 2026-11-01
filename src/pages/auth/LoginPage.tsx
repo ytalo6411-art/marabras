@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import LanguageSelector from '@/components/LanguageSelector';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
 import { Button, Field, Alert } from '@/components/ui';
@@ -30,7 +31,7 @@ export default function LoginPage() {
   }, [mode, clearError]);
 
   if (user) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to={typeof redirectReason === 'string' && redirectReason.startsWith('/app/') && !redirectReason.startsWith('/app/login') ? redirectReason : '/app'} replace />;
   }
 
   async function handleGoogle() {
@@ -89,6 +90,7 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
+      <div className="public-language"><LanguageSelector /></div>
       {/* Painel de apresentação — escondido no mobile para focar no formulário */}
       <aside className="auth-hero">
         <div className="brand">

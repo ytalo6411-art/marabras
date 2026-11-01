@@ -1,5 +1,6 @@
+import { t } from '@/i18n/runtime';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
@@ -25,6 +26,7 @@ export default function WorkoutBuilderPage() {
   const { user } = useAuthStore();
 
   const isEditing = Boolean(id);
+  const [searchParams] = useSearchParams();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -41,17 +43,30 @@ export default function WorkoutBuilderPage() {
   const [pickerQuery, setPickerQuery] = useState('');
   const [candidates, setCandidates] = useState<Exercise[]>([]);
   const [candidatesLoading, setCandidatesLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [candidateError, setCandidateError] = useState('');
+
+  useEffect(() => {
+    const exerciseId = searchParams.get('exercise');
+    if (!exerciseId || id) return;
+    void supabase.from('exercises').select('*').eq('id',exerciseId).maybeSingle().then(({data,error}) => {
+      if (error) { setLoadError('Não foi possível carregar o exercício. Volte à biblioteca e tente novamente.'); return; }
+      if (data) setItems(prev => prev.some(i=>i.exercise_id===data.id) ? prev : [...prev,{id:crypto.randomUUID(),plan_id:'',exercise_id:data.id,position:prev.length,sets:3,reps:'8–12',rest_seconds:90,duration_seconds:null,notes:null,weight_kg:null,intensity:null,tempo:null,created_at:new Date().toISOString(),updated_at:new Date().toISOString(),exercise:data}]);
+    });
+  }, [searchParams,id]);
 
   // Carrega o plano em edição.
   useEffect(() => {
     if (!id || !user) return;
 
     setLoading(true);
+    setLoadError('');
     Promise.all([
       supabase.from('workout_plans').select('*').eq('id', id).maybeSingle(),
       supabase.from('workout_exercises').select('*').eq('plan_id', id).order('position'),
     ])
       .then(([planRes, itemsRes]) => {
+        if (planRes.error || itemsRes.error || !planRes.data) { setLoadError('Não foi possível carregar este treino. Tente novamente.'); return; }
         if (planRes.data) {
           const p = planRes.data;
           setName(p.name);
@@ -95,11 +110,12 @@ export default function WorkoutBuilderPage() {
       let q = supabase.from('exercises').select('*').eq('is_active', true).limit(20);
       if (pickerQuery.trim()) q = q.ilike('name', `%${pickerQuery.trim()}%`);
       void q.then(
-        ({ data }) => {
+        ({ data, error }) => {
+          setCandidateError(error ? 'Não foi possível buscar exercícios. Altere a busca para tentar novamente.' : '');
           setCandidates(data ?? []);
           setCandidatesLoading(false);
         },
-        () => setCandidatesLoading(false),
+        () => { setCandidateError('Não foi possível buscar exercícios. Tente novamente.'); setCandidatesLoading(false); },
       );
     }, 300);
 
@@ -217,25 +233,11 @@ export default function WorkoutBuilderPage() {
 
   async function handleStartSession() {
     const saved = await savePlan({ silent: true });
-    if (!saved) return;
-
-    const { data, error } = await supabase
-      .from('workout_sessions')
-      .insert({
-        user_id: user!.id,
-        plan_id: saved,
-        name: name.trim(),
-        status: 'in_progress',
-        started_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast.show('Não foi possível iniciar a sessão.', 'error');
-      return;
-    }
-    navigate(`/app/session/${data.id}`);
+    if (!saved || !user) return;
+    try {
+      const { startSession } = await import('@/services/workoutSession');
+      navigate(`/app/session/${await startSession(saved, user.id)}`);
+    } catch { toast.show('Não foi possível iniciar a sessão. A migração V10 é necessária.', 'error'); }
   }
 
   async function handleDelete() {
@@ -270,6 +272,7 @@ export default function WorkoutBuilderPage() {
         Treinos
       </Link>
 
+      {loadError && <Alert variant="error">{loadError}</Alert>}
       <h1 className="page-title">{isEditing ? 'Editar treino' : 'Novo treino'}</h1>
 
       <div className="grid-2" style={{ alignItems: 'start' }}>
@@ -429,6 +432,7 @@ export default function WorkoutBuilderPage() {
                   </span>
                 </div>
 
+                {candidateError && <Alert variant="error">{candidateError}</Alert>}
                 {candidatesLoading ? (
                   <p className="text-sm text-muted">Buscando…</p>
                 ) : candidates.length === 0 ? (
@@ -451,7 +455,7 @@ export default function WorkoutBuilderPage() {
                           width: '100%',
                         }}
                       >
-                        <span className="truncate">{ex.name}</span>
+                        <span className="truncate">{t(ex.name)}</span>
                         <IconPlus size={15} />
                       </button>
                     ))}

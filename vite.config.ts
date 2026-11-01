@@ -41,6 +41,9 @@ export default defineConfig({
       },
     },
   },
+  // The JSX translator and provider must share one live locale module.
+  // Prebundling the runtime would create a second, stale locale instance.
+  optimizeDeps: { exclude: ['@/i18n/jsx-runtime', '@/i18n/jsx-dev-runtime'] },
   server: {
     port: 5173,
     host: '0.0.0.0',
@@ -52,7 +55,7 @@ export default defineConfig({
     allowedHosts: true,
   },
   plugins: [
-    react(),
+    react({ jsxImportSource: '@/i18n' }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.png', 'offline.html'],

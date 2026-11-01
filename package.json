@@ -24,7 +24,11 @@
     "typecheck:api": "tsc --noEmit --strict --moduleResolution bundler --module esnext --target es2022 --skipLibCheck --types node api/ai/*.ts api/_lib/*.ts",
     "db:check": "node scripts/apply-migrations.mjs --check",
     "db:apply": "node scripts/apply-migrations.mjs",
-    "db:selftest": "node scripts/apply-migrations.mjs --self-test"
+    "db:selftest": "node scripts/apply-migrations.mjs --self-test",
+    "test:db": "node scripts/test-database.mjs",
+    "test:browser": "playwright test",
+    "test:i18n": "node scripts/extract-i18n.mjs && node scripts/check-i18n.mjs",
+    "browser:prepare": "node scripts/prepare-browser.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
@@ -35,7 +39,10 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.14",
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.64.1",
+    "@sparticuz/chromium": "^153.0.0",
     "@supabase/supabase-js": "^2.45.4",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",

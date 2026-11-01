@@ -179,6 +179,7 @@ export interface ValidationResult {
 export function validateGeneratedProgram(
   program: unknown,
   catalog?: CatalogExercise[],
+  profile?: PlanGenerationProfile,
 ): ValidationResult {
   const parsed = generatedProgramSchema.safeParse(program);
   if (!parsed.success) {
@@ -189,9 +190,12 @@ export function validateGeneratedProgram(
   }
 
   const errors: string[] = [];
+  if (profile && parsed.data.days.length !== profile.sessionsPerWeek) errors.push('O número de sessões não corresponde à disponibilidade.');
+  if (profile && parsed.data.days.some(day => day.weekday !== null && profile.preferredDays.length === profile.sessionsPerWeek && !profile.preferredDays.includes(day.weekday))) errors.push('Dia fora da disponibilidade informada.');
   const knownIds = catalog ? new Set(catalog.map((e) => e.id)) : null;
 
   for (const day of parsed.data.days) {
+    if (profile && (day.estimatedMinutes > Math.max(10,profile.minutesPerSession) || Math.abs(day.estimatedMinutes-estimateMinutes(day.exercises))>1)) errors.push('A duração não corresponde ao tempo disponível ou às séries prescritas.');
     const seen = new Set<string>();
     for (const exercise of day.exercises) {
       if (seen.has(exercise.exerciseId)) {
@@ -199,6 +203,16 @@ export function validateGeneratedProgram(
       }
       seen.add(exercise.exerciseId);
 
+      const source = catalog?.find(e => e.id === exercise.exerciseId);
+      if (source && profile) {
+        if (source.equipment.some(eq => eq !== 'bodyweight' && !profile.equipment.includes(eq))) errors.push(`Equipamento indisponível: ${source.name}`);
+        if (profile.level === 'beginner' && source.difficulty !== 'beginner') errors.push(`Nível incompatível: ${source.name}`);
+        if (profile.level === 'intermediate' && source.difficulty === 'advanced') errors.push(`Nível incompatível: ${source.name}`);
+        if (isExerciseAvoided(source, profile)) errors.push(`Exercício evitado ou adaptação necessária: ${source.name}`);
+        if (exercise.pattern !== source.pattern || exercise.primaryMuscle !== source.primaryMuscle || exercise.name !== source.name) errors.push(`Metadados divergentes: ${source.name}`);
+        if (exercise.videoUrl && exercise.videoUrl !== source.videoUrl) errors.push('Vídeo não corresponde à fonte do exercício.');
+        for(const alt of exercise.alternatives){const candidate=catalog?.find(e=>e.id===alt.exerciseId);if(!candidate || candidate.name!==alt.name || isExerciseAvoided(candidate,profile) || candidate.equipment.some(eq=>eq!=='bodyweight'&&!profile.equipment.includes(eq)) || !allowedDifficulties(profile.level).includes(candidate.difficulty))errors.push('Alternativa incompatível com o perfil.');}
+      }
       if (knownIds && knownIds.size > 0 && !knownIds.has(exercise.exerciseId)) {
         errors.push(`Exercício fora do catálogo no dia ${day.label}: ${exercise.name}`);
       }
@@ -453,7 +467,7 @@ function exerciseCountFor(profile: PlanGenerationProfile): number {
 
 /* ─── Seleção de exercícios ────────────────────────────────────────────────── */
 
-function isAvoided(exercise: CatalogExercise, profile: PlanGenerationProfile): boolean {
+export function isExerciseAvoided(exercise: CatalogExercise, profile: PlanGenerationProfile): boolean {
   const nameKey = normalize(exercise.name);
   const slugKey = normalize(exercise.slug);
 
@@ -540,9 +554,9 @@ function pickForSlot(
     difficulties: [...allowed],
     inDatabaseOnly: true,
   }).filter((exercise) => {
-    if (isAvoided(exercise, profile)) return false;
+    if (isExerciseAvoided(exercise, profile)) return false;
     // O exercício pode usar qualquer equipamento disponível; peso do corpo sempre vale.
-    return exercise.equipment.some((eq) => equipment.has(eq) || eq === 'bodyweight');
+    return exercise.equipment.length > 0 && exercise.equipment.every((eq) => equipment.has(eq) || eq === 'bodyweight');
   });
 
   if (candidates.length === 0) return null;
@@ -579,7 +593,7 @@ function cueFor(exercise: CatalogExercise, goal: TrainingGoal): string {
 
 /* ─── Geração ──────────────────────────────────────────────────────────────── */
 
-function estimateMinutes(exercises: GeneratedExercise[]): number {
+export function estimateMinutes(exercises: Pick<GeneratedExercise,'durationSeconds'|'sets'|'restSeconds'>[]): number {
   const workSeconds = exercises.reduce((total, exercise) => {
     const work = exercise.durationSeconds ?? exercise.sets * 40;
     const rest = exercise.restSeconds * Math.max(0, exercise.sets - 1);
@@ -650,6 +664,18 @@ function buildExercisesForSlots(
   return exercises;
 }
 
+/** Keep the promised duration, including warm-up, by reducing optional work. */
+export function fitExercisesToTime(exercises: GeneratedExercise[], minutes: number): GeneratedExercise[] {
+ const fitted=exercises.map(e=>({...e}));
+ while(fitted.length>1 && estimateMinutes(fitted)>minutes)fitted.pop();
+ if(fitted.length===1 && estimateMinutes(fitted)>minutes){
+  const e=fitted[0]!;
+  if(e.durationSeconds!==null)e.durationSeconds=Math.max(30,(minutes-8)*60);
+  else {e.sets=Math.max(1,Math.min(e.sets,Math.floor((minutes-8)*60/(40+e.restSeconds))));if(estimateMinutes(fitted)>minutes)e.restSeconds=0;}
+ }
+ return fitted;
+}
+
 /**
  * Regenera UM dia preservando o resto do programa.
  *
@@ -668,7 +694,7 @@ export function regenerateDay(options: {
   avoidExerciseIds?: string[];
 }): GeneratedDay {
   const { profile, catalog, patterns, label, name, weekday } = options;
-  const available = catalog.filter((exercise) => exercise.inDatabase);
+  const available = catalog.filter((exercise) => exercise.inDatabase && !isExerciseAvoided(exercise, profile));
   const usedIds = new Set<string>(options.avoidExerciseIds ?? []);
 
   const slots: DaySlot[] = patterns.map((pattern) => ({
@@ -684,15 +710,16 @@ export function regenerateDay(options: {
     options.seed,
     exerciseCountFor(profile),
   );
+  const fitted=fitExercisesToTime(exercises,profile.minutesPerSession);
 
   return {
     label,
     name,
     weekday,
-    estimatedMinutes: estimateMinutes(exercises),
-    muscles: [...new Set(exercises.map((exercise) => exercise.primaryMuscle))],
+    estimatedMinutes: estimateMinutes(fitted),
+    muscles: [...new Set(fitted.map((exercise) => exercise.primaryMuscle))],
     rationale: `Variação do dia ${label} com os mesmos padrões de movimento, mantendo o restante do plano intacto.`,
-    exercises,
+    exercises: fitted,
   };
 }
 
@@ -703,7 +730,7 @@ export function generateProgram(options: GeneratePlanOptions): GeneratedProgram 
   const warnings: string[] = [];
   const rationale: string[] = [];
 
-  const available = catalog.filter((exercise) => exercise.inDatabase);
+  const available = catalog.filter((exercise) => exercise.inDatabase && !isExerciseAvoided(exercise, profile));
 
   if (available.length === 0) {
     return {
@@ -737,7 +764,6 @@ export function generateProgram(options: GeneratePlanOptions): GeneratedProgram 
   const days: GeneratedDay[] = [];
 
   for (const template of dayTemplates) {
-    const isCoreCardio = template.slots.every((slot) => slot.pattern === 'core' || slot.pattern === 'cardio' || slot.pattern === 'mobility');
 
     // Músculos prioritários ganham um slot extra quando sobrou espaço.
     const slots: DaySlot[] = [...template.slots];
@@ -752,7 +778,7 @@ export function generateProgram(options: GeneratePlanOptions): GeneratedProgram 
       }
     }
 
-    const exercises = buildExercisesForSlots(slots, profile, available, usedIds, seed, perSession);
+    const exercises = fitExercisesToTime(buildExercisesForSlots(slots, profile, available, usedIds, seed, perSession),profile.minutesPerSession);
 
     if (exercises.length === 0) {
       warnings.push(
@@ -763,9 +789,7 @@ export function generateProgram(options: GeneratePlanOptions): GeneratedProgram 
 
     const weekday = weekdayForDay(profile.preferredDays, days.length, profile.sessionsPerWeek);
     const muscles = [...new Set(exercises.map((exercise) => muscleGroup(exercise.primaryMuscle)))];
-    const estimatedMinutes = isCoreCardio
-      ? clamp(profile.minutesPerSession, 15, 60)
-      : estimateMinutes(exercises);
+    const estimatedMinutes = estimateMinutes(exercises);
 
     days.push({
       label: template.label,
@@ -813,6 +837,9 @@ export function generateProgram(options: GeneratePlanOptions): GeneratedProgram 
   const splitLabel = splitKind === 'full_body' ? 'corpo inteiro' : dayTemplates.map((d) => d.label).join('·');
   const programName = `${goalShortName(profile.goal)} — ${splitLabel}`;
 
+  rationale.unshift('Aquecimento: 5 minutos de movimento leve e 1–2 séries leves dos primeiros movimentos, sem fadiga. Pare se sentir dor.');
+  if (profile.level !== 'beginner') rationale.push('Progressão: quando completar todas as séries com técnica estável e 2–3 repetições em reserva, aumente a carga em 2–5% na próxima sessão. Mantenha a carga se a execução piorar.');
+  else rationale.push('Progressão: domine a técnica e o limite superior de repetições antes de aumentar a carga. Aumente apenas um passo por vez.');
   rationale.unshift(
     `Plano de ${goalShortName(profile.goal).toLowerCase()} em ${days.length} ${days.length === 1 ? 'sessão' : 'sessões'} por semana (${splitKind === 'full_body' ? 'corpo inteiro' : `divisão ${splitLabel}`}), nível ${levelName(profile.level)}.`,
   );
@@ -975,8 +1002,8 @@ export function toGenerationProfile(input: {
     secondaryGoals: goals.filter((item) => item !== goal),
     environment: input.environment ?? 'home_equipment',
     equipment: input.equipment.length > 0 ? input.equipment : ['bodyweight'],
-    sessionsPerWeek: clamp(input.sessionsPerWeek ?? 3, 1, 6),
-    minutesPerSession: clamp(input.minutesPerSession ?? 45, 10, 120),
+    sessionsPerWeek: clamp(input.sessionsPerWeek ?? 3, 1, 7),
+    minutesPerSession: clamp(input.minutesPerSession ?? 45, 10, 180),
     preferredDays: input.preferredDays,
     splitPreference: input.splitPreference ?? 'coach_choice',
     priorityMuscles: input.priorityMuscles,

@@ -20,6 +20,8 @@
 
 import { supabase } from '@/lib/supabase';
 import type { Exercise, ExerciseCategory, SourceType } from '@/types/database';
+import { getLocale } from '@/i18n/runtime';
+import { FALLBACK_EXERCISES } from '@/data/exerciseFallback';
 
 const FREE_EXERCISE_DB =
   import.meta.env.VITE_FREEEXERCISEDB_BASE_URL ||
@@ -342,6 +344,7 @@ export interface ExerciseSearchParams {
   query?: string;
   muscle?: string;
   difficulty?: string;
+  equipment?: string;
   limit?: number;
   offset?: number;
 }
@@ -358,9 +361,9 @@ export interface ExerciseSearchParams {
 export async function searchExercises(
   params: ExerciseSearchParams = {},
 ): Promise<ExerciseResult[]> {
-  const { query = '', muscle, difficulty, limit = 24, offset = 0 } = params;
+  const { query = '', muscle, difficulty, equipment, limit = 24, offset = 0 } = params;
 
-  const cacheKey = JSON.stringify({ query, muscle, difficulty, limit, offset });
+  const cacheKey = JSON.stringify({ query, muscle, difficulty, equipment, limit, offset, locale: getLocale() });
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
@@ -375,14 +378,15 @@ export async function searchExercises(
 
     if (query.trim()) {
       // Busca por full-text quando disponível; o ILIKE cobre o fallback.
-      q = q.ilike('name', `%${query.trim()}%`);
+      q = q.or(`name.ilike.%${query.trim().replace(/[,()]/g,' ')}%,instructions.ilike.%${query.trim().replace(/[,()]/g,' ')}%`);
     }
     if (muscle) q = q.eq('primary_muscle', muscle);
     if (difficulty) q = q.eq('difficulty', difficulty);
+    if (equipment) q = q.contains('equipment', [equipment]);
 
     const { data, error } = await q;
 
-    if (!error && data && data.length > 0) {
+    if (!error && data && (data.length > 0 || offset > 0 || query || muscle || difficulty || equipment)) {
       const results = data.map(fromDatabase);
       setCached(cacheKey, results);
       return results;
@@ -399,6 +403,7 @@ export async function searchExercises(
     const filtered = all.filter((e) => {
       if (muscle && e.primaryMuscle !== muscle) return false;
       if (difficulty && e.difficulty !== difficulty) return false;
+      if (equipment && !e.equipment.includes(equipment)) return false;
       if (query.trim()) {
         const q = query.trim().toLowerCase();
         return (
@@ -425,11 +430,25 @@ export async function searchExercises(
     }
   }
 
+  if (!results.length) {
+    const q = query.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    results.push(...FALLBACK_EXERCISES.filter(e => (!muscle || e.primary_muscle === muscle) && (!difficulty || e.difficulty === difficulty) && (!equipment || e.equipment.includes(equipment)) && (!q || (e.name+' '+e.instructions).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(q))).map(e => ({...e,primaryMuscle:e.primary_muscle,secondaryMuscles:e.secondary_muscles,key:e.slug,source:'manual' as const,inDatabase:false,attribution:'ATHLETIX · catálogo local de emergência'})));
+  }
   const sliced = results.slice(offset, offset + limit);
   setCached(cacheKey, sliced);
   return sliced;
 }
 
+export function exerciseIllustration(name: string, equipment: string[]): string | undefined {
+ const n=name.toLowerCase();
+ if (/plank|prancha/.test(n) && equipment.includes('bodyweight')) return '/images/exercises/plank.jpg';
+ if (/push.up|flexão/.test(n) && equipment.includes('bodyweight')) return '/images/exercises/pushup.jpg';
+ if (/squat|agachamento/.test(n) && equipment.length===1 && equipment[0]==='bodyweight') return '/images/exercises/squat.jpg';
+ if (/calf raise|panturrilha/.test(n) && equipment.includes('machine')) return '/images/exercises/calf.jpg';
+ if (/shoulder press/.test(n) && equipment.includes('dumbbell')) return '/images/exercises/shoulder.jpg';
+ if (/bicep.*curl|biceps curl/.test(n) && equipment.includes('dumbbell')) return '/images/exercises/curl.jpg';
+ return undefined;
+}
 function fromDatabase(row: Exercise): ExerciseResult {
   return {
     key: row.id,
@@ -444,7 +463,7 @@ function fromDatabase(row: Exercise): ExerciseResult {
     instructions: row.instructions ?? undefined,
     videoUrl: row.video_url ?? undefined,
     thumbnailUrl: row.thumbnail_url ?? undefined,
-    imageUrl: row.image_url ?? undefined,
+    imageUrl: row.image_url ?? exerciseIllustration(row.name,row.equipment ?? []),
     source: row.source,
     sourceUrl: row.source_url ?? undefined,
     attribution: row.attribution ?? undefined,
@@ -515,13 +534,22 @@ async function loadWger(params: {
    ───────────────────────────────────────────────────────────────────────────── */
 
 export async function getExerciseBySlug(slug: string): Promise<ExerciseResult | null> {
+  // Session links use a UUID; library links use a slug.
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug)) {
+    const { data, error } = await supabase.from('exercises').select('*').eq('id',slug).maybeSingle();
+    if (error) throw error;
+    return data ? fromDatabase(data) : null;
+  }
+  const local = FALLBACK_EXERCISES.find(e=>e.slug===slug);
+  if (local) return {...local,primaryMuscle:local.primary_muscle,secondaryMuscles:local.secondary_muscles,key:local.slug,source:'manual',inDatabase:false};
   // Banco local
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('exercises')
     .select('*')
     .eq('slug', slug)
     .maybeSingle();
 
+  if (error) throw error;
   if (data) return fromDatabase(data);
 
   // Free Exercise DB

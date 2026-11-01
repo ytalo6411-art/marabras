@@ -48,6 +48,22 @@ jobs:
       - name: Testes
         run: npm test
 
+      - name: Migrações e isolamento no PostgreSQL local
+        run: npm run test:db
+
+      - name: Cobertura de traduções
+        run: npm run test:i18n
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Fluxos reais no navegador (fixtures isoladas)
+        run: npm run test:browser
+        env:
+          CI: 'true'
+          VITE_SUPABASE_URL: https://test.supabase.co
+          VITE_SUPABASE_ANON_KEY: test-public-key
+
       - name: Build
         run: npm run build:only
 

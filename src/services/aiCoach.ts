@@ -12,8 +12,10 @@
  */
 
 import { supabase } from '@/lib/supabase';
+import { getLocale } from '@/i18n/runtime';
 import { getJson, postJson, HttpError } from '@/services/http';
 import {
+  isExerciseAvoided,
   generatedProgramSchema,
   validateGeneratedProgram,
   type GeneratedProgram,
@@ -113,8 +115,9 @@ export async function requestAiPlan(params: {
 
   // Só exercícios compatíveis: reduz custo e evita sugestões impossíveis.
   const candidates = params.catalog
-    .filter((exercise) => exercise.inDatabase)
-    .filter((exercise) => exercise.equipment.some((eq) => params.profile.equipment.includes(eq) || eq === 'bodyweight'))
+    .filter((exercise) => exercise.inDatabase && !isExerciseAvoided(exercise, params.profile))
+    .filter((exercise) => exercise.equipment.every((eq) => params.profile.equipment.includes(eq) || eq === 'bodyweight'))
+    .filter((exercise) => params.profile.level === 'advanced' || (params.profile.level === 'intermediate' ? exercise.difficulty !== 'advanced' : exercise.difficulty === 'beginner'))
     .slice(0, 120)
     .map((exercise) => ({
       id: exercise.id,
@@ -133,6 +136,7 @@ export async function requestAiPlan(params: {
         profile: sanitizeProfile(params.profile),
         candidates,
         seed: params.seed,
+        locale: getLocale(),
       },
       { timeoutMs: 45_000 },
     );
@@ -146,7 +150,7 @@ export async function requestAiPlan(params: {
       return { available: false, reason: 'A resposta da IA não passou na validação de formato.' };
     }
 
-    const validated = validateGeneratedProgram(parsed.data, params.catalog);
+    const validated = validateGeneratedProgram(parsed.data, params.catalog, params.profile);
     if (!validated.ok) {
       return {
         available: false,
@@ -194,6 +198,7 @@ export async function askCoach(params: {
       token,
       question: params.question,
       context: params.context,
+      locale: getLocale(),
     }, { timeoutMs: 30_000 });
 
     if (!response.answer) {

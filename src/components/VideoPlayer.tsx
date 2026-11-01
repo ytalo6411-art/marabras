@@ -30,7 +30,7 @@ export function VideoPlayer({
             src={poster}
             alt={`Ilustração de ${title}`}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            loading="lazy"
+            loading="lazy" width="640" height="360"
           />
         ) : (
           <div
@@ -61,7 +61,7 @@ export function VideoPlayer({
           aria-label={`Reproduzir demonstração de ${title}`}
         >
           {poster && (
-            <img src={poster} alt="" loading="lazy" referrerPolicy="no-referrer" />
+            <img src={poster} alt="" loading="lazy" width="640" height="360" referrerPolicy="no-referrer" />
           )}
           <span className="video-play">
             <IconPlay size={24} />
@@ -72,7 +72,9 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="video-frame">
+    <div>
+      <p className="field-hint">Demonstração sem legendas na fonte. As instruções escritas estão abaixo.</p>
+      <div className="video-frame">
       <video
         src={src}
         poster={poster ?? undefined}
@@ -82,9 +84,10 @@ export function VideoPlayer({
         preload="metadata"
         onError={() => setFailed(true)}
       >
-        <track kind="captions" />
+        {/* The source has no caption track; never fabricate captions. */}
         Seu navegador não suporta vídeo. <a href={src}>Baixe o arquivo.</a>
       </video>
+      </div>
     </div>
   );
 }

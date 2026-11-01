@@ -1,4 +1,5 @@
 import { Suspense, lazy } from 'react';
+import { useI18n } from '@/i18n/context';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/auth';
@@ -75,6 +76,8 @@ function PageFallback() {
 }
 
 export default function App() {
+  // Subscribe so all route elements are recreated when the language changes.
+  useI18n();
   const initialize = useAuthStore((s) => s.initialize);
 
   useEffect(() => {

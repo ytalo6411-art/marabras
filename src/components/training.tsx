@@ -6,6 +6,11 @@
  * dia da semana → foco → exercícios → ação principal.
  */
 
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/auth';
+import { startSession } from '@/services/workoutSession';
+import { useToast } from './useToast';
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { IconChevronRight, IconClock, IconDumbbell, IconPlay, IconSparkles } from './icons';
@@ -94,6 +99,18 @@ export function PlanDayCard({
   emphasis?: boolean;
   compact?: boolean;
 }) {
+  const [starting,setStarting] = useState(false);
+  const [error,setError] = useState('');
+  const user = useAuthStore(s => s.user);
+  const navigate = useNavigate();
+  const toast = useToast();
+  async function start() {
+    if(!user || starting)return;
+    setStarting(true);setError('');
+    try { navigate(`/app/session/${await startSession(plan.id,user.id)}`); }
+    catch { setError('Não foi possível iniciar. Verifique os exercícios e a migração V10.');toast.show('Não foi possível iniciar a sessão.','error'); }
+    finally {setStarting(false);}
+  }
   return (
     <div className={`plan-day ${emphasis ? 'plan-day--next' : ''}`}>
       <div className="plan-day__head">
@@ -119,15 +136,16 @@ export function PlanDayCard({
       )}
 
       <div className="row row-wrap" style={{ gap: 8, marginTop: 'var(--sp-3)' }}>
-        <Link to={`/app/session/${plan.id}`} className="btn btn-primary btn-sm">
+        <button type="button" onClick={() => void start()} disabled={starting} className="btn btn-primary btn-sm">
           <IconPlay size={14} />
-          Iniciar
-        </Link>
+          {starting ? 'Preparando…' : 'Iniciar'}
+        </button>
         <Link to={`/app/workouts/${plan.id}`} className="btn btn-secondary btn-sm">
           <IconDumbbell size={14} />
           Ver treino
         </Link>
       </div>
+      {error && <p className="field-error" role="alert">{error}</p>}
     </div>
   );
 }

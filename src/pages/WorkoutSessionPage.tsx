@@ -1,544 +1,120 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { t } from '@/i18n/runtime';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
-import { Button, Card, Alert } from '@/components/ui';
+import { Alert, Button, Card, ConfirmDialog, SkeletonList } from '@/components/ui';
+import { IconCheck, IconChevronLeft, IconTimer } from '@/components/icons';
 import VideoPlayer from '@/components/VideoPlayer';
-import { IconChevronLeft, IconCheck, IconTimer, IconPlay, IconPause, IconX } from '@/components/icons';
-import { formatClock, formatDuration } from '@/utils/format';
-import type { WorkoutSession, WorkoutExercise, Exercise } from '@/types/database';
+import { formatClock, formatNumber } from '@/utils/format';
+import { completeSession, initialProgress, progressStorageKey, restoreProgress, saveSessionProgress, saveSet, sessionExercises, type SessionProgress, type SessionExercise } from '@/services/workoutSession';
+import type { WorkoutSession, WorkoutSet } from '@/types/database';
 
-/**
- * Exercício dentro de uma sessão em execução.
- *
- * Não estende `WorkoutExercise` porque aqui `sets` é a lista de séries
- * registradas (array), enquanto no plano é a quantidade de séries (number).
- */
-interface SessionExercise
-  extends Omit<WorkoutExercise, 'sets'> {
-  exercise: Exercise | null;
-  /** Séries registradas nesta sessão, indexadas por número da série. */
-  sets: { setNumber: number; reps: number | null; weight: number | null; done: boolean }[];
-}
-
-/**
- * Modo de execução do treino.
- *
- * Mostra o exercício atual, vídeo, série atual, carga, cronômetro de descanso
- * e o próximo exercício. Ao terminar, salva automaticamente os dados da sessão.
- *
- * O cronômetro usa timestamp absoluto como fonte de verdade — assim ele não
- * "perde" tempo quando a aba vai para segundo plano ou o navegador ajusta o
- * intervalo do `setInterval`.
- */
+type LocalSet = { reps: number | null; weight: number | null; done: boolean };
 export default function WorkoutSessionPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { id } = useParams<{id: string}>();
+  const user = useAuthStore(s => s.user);
   const toast = useToast();
-  const { user } = useAuthStore();
-
   const [session, setSession] = useState<WorkoutSession | null>(null);
-  const [exercises, setExercises] = useState<SessionExercise[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [currentSet, setCurrentSet] = useState(0);
+  const [items, setItems] = useState<SessionExercise[]>([]);
+  const [sets, setSets] = useState<Record<string, LocalSet>>({});
+  const [progress, setProgress] = useState<SessionProgress>(initialProgress);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [finished, setFinished] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [confirmExit, setConfirmExit] = useState(false);
+  const [now, setNow] = useState(()=>Date.now());
+  const revision = useRef(0);
+  const [syncAttempt,setSyncAttempt] = useState(0);
+  const key = (exercise: string, n: number) => `${exercise}:${n}`;
 
-  // Cronômetro de descanso: timestamp de término, não contador regressivo.
-  const [restUntil, setRestUntil] = useState<number | null>(null);
-  const [now, setNow] = useState(() => Date.now());
-  const [paused, setPaused] = useState(false);
-
-  const startRef = useRef<number>(Date.now());
-
-  // ── Carregamento ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!id || !user) return;
-
-    setLoading(true);
-    Promise.all([
-      supabase.from('workout_sessions').select('*').eq('id', id).maybeSingle(),
-      supabase.from('workout_exercises').select('*').eq('plan_id', '').eq('session_id', id),
-    ])
-      .then(async ([sessionRes]) => {
-        if (!sessionRes.data) return;
-        setSession(sessionRes.data);
-        startRef.current = sessionRes.data.started_at
-          ? new Date(sessionRes.data.started_at).getTime()
-          : Date.now();
-
-        // Busca os exercícios do plano vinculado.
-        const planId = sessionRes.data.plan_id;
-        if (!planId) return;
-
-        const { data: planItems } = await supabase
-          .from('workout_exercises')
-          .select('*')
-          .eq('plan_id', planId)
-          .order('position');
-
-        const exerciseIds = (planItems ?? []).map((i) => i.exercise_id);
-        const { data: exRows } = exerciseIds.length
-          ? await supabase.from('exercises').select('*').in('id', exerciseIds)
-          : { data: [] as Exercise[] };
-
-        const exMap = new Map((exRows ?? []).map((e) => [e.id, e]));
-
-        setExercises(
-          (planItems ?? []).map((item) => ({
-            ...item,
-            exercise: exMap.get(item.exercise_id) ?? null,
-            sets: Array.from({ length: item.sets }, (_, i) => ({
-              setNumber: i + 1,
-              reps: null,
-              weight: item.weight_kg,
-              done: false,
-            })),
-          })),
-        );
-      })
-      .finally(() => setLoading(false));
-  }, [id, user]);
-
-  // ── Cronômetro ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (restUntil === null) return;
-    const id2 = window.setInterval(() => setNow(Date.now()), 250);
-    return () => window.clearInterval(id2);
-  }, [restUntil]);
-
-  // Avisa quando o descanso termina.
-  useEffect(() => {
-    if (restUntil !== null && now >= restUntil && !paused) {
-      setRestUntil(null);
-      toast.show('Descanso encerrado. Vamos lá!', 'success');
-      if ('vibrate' in navigator) navigator.vibrate?.(120);
-    }
-  }, [now, restUntil, paused, toast]);
-
-  const current = exercises[currentIndex];
-  const restRemaining = restUntil !== null ? Math.max(0, Math.ceil((restUntil - now) / 1000)) : 0;
-
-  // ── Ações ───────────────────────────────────────────────────────────────
-  const updateSet = useCallback(
-    (exerciseIndex: number, setIndex: number, patch: Partial<SessionExercise['sets'][number]>) => {
-      setExercises((prev) =>
-        prev.map((ex, i) =>
-          i !== exerciseIndex
-            ? ex
-            : { ...ex, sets: ex.sets.map((s, j) => (j === setIndex ? { ...s, ...patch } : s)) },
-        ),
-      );
-    },
-    [],
-  );
-
-  async function completeSet() {
-    if (!current) return;
-
-    const set = current.sets[currentSet];
-    if (!set) return;
-
-    updateSet(currentIndex, currentSet, { done: !set.done });
-
-    // Grava a série no banco (upsert por session+exercise+set_number).
-    if (!set.done && id) {
+    let active = true;
+    setLoading(true); setError('');
+    void (async () => {
       try {
-        await supabase.from('workout_sets').upsert(
-          {
-            session_id: id,
-            exercise_id: current.exercise_id,
-            set_number: set.setNumber,
-            reps: set.reps ?? parseInt(current.reps, 10) ?? null,
-            weight_kg: set.weight,
-            completed: true,
-          },
-          { onConflict: 'session_id,exercise_id,set_number' },
-        );
-      } catch {
-        // Falha no save da série não impede continuar o treino.
-      }
-    }
-
-    const allDone = current.sets.every((s, j) => (j === currentSet ? !set.done : s.done));
-    if (allDone) {
-      // Avança para o próximo exercício.
-      if (currentIndex < exercises.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-        setCurrentSet(0);
-        const nextRest = exercises[currentIndex + 1]?.rest_seconds ?? 60;
-        setRestUntil(Date.now() + nextRest * 1000);
-        setNow(Date.now());
-      } else {
-        await finishSession();
-      }
-    } else {
-      // Avança para a próxima série.
-      const nextIndex = current.sets.findIndex((s, j) => j > currentSet && !s.done);
-      if (nextIndex !== -1) {
-        setCurrentSet(nextIndex);
-        const nextRest = current.rest_seconds ?? 60;
-        setRestUntil(Date.now() + nextRest * 1000);
-        setNow(Date.now());
-      }
-    }
-  }
-
-  async function finishSession() {
-    if (!id || !session) return;
-    setSaving(true);
-
-    try {
-      const duration = Math.round((Date.now() - startRef.current) / 1000);
-
-      // Volume total = soma de (reps × carga) das séries concluídas.
-      const volume = exercises.reduce((sum, ex) => {
-        return (
-          sum +
-          ex.sets
-            .filter((s) => s.done)
-            .reduce((sSum, s) => sSum + (s.reps ?? 0) * (s.weight ?? 0), 0)
-        );
-      }, 0);
-
-      await supabase
-        .from('workout_sessions')
-        .update({
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          duration_seconds: duration,
-          total_volume_kg: Math.round(volume * 100) / 100,
-        })
-        .eq('id', id);
-
-      // Registra o histórico por exercício e atualiza recordes pessoais.
-      for (const ex of exercises) {
-        const completed = ex.sets.filter((s) => s.done);
-        if (completed.length === 0) continue;
-
-        const bestWeight = Math.max(...completed.map((s) => s.weight ?? 0));
-        const exVolume = completed.reduce((s, x) => s + (x.reps ?? 0) * (x.weight ?? 0), 0);
-
-        await supabase.from('exercise_history').insert({
-          user_id: user!.id,
-          exercise_id: ex.exercise_id,
-          session_id: id,
-          best_weight_kg: bestWeight || null,
-          best_reps: Math.max(...completed.map((s) => s.reps ?? 0)) || null,
-          total_volume_kg: Math.round(exVolume * 100) / 100,
-        });
-
-        if (bestWeight > 0) {
-          // Só grava se for um novo recorde — caso contrário preserva o melhor.
-          const { data: existing } = await supabase
-            .from('personal_records')
-            .select('id, value')
-            .eq('user_id', user!.id)
-            .eq('exercise_id', ex.exercise_id)
-            .eq('record_type', 'weight')
-            .maybeSingle();
-
-          if (!existing) {
-            await supabase.from('personal_records').insert({
-              user_id: user!.id,
-              exercise_id: ex.exercise_id,
-              record_type: 'weight',
-              value: bestWeight,
-              unit: 'kg',
-              session_id: id,
-            });
-          } else if (bestWeight > existing.value) {
-            await supabase
-              .from('personal_records')
-              .update({
-                value: bestWeight,
-                achieved_at: new Date().toISOString(),
-                session_id: id,
-              })
-              .eq('id', existing.id);
-          }
+        const {data: row, error: e} = await supabase.from('workout_sessions').select('*').eq('id',id).eq('user_id',user.id).maybeSingle();
+        if (e) throw e;
+        if (!row) throw new Error('Sessão não encontrada ou não pertence à sua conta.');
+        let plan: SessionExercise[] = [];
+        if (row.plan_id) {
+          const {data, error: pe} = await supabase.from('workout_exercises').select('*, exercise:exercises(*)').eq('plan_id',row.plan_id).order('position');
+          if (pe) throw pe;
+          plan = (data ?? []) as SessionExercise[];
         }
-      }
+        const exercises = sessionExercises(row.exercise_snapshot,plan);
+        if (!exercises.length) throw new Error('Esta sessão não contém exercícios válidos.');
+        const {data: records,error: se} = await supabase.from('workout_sets').select('*').eq('session_id',id);
+        if (se) throw se;
+        const restored: Record<string,LocalSet> = {};
+        for (const item of exercises) for(let n=1;n<=item.sets;n++) {
+          const saved = records?.find(r => r.exercise_id === item.exercise_id && r.set_number === n);
+          restored[key(item.exercise_id,n)] = {reps: saved?.reps ?? null,weight: saved?.weight_kg ?? item.weight_kg,done: saved?.completed ?? false};
+        }
+        const p = restoreProgress(JSON.stringify(row.client_state ?? {}),exercises.length);
+        if (active) {setSession(row);setItems(exercises);setSets(restored);setProgress(p);setLoading(false);}
+      } catch { if(active) {setError('Não foi possível carregar a sessão. Verifique a conexão e se a migração V10 foi aplicada.');setLoading(false);} }
+    })();
+    return () => {active=false;};
+  },[id,user]);
 
-      setFinished(true);
-      toast.show('Treino concluído e salvo!', 'success');
-    } catch {
-      toast.show('Houve um problema ao salvar. Tente novamente.', 'error');
-    } finally {
-      setSaving(false);
-    }
+  useEffect(() => {
+    if (!id || !user || loading || session?.status !== 'in_progress') return;
+    try {localStorage.setItem(progressStorageKey(user.id,id),JSON.stringify(progress));} catch { /* Nonessential mirror. */ }
+    let retry: number | undefined;
+    const timer = window.setTimeout(() => {void saveSessionProgress(id,user.id,progress).then(()=>setError(previous=>previous.startsWith('Progresso salvo')?'':previous)).catch(() => {setError('Progresso salvo neste dispositivo; a sincronização será tentada novamente.');retry=window.setTimeout(()=>setSyncAttempt(n=>n+1),5000);});},350);
+    return () => {clearTimeout(timer);if(retry)clearTimeout(retry);};
+  },[progress,id,user,loading,session?.status,syncAttempt]);
+  useEffect(() => {const timer=setInterval(() => setNow(Date.now()),500);return () => clearInterval(timer);},[]);
+  const current = items[Math.min(progress.current,items.length-1)];
+  const remaining = progress.restUntil === null ? 0 : progress.paused ? progress.remaining : Math.max(0,Math.ceil((progress.restUntil-now)/1000));
+  const completed = Object.values(sets).filter(s => s.done && (s.reps ?? 0)>0);
+  const volume = completed.reduce((sum,s) => sum+(s.reps ?? 0)*(s.weight ?? 0),0);
+  const update = (n:number,patch:Partial<LocalSet>) => {revision.current++;if(current)setSets(s => ({...s,[key(current.exercise_id,n)]:{...s[key(current.exercise_id,n)]!,...patch}}));};
+  const navigate = (index:number) => setProgress(p => ({...p,current:Math.max(0,Math.min(items.length-1,index))}));
+  const startRest = () => {const seconds=current?.rest_seconds ?? 90;setNow(Date.now());setProgress(p => ({...p,paused:false,remaining:seconds,restUntil:Date.now()+seconds*1000}));};
+  function togglePause() {setProgress(p => p.paused ? {...p,paused:false,restUntil:Date.now()+p.remaining*1000} : {...p,paused:true,remaining:Math.max(0,Math.ceil(((p.restUntil ?? Date.now())-Date.now())/1000)),restUntil:null});}
+  async function record(n:number) {
+    if(!current || !id || busy) return;
+    const set = sets[key(current.exercise_id,n)];
+    if(!set) return;
+    const reps=set.reps ?? parseInt(current.reps,10);
+    if(!set.done && (!Number.isInteger(reps) || reps<1 || reps>1000 || (set.weight !== null && (!Number.isFinite(set.weight) || set.weight<0)))) {setError('Informe de 1 a 1000 repetições e uma carga válida antes de concluir.');return;}
+    setBusy(true);setError('');const token=revision.current;
+    try {
+      const payload: Omit<WorkoutSet,'id'|'created_at'> & {id?:string} = {session_id:id,exercise_id:current.exercise_id,set_number:n,reps:Number.isFinite(reps)?reps:null,weight_kg:set.weight,duration_seconds:current.duration_seconds,rir:null,completed:!set.done};
+      await saveSet(payload);
+      if(token===revision.current) update(n,{done:!set.done,reps:payload.reps});
+      if(!set.done) startRest();
+      toast.show(set.done?'Série desmarcada e salva.':'Série salva. Bom descanso!','success');
+    } catch {setError('A série não foi salva. Sua edição foi mantida; tente novamente.');}
+    finally {setBusy(false);}
   }
-
-  if (loading) {
-    return (
+  async function finish() {
+    if(!id || !completed.length || busy) return;
+    setBusy(true);setError('');
+    try {await saveSessionProgress(id,user!.id,progress);const result=await completeSession(id);setSession(result);toast.show('Treino concluído e salvo!','success');}
+    catch {setError('Não foi possível concluir. As séries continuam salvas. Aplique a migração V10 se necessário e tente novamente.');}
+    finally {setBusy(false);}
+  }
+  if(loading)return <SkeletonList count={3} height={150}/>;
+  if(!session || !items.length || !current)return <><Alert variant="error">{error || 'Sessão indisponível.'}</Alert><Link className="btn btn-secondary" to="/app/workouts">Voltar aos treinos</Link></>;
+  if(session.status==='completed')return <Card className="session-summary"><span className="eyebrow">SESSÃO SALVA</span><h1 className="page-title">Treino concluído!</h1><p className="text-muted">Seu histórico foi atualizado com as séries que você concluiu e salvou.</p><div className="metric-grid"><div><strong>{completed.length}</strong><span>séries concluídas</span></div><div><strong>{formatClock(session.duration_seconds ?? 0)}</strong><span>tempo total</span></div><div><strong>{formatNumber(session.total_volume_kg)} kg</strong><span>volume com carga</span></div></div><div className="row row-wrap"><Link className="btn btn-primary" to="/app">Ir para o painel</Link><Link className="btn btn-secondary" to="/app/progress">Ver evolução</Link></div></Card>;
+  return <div className="stack stack-4">
+    <div className="row-between"><div><span className="eyebrow">Exercício {progress.current+1} de {items.length}</span><h1 className="page-title">{t(current.exercise?.name ?? '')}</h1></div><Button variant="ghost" onClick={()=>setConfirmExit(true)}>Sair</Button></div>
+    {error && <Alert variant="error">{error}</Alert>}
+    <div className="session-grid">
+      <div className="stack stack-4"><VideoPlayer src={current.exercise?.video_url} poster={current.exercise?.thumbnail_url ?? current.exercise?.image_url} title={t(current.exercise?.name ?? 'Exercício')}/><Card><h2 className="card-title">Como executar</h2><p className="text-muted" style={{whiteSpace:'pre-line'}}>{t(current.exercise?.instructions || 'Consulte a ficha do exercício antes de executar.')}</p><Link to={`/app/exercises/${current.exercise_id}`} className="text-sm">Ver músculos, equipamentos e alternativas</Link></Card></div>
       <div className="stack stack-4">
-        <div className="skeleton" style={{ height: 240, borderRadius: 'var(--r-lg)' }} />
-        <div className="skeleton" style={{ height: 120, borderRadius: 'var(--r-lg)' }} />
+        <Card className="rest-card"><div className="row-between"><span className="row"><IconTimer size={20}/>Descanso</span><strong className="mono" role="timer" aria-label="Tempo de descanso">{formatClock(remaining)}</strong></div><div className="row row-wrap"><Button variant="secondary" onClick={progress.restUntil || progress.paused?togglePause:startRest}>{progress.paused?'Retomar':progress.restUntil?'Pausar':'Iniciar descanso'}</Button><Button variant="ghost" onClick={()=>setProgress(p=>({...p,restUntil:null,paused:false,remaining:0}))}>Pular descanso</Button></div></Card>
+        <Card><div className="card-header"><h2 className="card-title">Suas séries</h2><span className="badge">{current.sets} × {current.reps}</span></div><p className="text-sm text-muted">Registre o que realizou. A carga é opcional para exercícios com peso do corpo.</p><div className="stack stack-3">{Array.from({length:current.sets},(_,i)=>i+1).map(n=>{const s=sets[key(current.exercise_id,n)];return <div className="set-row" key={n}><strong aria-label={`Série ${n}`}>{n}</strong><label>Repetições<input aria-label={`Repetições da série ${n}`} type="number" min={1} max={1000} inputMode="numeric" value={s?.reps ?? ''} placeholder={current.reps} disabled={busy || s?.done} onChange={e=>update(n,{reps:e.target.value===''?null:Number(e.target.value)})}/></label><label>Carga (kg)<input aria-label={`Carga da série ${n}`} type="number" min={0} step={0.5} inputMode="decimal" value={s?.weight ?? ''} placeholder="0" disabled={busy || s?.done} onChange={e=>update(n,{weight:e.target.value===''?null:Number(e.target.value)})}/></label><Button variant={s?.done?'secondary':'primary'} loading={busy} onClick={()=>void record(n)} aria-label={`${s?.done?'Desmarcar':'Concluir'} série ${n}`}><IconCheck size={18}/><span>{s?.done?'Feita':'Concluir'}</span></Button></div>;})}</div></Card>
+        <div className="row-between"><Button variant="secondary" disabled={progress.current===0} onClick={()=>navigate(progress.current-1)}><IconChevronLeft size={16}/>Anterior</Button><Button variant="secondary" disabled={progress.current===items.length-1} onClick={()=>navigate(progress.current+1)}>Próximo</Button></div>
+        <Card><span className="eyebrow">A SEGUIR</span><strong>{t(items[progress.current+1]?.exercise?.name ?? '').trim() || 'Último exercício — revise suas séries'}</strong></Card>
+        <p className="text-sm text-muted">{completed.length} séries salvas · {formatNumber(volume)} kg de volume</p><Button block size="lg" disabled={!completed.length} loading={busy} onClick={()=>void finish()}>Encerrar e salvar</Button>{!completed.length&&<p className="field-hint">Conclua pelo menos uma série para encerrar. Iniciar o treino não conta como conclusão.</p>}
       </div>
-    );
-  }
-
-  if (!session || exercises.length === 0) {
-    return (
-      <>
-        <Alert variant="warning">
-          Esta sessão não tem exercícios registrados. Abra um plano de treino para começar.
-        </Alert>
-        <Link to="/app/workouts" className="btn btn-secondary" style={{ marginTop: 16 }}>
-          <IconChevronLeft size={16} />
-          Voltar aos treinos
-        </Link>
-      </>
-    );
-  }
-
-  if (finished) {
-    return (
-      <>
-        <Card>
-          <div className="center" style={{ padding: 'var(--sp-6) 0' }}>
-            <div style={{ fontSize: '3rem', marginBottom: 'var(--sp-3)' }} aria-hidden="true">
-              🎉
-            </div>
-            <h1 className="page-title">Treino concluído!</h1>
-            <p className="page-subtitle">
-              Seus dados foram salvos automaticamente e os recordes foram atualizados.
-            </p>
-            <div className="row" style={{ justifyContent: 'center' }}>
-              <Button variant="primary" onClick={() => navigate('/app')}>
-                Ir para o painel
-              </Button>
-              <Button variant="secondary" onClick={() => navigate('/app/progress')}>
-                Ver evolução
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </>
-    );
-  }
-
-  const set = current?.sets[currentSet];
-
-  return (
-    <>
-      {/* Progresso */}
-      <div className="row-between" style={{ marginBottom: 'var(--sp-4)' }}>
-        <div>
-          <div className="eyebrow">
-            Exercício {currentIndex + 1} de {exercises.length}
-          </div>
-          <h1 className="page-title" style={{ marginBottom: 0 }}>
-            {current?.exercise?.name ?? 'Exercício'}
-          </h1>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={async () => {
-            if (confirm('Encerrar a sessão sem salvar?')) {
-              await supabase
-                .from('workout_sessions')
-                .update({ status: 'skipped' })
-                .eq('id', id!);
-              navigate('/app/workouts');
-            }
-          }}
-          aria-label="Encerrar sessão"
-        >
-          <IconX size={18} />
-        </Button>
-      </div>
-
-      <div className="grid-2" style={{ alignItems: 'start' }}>
-        {/* Vídeo e instruções */}
-        <div className="stack stack-4">
-          <div>
-            <VideoPlayer
-              src={current?.exercise?.video_url}
-              poster={current?.exercise?.thumbnail_url ?? current?.exercise?.image_url}
-              title={current?.exercise?.name ?? 'Exercício'}
-            />
-          </div>
-
-          {current?.exercise?.instructions && (
-            <Card>
-              <h2 className="card-title" style={{ marginBottom: 'var(--sp-2)' }}>
-                Como executar
-              </h2>
-              <p className="text-sm text-muted" style={{ whiteSpace: 'pre-line' }}>
-                {current.exercise.instructions}
-              </p>
-            </Card>
-          )}
-        </div>
-
-        {/* Controle */}
-        <div className="stack stack-4">
-          {/* Cronômetro de descanso */}
-          {restUntil !== null && (
-            <Card
-              style={{
-                borderColor: 'var(--accent)',
-                background: 'var(--accent-soft)',
-              }}
-            >
-              <div className="row-between">
-                <div className="row">
-                  <IconTimer size={22} />
-                  <div>
-                    <div className="text-sm" style={{ fontWeight: 700 }}>
-                      Descanso
-                    </div>
-                    <div className="text-xs text-muted">
-                      {paused ? 'pausado' : 'prepare-se para a próxima série'}
-                    </div>
-                  </div>
-                </div>
-                <div className="mono" style={{ fontSize: '1.8rem', fontWeight: 800 }}>
-                  {formatClock(restRemaining)}
-                </div>
-              </div>
-              <div className="row" style={{ marginTop: 'var(--sp-3)' }}>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setPaused((p) => !p)}
-                  aria-label={paused ? 'Retomar descanso' : 'Pausar descanso'}
-                >
-                  {paused ? <IconPlay size={15} /> : <IconPause size={15} />}
-                  {paused ? 'Retomar' : 'Pausar'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setRestUntil(null)}
-                >
-                  Pular
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          {/* Série atual */}
-          <Card>
-            <div className="card-header">
-              <h2 className="card-title">
-                Série {currentSet + 1} de {current?.sets.length}
-              </h2>
-              <span className="badge">{current?.reps} reps</span>
-            </div>
-
-            <div className="stack stack-3">
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 'var(--sp-3)',
-                }}
-              >
-                <label>
-                  <span className="field-hint" style={{ display: 'block', marginBottom: 4 }}>
-                    Repetições
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={1000}
-                    value={set?.reps ?? ''}
-                    placeholder={current?.reps ?? '10'}
-                    onChange={(e) =>
-                      updateSet(currentIndex, currentSet, {
-                        reps: e.target.value === '' ? null : Number(e.target.value),
-                      })
-                    }
-                    style={{ width: '100%' }}
-                  />
-                </label>
-
-                <label>
-                  <span className="field-hint" style={{ display: 'block', marginBottom: 4 }}>
-                    Carga (kg)
-                  </span>
-                  <input
-                    type="number"
-                    step={0.5}
-                    min={0}
-                    value={set?.weight ?? ''}
-                    placeholder={String(current?.weight_kg ?? '0')}
-                    onChange={(e) =>
-                      updateSet(currentIndex, currentSet, {
-                        weight: e.target.value === '' ? null : Number(e.target.value),
-                      })
-                    }
-                    style={{ width: '100%' }}
-                  />
-                </label>
-              </div>
-
-              <Button variant="primary" size="lg" block onClick={completeSet}>
-                <IconCheck size={18} />
-                {set?.done ? 'Desmarcar série' : 'Concluir série'}
-              </Button>
-
-              {/* Lista de séries do exercício */}
-              <div className="row row-wrap" style={{ gap: 6 }}>
-                {current?.sets.map((s, i) => (
-                  <button
-                    key={s.setNumber}
-                    type="button"
-                    className="chip"
-                    aria-pressed={i === currentSet}
-                    onClick={() => setCurrentSet(i)}
-                    style={
-                      s.done
-                        ? { borderColor: 'var(--success)', color: 'var(--success)' }
-                        : undefined
-                    }
-                  >
-                    {s.setNumber}
-                    {s.done ? ' ✓' : ''}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </Card>
-
-          {/* Próximo */}
-          {(() => {
-            const next = exercises[currentIndex + 1];
-            if (!next) return null;
-            return (
-              <Card>
-                <div className="text-xs text-muted" style={{ marginBottom: 4 }}>
-                  A SEGUIR
-                </div>
-                <div className="row-between">
-                  <strong>{next.exercise?.name ?? 'Próximo exercício'}</strong>
-                  <span className="badge">{next.sets.length} séries</span>
-                </div>
-              </Card>
-            );
-          })()}
-
-          {/* Progresso da sessão */}
-          <div className="row-between text-sm text-muted">
-            <span>
-              Tempo: {formatDuration(Math.round((Date.now() - startRef.current) / 1000))}
-            </span>
-            <span>
-              {exercises.filter((e) => e.sets.every((s) => s.done)).length}/{exercises.length}{' '}
-              exercícios
-            </span>
-          </div>
-
-          <Button variant="secondary" block onClick={finishSession} loading={saving}>
-            Encerrar e salvar
-          </Button>
-        </div>
-      </div>
-    </>
-  );
+    </div>
+    <ConfirmDialog open={confirmExit} title="Sair da sessão?" message="As séries já salvas serão mantidas. Você poderá retomar este treino depois." confirmLabel="Salvar posição e sair" onConfirm={()=>{void saveSessionProgress(session.id,user!.id,progress).then(()=>{window.location.assign('/app/workouts');}).catch(()=>setError('Não foi possível sincronizar. Tente sair novamente.'));}} onCancel={()=>setConfirmExit(false)}/>
+  </div>;
 }
