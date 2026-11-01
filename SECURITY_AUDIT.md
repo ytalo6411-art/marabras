@@ -32,6 +32,7 @@ Local (isolated, non-destructive):
 - `npm run test:i18n` — **648 strings** covered.
 - `npm run test:browser` — **3 passed** (login/i18n/overflow, authenticated shell/meal, workout set persistence/rest).
 - `npm run build` — PASS; PWA **46 precache entries (1017.24 KiB)**; no inline scripts in `dist/index.html`; SW navigation fallback excludes `/api/`.
+- GitHub Actions CI — **PASS** on Node 22.13 (run `41314907762`). Node engine is now `>=22.13.0` because Supabase realtime-js needs native WebSocket in the client-hardening security tests; Vercel builds on Node 26.
 
 Live Supabase (read-only preflight, then transactional migrations):
 
@@ -51,7 +52,7 @@ These are **not** silently ignored; they need dashboard/credentials beyond this 
 2. **Redirect allowlist**: review/remove unused legacy domains (`marabas.vercel.app`, `projeto-maramba.vercel.app`) and localhost entries for production if not needed.
 3. **AI provider**: `AI_API_KEY` is not set in Vercel, so `/api/ai/*` returns 503 and the app uses the deterministic generator. To enable, set server-side `AI_API_KEY`, optional `AI_BASE_URL` (allowlisted HTTPS hosts only) and `AI_MODEL`. Configure provider-side spend alerts; DB quotas cap per-user usage but are not a billing alert.
 4. **Google OAuth**: provider is disabled in Supabase; the UI button remains but the service returns a comprehensible error instead of redirecting. Enable/configure the provider if the button should succeed.
-5. **Vercel deployment**: frontend/API/CSP changes require a new deployment to take effect (DB hardening is already live).
+5. **Vercel deployment**: a **private preview** is READY (`dpl_FPEXYvvDYGkhFX7mdDagquwFZ7GJ`, commit `bdf9257`, SSO-protected; not end-to-end tested from this sandbox). **Production is unchanged** (`dpl_6geU419BmYTUBg2UfsYVwX4Xo6eB` @ `5bdfae9`). Merge PR #7 and promote/deploy to production for the frontend/API/CSP fixes to take effect; DB hardening is already live.
 
 ## 5. Recommended next steps
 
