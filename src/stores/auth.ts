@@ -28,6 +28,14 @@ interface AuthState {
   unreadCount: number;
   /** true enquanto a sessão inicial está sendo resolvida. */
   initializing: boolean;
+  /**
+   * true depois que o papel (admin) foi consultado no banco.
+   *
+   * A sessão resolve antes do perfil: sem este flag, abrir /app/admin por link
+   * direto redirecionava o admin para o painel, porque `isAdmin` ainda era
+   * false quando a rota era avaliada.
+   */
+  roleResolved: boolean;
   /** true durante uma ação de login (evita duplo submit). */
   loading: boolean;
   error: AuthError | null;
@@ -59,6 +67,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAdmin: false,
   unreadCount: 0,
   initializing: true,
+  roleResolved: false,
   loading: false,
   error: null,
   configured: isSupabaseConfigured,
@@ -73,7 +82,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
    */
   resetLocalSession: () => {
     clearPrivateUserData(); clearCatalogCache(); clearSchemaCapabilities(); clearAiSessionCache();
-    set({session:null,user:null,profile:null,preferences:null,isAdmin:false,unreadCount:0,profileError:null,error:null});
+    set({session:null,user:null,profile:null,preferences:null,isAdmin:false,roleResolved:false,unreadCount:0,profileError:null,error:null});
   },
 
   initialize: async () => {
@@ -114,7 +123,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   refreshProfile: async () => {
     set({ profileError: null });
     const user = get().user;
-    if (!user) return;
+    if (!user) {
+      set({ roleResolved: true });
+      return;
+    }
 
     try {
       const [profileRes, prefsRes, adminRes] = await Promise.all([
@@ -162,6 +174,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await get().refreshUnreadCount();
     } catch {
       set({ profileError: 'Não foi possível carregar seu perfil. Tente novamente.' });
+    } finally {
+      // Mesmo em erro a guarda precisa de uma resposta: falha fechada (isAdmin
+      // permanece false), mas sem prender a tela em carregamento infinito.
+      set({ roleResolved: true });
     }
   },
 
@@ -231,6 +247,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       profile: null,
       preferences: null,
       isAdmin: false,
+      roleResolved: false,
       unreadCount:0,
       profileError:null,
       error,

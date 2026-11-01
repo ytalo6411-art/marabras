@@ -241,5 +241,103 @@ await check(async()=>{
   await rejects(null,'select * from public.content_reports');
 });
 
-console.log(`PASS: ${assertions} security scenarios; two isolated users + anon; actual migrations, grants, cross-tenant IDs, public-row writes, admin boundaries, malicious JSON, quotas/replay across separate transactions, account deletion cascade, community privacy and anti-IDOR.`);
+// ─── Salvar treinos: bookmark privado, nunca um oráculo de privacidade ────────
+await check(async()=>{
+  await as(B,'insert into public.workout_saves(workout_id,user_id) values($1,$2)',[W1,B]);
+  // Só o próprio usuário vê o que salvou: o autor não descobre quem salvou.
+  assert.equal((await as(B,'select workout_id from public.workout_saves')).rows.length,1);
+  assert.equal((await as(A,'select workout_id from public.workout_saves')).rows.length,0);
+  await rejects(null,'select * from public.workout_saves');
+  // Salvar em nome de terceiro é recusado.
+  await rejects(B,'insert into public.workout_saves(workout_id,user_id) values($1,$2)',[W1,A]);
+  // O contador é do servidor: nem o dono do treino infla.
+  assert.equal((await as(A,'select save_count from public.shared_workouts where id=$1',[W1])).rows[0].save_count,1);
+  await rejects(A,'update public.shared_workouts set save_count=999 where id=$1',[W1]);
+  // B não apaga o save de A.
+  await as(A,'insert into public.workout_saves(workout_id,user_id) values($1,$2)',[W1,A]);
+  assert.equal((await as(B,'delete from public.workout_saves where user_id=$1',[A])).affectedRows,0);
+});
+
+await check(async()=>{
+  // Não é possível salvar treino que a RLS de leitura esconde: perfil privado.
+  await as(A,'update public.athlete_profiles set is_public=false where user_id=$1',[A]);
+  await rejects(B,'insert into public.workout_saves(workout_id,user_id) values($1,$2)',[W1,B]);
+  await as(A,'update public.athlete_profiles set is_public=true where user_id=$1',[A]);
+  // Bloqueio também impede salvar.
+  await as(B,'insert into public.athlete_blocks(blocker_id,blocked_id) values($1,$2)',[B,A]);
+  await rejects(B,'insert into public.workout_saves(workout_id,user_id) values($1,$2)',[W1,B]);
+  await as(B,'delete from public.athlete_blocks where blocker_id=$1 and blocked_id=$2',[B,A]);
+});
+
+// ─── Privacidade por tipo tem efeito no servidor, não só na UI ────────────────
+await check(async()=>{
+  // Desligar "treinos" esconde as publicações mesmo com perfil público.
+  await as(A,'update public.athlete_profiles set show_workouts=false where user_id=$1',[A]);
+  assert.equal((await as(B,'select id from public.shared_workouts where id=$1',[W1])).rows.length,0);
+  assert.equal((await as(A,'select id from public.shared_workouts where id=$1',[W1])).rows.length,1);
+  // E o servidor recusa nova publicação, não apenas o botão da interface.
+  await rejects(A,"insert into public.shared_workouts(user_id,title,snapshot) values($1,'sem permissão','{\"days\":[]}'::jsonb)",[A]);
+  await as(A,'update public.athlete_profiles set show_workouts=true where user_id=$1',[A]);
+  assert.equal((await as(B,'select id from public.shared_workouts where id=$1',[W1])).rows.length,1);
+  // Perfil privado também bloqueia publicação por fora da UI.
+  await as(A,'update public.athlete_profiles set is_public=false where user_id=$1',[A]);
+  await rejects(A,"insert into public.shared_workouts(user_id,title,snapshot) values($1,'privado','{\"days\":[]}'::jsonb)",[A]);
+  await as(A,'update public.athlete_profiles set is_public=true where user_id=$1',[A]);
+});
+
+// ─── Progresso público: opt-in e somente agregados ───────────────────────────
+await check(async()=>{
+  // Sem opt-in explícito, nada aparece — nem para quem sabe o id.
+  assert.equal((await as(B,'select * from public.athlete_public_progress where user_id=$1',[A])).rows.length,0);
+  await as(A,'update public.athlete_profiles set show_progress=true where user_id=$1',[A]);
+  const rows=(await as(B,'select * from public.athlete_public_progress where user_id=$1',[A])).rows;
+  assert.equal(rows.length,1);
+  assert.ok(rows[0].sessions_completed>=1,'contagem agregada deve refletir sessões concluídas');
+  // Nenhuma coluna sensível pode existir na view pública.
+  const cols=(await db.query("select column_name from information_schema.columns where table_name='athlete_public_progress'")).rows.map(r=>r.column_name);
+  for(const forbidden of ['weight_kg','total_volume_kg','notes','name','started_at','completed_at','plan_id','email','birth_date']){
+    assert.ok(!cols.includes(forbidden),`progresso público não pode expor ${forbidden}`);
+  }
+  // Desligar remove na hora; bloqueio corta nos dois sentidos.
+  await as(A,'update public.athlete_profiles set show_progress=false where user_id=$1',[A]);
+  assert.equal((await as(B,'select * from public.athlete_public_progress where user_id=$1',[A])).rows.length,0);
+  await as(A,'update public.athlete_profiles set show_progress=true where user_id=$1',[A]);
+  await as(B,'insert into public.athlete_blocks(blocker_id,blocked_id) values($1,$2)',[B,A]);
+  assert.equal((await as(B,'select * from public.athlete_public_progress where user_id=$1',[A])).rows.length,0);
+  await as(B,'delete from public.athlete_blocks where blocker_id=$1 and blocked_id=$2',[B,A]);
+  await rejects(null,'select * from public.athlete_public_progress');
+});
+
+// ─── Moderação: fila e resolução são exclusivas do admin ─────────────────────
+await check(async()=>{
+  // Quem denunciou não lê a fila nem muda o status da própria denúncia.
+  assert.equal((await as(B,'select * from public.admin_content_reports')).rows.length,0);
+  await rejects(B,"update public.content_reports set status='dismissed' where reporter_id=$1",[B]);
+  await rejects(B,"select public.resolve_content_report(id,'dismissed',false) from public.content_reports");
+  await rejects(null,'select * from public.admin_content_reports');
+
+  await db.query("insert into public.admin_users(user_id,role,active) values($1,'admin',true)",[A]);
+  const queue=(await as(A,'select * from public.admin_content_reports')).rows;
+  assert.ok(queue.length>=1,'admin deve ver a denúncia pendente');
+  assert.ok(queue.some(r=>r.workout_id===W1));
+
+  // Decisão inválida é recusada antes de gravar.
+  await rejects(A,'select public.resolve_content_report($1,$2,false)',[queue[0].id,'banana']);
+  const resolved=(await as(A,'select public.resolve_content_report($1,$2,$3)',[queue[0].id,'reviewed',true])).rows[0].resolve_content_report;
+  assert.equal(resolved,queue[0].id,'servidor confirma o id resolvido');
+  // Conteúdo derrubado fica invisível para terceiros, mas o autor ainda vê.
+  assert.equal((await as(B,'select id from public.shared_workouts where id=$1',[W1])).rows.length,0);
+  assert.equal((await as(A,'select id from public.shared_workouts where id=$1',[W1])).rows.length,1);
+  // A decisão deixa trilha de auditoria.
+  const audit=(await db.query("select metadata from public.audit_logs where action='resolve' and row_id=$1",[queue[0].id])).rows;
+  assert.equal(audit.length,1);
+  assert.equal(audit[0].metadata.decision,'reviewed');
+
+  await db.query('delete from public.admin_users where user_id=$1',[A]);
+  // Sem o papel, a fila volta a ficar invisível.
+  assert.equal((await as(A,'select * from public.admin_content_reports')).rows.length,0);
+  await as(A,'update public.shared_workouts set is_public=true where id=$1',[W1]);
+});
+
+console.log(`PASS: ${assertions} security scenarios; two isolated users + anon; actual migrations, grants, cross-tenant IDs, public-row writes, admin boundaries, malicious JSON, quotas/replay across separate transactions, account deletion cascade, community privacy, saves, per-type privacy, public progress aggregates, moderation queue and anti-IDOR.`);
 await db.close();

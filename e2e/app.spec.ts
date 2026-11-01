@@ -6,11 +6,12 @@ const sessionId='10000000-0000-4000-8000-000000000004';
 const exercise={id:exerciseId,name:'Agachamento livre',slug:'squat',primary_muscle:'quadriceps',secondary_muscles:['glutes'],equipment:['bodyweight'],difficulty:'beginner',instructions:'Pés firmes. Desça com controle.',is_active:true,source:'manual',alternatives:[]};
 const item={id:'item',plan_id:planId,exercise_id:exerciseId,position:0,sets:2,reps:'10',weight_kg:0,rest_seconds:90,duration_seconds:null,notes:null,exercise};
 async function fixture(page:Page){
- let nutritionProfile:unknown=null;let nutritionPlan:unknown=null;
+ let nutritionProfile:unknown=null;let nutritionPlan:unknown=null;let savesState=false;
  await page.addInitScript(({userId})=>{localStorage.setItem('athletix:locale','pt-BR');localStorage.setItem('sb-test-auth-token',JSON.stringify({access_token:'test-only',token_type:'bearer',expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,refresh_token:'test-only',user:{id:userId,aud:'authenticated',role:'authenticated',email:'test@example.invalid',app_metadata:{},user_metadata:{},created_at:new Date().toISOString()}}));},{userId});
  await page.route('https://test.supabase.co/**',async route=>{
   const req=route.request();const url=new URL(req.url());const table=url.pathname.split('/rest/v1/')[1];
   if(url.pathname.includes('/auth/'))return route.fulfill({json:url.pathname.endsWith('settings')?{external:{}}:{access_token:'test-only',token_type:'bearer',expires_in:3600,refresh_token:'test-only',user:{id:userId,aud:'authenticated',role:'authenticated',email:'test@example.invalid',app_metadata:{},user_metadata:{},created_at:new Date().toISOString()}}});
+  if(url.pathname.includes('/rest/v1/rpc/resolve_content_report'))return route.fulfill({json:req.postDataJSON().p_report_id});
   let body:unknown=[];
   if(table==='nutrition_profiles'&&['POST','PATCH'].includes(req.method())){const v=req.postDataJSON();nutritionProfile=Array.isArray(v)?v[0]:v;body=nutritionProfile;}
   if(table==='nutrition_plans'&&['POST','PATCH'].includes(req.method())){const v=req.postDataJSON();nutritionPlan=Array.isArray(v)?v[0]:v;body=nutritionPlan;}
@@ -28,6 +29,11 @@ async function fixture(page:Page){
   if(table==='athlete_directory')body=[{user_id:'other-user',handle:'marina',display_name:'Marina Souza',bio:'Corredora',goals:'10 km',avatar_url:null,show_workouts:true,show_progress:false}];
   if(table==='shared_workouts')body=[{id:'shared-1',user_id:'other-user',title:'Treino de força — iniciante',description:'Rotina de 3 dias',snapshot:{days:[{label:'A',name:'Corpo inteiro',exercises:[{name:'Agachamento livre',slug:'squat',sets:3,reps:'8–12',restSeconds:90,primaryMuscle:'quadriceps'}]}]},is_public:true,like_count:2,comment_count:1,created_at:new Date().toISOString()}];
   if(table==='workout_likes')body=[];
+  if(table==='workout_saves'&&req.method()==='POST')savesState=true;
+  if(table==='workout_saves'&&req.method()==='DELETE')savesState=false;
+  if(table==='workout_saves')body=req.method()==='POST'?[{workout_id:'shared-1',user_id:userId}]:req.method()==='DELETE'?[]:(savesState?[{workout_id:'shared-1',created_at:new Date().toISOString()}]:[]);
+  if(table==='athlete_public_progress')body=[{user_id:'other-user',sessions_completed:12,sessions_last_30d:4,athlete_since:'2026-01-01T00:00:00Z'}];
+  if(table==='admin_content_reports')body=[{id:'r1',reason:'spam',details:'Link de venda',status:'open',created_at:new Date().toISOString(),workout_id:'shared-1',reported_user_id:null,workout_title:'Treino de força — iniciante',workout_is_public:true,workout_author_id:'other-user',reporter_handle:'marina',reported_handle:'marina'}];
   if(table==='workout_comments')body=[{id:'c1',user_id:'other-user',body:'Boa rotina!',created_at:new Date().toISOString()}];
   if(table==='athlete_blocks')body=[];
   if(table==='content_reports')body=req.method()==='POST'?{id:'r1'}:[];
@@ -164,4 +170,76 @@ test('comunidade: busca de atletas e navegação inferior com 5 destinos', async
     expect(box!.width).toBeGreaterThanOrEqual(44);
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
+});
+
+test('comunidade: salvar treino, aba Salvos e perfil público do atleta', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await fixture(page);
+  await page.goto('/app/community');
+
+  // Salvar é uma ação real: o botão muda de estado após confirmação do servidor.
+  const save = page.getByRole('button', { name: 'Salvar treino' });
+  await expect(save).toBeVisible();
+  await save.click();
+  await expect(page.getByText('Treino salvo')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Remover dos salvos' })).toHaveAttribute('aria-pressed', 'true');
+
+  // A aba Salvos lista o treino guardado.
+  await page.getByRole('tab', { name: 'Salvos' }).click();
+  await expect(page.getByText('Treino de força — iniciante')).toBeVisible();
+
+  // Remover dos salvos esvazia a lista com estado vazio explicativo.
+  await page.getByRole('button', { name: 'Remover dos salvos' }).click();
+  await expect(page.getByRole('heading', { name: 'Nenhum treino salvo' })).toBeVisible();
+
+  // O resultado de busca leva a um perfil público de verdade.
+  await page.getByRole('tab', { name: 'Atletas' }).click();
+  await page.getByLabel('Buscar atletas').fill('marina');
+  await page.getByRole('link', { name: /Marina Souza/ }).click();
+  await expect(page.getByRole('heading', { name: 'Marina Souza' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Treinos publicados' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Denunciar atleta' })).toBeVisible();
+
+  expect(errors).toEqual([]);
+});
+
+test('comunidade: progresso público só aparece com opt-in e mostra apenas contagens', async ({ page }) => {
+  await fixture(page);
+  // O atleta da fixture tem show_progress:false — nada de consistência deve aparecer.
+  await page.goto('/app/community/atleta/marina');
+  await expect(page.getByRole('heading', { name: 'Marina Souza' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Consistência' })).toHaveCount(0);
+
+  // Com opt-in, aparecem só as contagens agregadas, nunca carga ou medidas.
+  await page.route('https://test.supabase.co/rest/v1/athlete_directory**', async (route) => {
+    await route.fulfill({ json: [{ user_id: 'other-user', handle: 'marina', display_name: 'Marina Souza', bio: 'Corredora', goals: '10 km', avatar_url: null, show_workouts: true, show_progress: true }] });
+  });
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Consistência' })).toBeVisible();
+  await expect(page.getByText('Treinos concluídos')).toBeVisible();
+  await expect(page.getByText('12', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Cargas, peso, medidas e dieta não são compartilhados/)).toBeVisible();
+});
+
+test('moderação: admin vê a fila e resolve com confirmação do servidor', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await fixture(page);
+  // O papel de admin vem do banco; a fixture responde como admin ativo.
+  await page.route('https://test.supabase.co/rest/v1/admin_users**', async (route) => {
+    await route.fulfill({ json: { user_id: userId, role: 'admin', active: true } });
+  });
+  await page.goto('/app/admin');
+  await page.getByRole('button', { name: 'Denúncias' }).click();
+
+  await expect(page.getByText('Link de venda')).toBeVisible();
+  await expect(page.getByText('Spam ou propaganda')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Aceitar e ocultar treino' }).click();
+  await expect(page.getByText('Denúncia aceita e conteúdo ocultado')).toBeVisible();
+  // Só sai da fila depois da confirmação: a fila fica vazia com estado explicativo.
+  await expect(page.getByRole('heading', { name: 'Nenhuma denúncia pendente' })).toBeVisible();
+
+  expect(errors).toEqual([]);
 });

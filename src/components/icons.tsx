@@ -370,3 +370,110 @@ export const IconLock = (p: IconProps) => (
     <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7" />
   </Base>
 );
+
+export const IconBookmark = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z" />
+  </Base>
+);
+
+export const IconBookmarkFilled = ({ size = 20, ...p }: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...p}
+  >
+    <path d="M6.5 4.5h11a1 1 0 0 1 1 1v14l-6.5-4-6.5 4v-14a1 1 0 0 1 1-1Z" />
+  </svg>
+);
+
+
+export const IconClipboard = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="5.5" y="4.5" width="13" height="16" rx="2" />
+    <path d="M9.5 4.5V3.8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.7" />
+    <path d="M9 10h6M9 14h4" />
+  </Base>
+);
+
+
+
+
+export const IconRuler = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="2.5" y="8.5" width="19" height="7" rx="1.5" />
+    <path d="M7 8.5v3M11 8.5v4M15 8.5v3M19 8.5v4" />
+  </Base>
+);
+
+export const IconWifiOff = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 8.5a15 15 0 0 1 6-3.2M15 5.4a15 15 0 0 1 6 3.1" />
+    <path d="M6.5 12.2a10 10 0 0 1 3-1.7M14.5 10.6a10 10 0 0 1 3 1.6" />
+    <path d="M9.8 15.7a5 5 0 0 1 4.4 0" />
+    <path d="M12 19h.01M3 3l18 18" />
+  </Base>
+);
+
+export const IconVideo = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="3" y="6" width="12.5" height="12" rx="2" />
+    <path d="M15.5 10.5 21 7.5v9l-5.5-3v-3Z" />
+  </Base>
+);
+
+export const IconCompass = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m15.2 8.8-2 4.4-4.4 2 2-4.4 4.4-2Z" />
+  </Base>
+);
+
+export const IconInbox = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3.5 13.5 6 5.5h12l2.5 8v5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-5Z" />
+    <path d="M3.5 13.5H9a3 3 0 0 0 6 0h5.5" />
+  </Base>
+);
+
+export const IconBuilding = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M5 20.5V4.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16" />
+    <path d="M15 9.5h3a1 1 0 0 1 1 1v10M3.5 20.5h17" />
+    <path d="M8 7.5h4M8 11h4M8 14.5h4" />
+  </Base>
+);
+
+
+export const IconTree = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 3.5 6.5 11h3L5.5 16.5h13L14.5 11h3L12 3.5Z" />
+    <path d="M12 16.5v4" />
+  </Base>
+);
+
+export const IconGrip = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="9" cy="6" r="1.2" fill="currentColor" />
+    <circle cx="15" cy="6" r="1.2" fill="currentColor" />
+    <circle cx="9" cy="12" r="1.2" fill="currentColor" />
+    <circle cx="15" cy="12" r="1.2" fill="currentColor" />
+    <circle cx="9" cy="18" r="1.2" fill="currentColor" />
+    <circle cx="15" cy="18" r="1.2" fill="currentColor" />
+  </Base>
+);
+
+export const IconAlert = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 4.5 21 19.5H3L12 4.5Z" />
+    <path d="M12 10v4M12 17h.01" />
+  </Base>
+);

@@ -2478,3 +2478,27 @@ label.row:has(input[type="checkbox"]) { min-height:44px; gap:10px; }
   color: var(--text-dim);
   pointer-events: none;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Comunidade: autoria e cards navegáveis
+   O link inteiro é o alvo de toque, com foco visível pelo :focus-visible global.
+   ───────────────────────────────────────────────────────────────────────────── */
+.community-author {
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--r-md, 10px);
+  min-height: 44px;
+}
+.community-author:hover strong { text-decoration: underline; }
+
+.community-athlete-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.community-athlete-card:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+.community-athlete-card:hover .card-title { text-decoration: underline; }

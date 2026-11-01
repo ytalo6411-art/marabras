@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { Card, SkeletonList, Alert, EmptyState } from '@/components/ui';
-import { IconShield, IconUsers, IconChart, IconDumbbell } from '@/components/icons';
+import { IconShield, IconUsers, IconChart, IconDumbbell, IconClipboard } from '@/components/icons';
+import { ModerationQueue } from '@/components/ModerationQueue';
 import { formatDate, formatNumber } from '@/utils/format';
 import type { Profile, AuditLog } from '@/types/database';
 
@@ -15,7 +16,7 @@ import type { Profile, AuditLog } from '@/types/database';
  */
 export default function AdminPage() {
   const { isAdmin } = useAuthStore();
-  const [tab, setTab] = useState<'overview' | 'users' | 'exercises' | 'audit'>('overview');
+  const [tab, setTab] = useState<'overview' | 'users' | 'exercises' | 'reports' | 'audit'>('overview');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     users: 0,
@@ -85,6 +86,9 @@ export default function AdminPage() {
         <button type="button" className="chip" aria-pressed={tab === 'exercises'} onClick={() => setTab('exercises')}>
           Exercícios
         </button>
+        <button type="button" className="chip" aria-pressed={tab === 'reports'} onClick={() => setTab('reports')}>
+          Denúncias
+        </button>
         <button type="button" className="chip" aria-pressed={tab === 'audit'} onClick={() => setTab('audit')}>
           Auditoria
         </button>
@@ -121,7 +125,7 @@ export default function AdminPage() {
         </div>
       ) : tab === 'users' ? (
         users.length === 0 ? (
-          <EmptyState icon="👥" title="Nenhum usuário" />
+          <EmptyState icon={<IconUsers size={28} />} title="Nenhum usuário" />
         ) : (
           <div className="table-wrap">
             <table className="data">
@@ -152,6 +156,8 @@ export default function AdminPage() {
             </table>
           </div>
         )
+      ) : tab === 'reports' ? (
+        <ModerationQueue />
       ) : tab === 'exercises' ? (
         <Card>
           <p className="text-sm text-muted">
@@ -160,7 +166,7 @@ export default function AdminPage() {
           </p>
         </Card>
       ) : audit.length === 0 ? (
-        <EmptyState icon="📋" title="Sem registros de auditoria" />
+        <EmptyState icon={<IconClipboard size={28} />} title="Sem registros de auditoria" />
       ) : (
         <div className="table-wrap">
           <table className="data">
