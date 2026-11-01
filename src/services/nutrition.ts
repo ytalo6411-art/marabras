@@ -7,7 +7,7 @@
  *    30 req/h sem key. Sem key, usamos a busca por substantem.
  *  • Open Food Facts — produtos industrializados, código de barras, marca,
  *    ingredientes e tabela nutricional. Licença ODbL, sem cadastro.
- *  • wger —gk exercises e tabela de nutrient templates.
+ *  • Catálogo USDA SR28 local — consultas sem chave e sem rede.
  *
  * Regra do projeto: nunca inventar valores nutricionais. Todo item
  * carrega `source` e `sourceUrl` identificando a origem real. Se a API
@@ -16,9 +16,9 @@
 
 import { supabase } from '@/lib/supabase';
 import type { FoodItem, SourceType } from '@/types/database';
+import { foodToResult } from '@/services/mealPlanning';
 
 const OPEN_FOOD_FACTS = import.meta.env.VITE_OPENFOODFACTS_BASE_URL || 'https://world.openfoodfacts.org';
-const USDA = import.meta.env.VITE_USDA_BASE_URL || 'https://api.nal.usda.gov/fdc';
 
 export interface NutritionResult {
   key: string;
@@ -31,9 +31,9 @@ export interface NutritionResult {
   proteinG: number;
   carbsG: number;
   fatG: number;
-  fiberG: number;
-  sugarG: number;
-  sodiumMg: number;
+  fiberG: number | null;
+  sugarG: number | null;
+  sodiumMg: number | null;
   vitamins: Record<string, number>;
   minerals: Record<string, number>;
   source: SourceType;
@@ -73,9 +73,9 @@ function fromDatabase(row: FoodItem): NutritionResult {
     proteinG: row.protein_g,
     carbsG: row.carbs_g,
     fatG: row.fat_g,
-    fiberG: row.fiber_g,
-    sugarG: row.sugar_g,
-    sodiumMg: row.sodium_mg,
+    fiberG: row.fiber_g ?? null,
+    sugarG: row.sugar_g ?? null,
+    sodiumMg: row.sodium_mg ?? null,
     vitamins: (row.vitamins ?? {}) as Record<string, number>,
     minerals: (row.minerals ?? {}) as Record<string, number>,
     source: row.source,
@@ -111,166 +111,20 @@ interface OFFProduct {
   url?: string;
 }
 
-function parseServingSize(product: OFFProduct): { grams: number; label?: string } {
-  if (product.serving_quantity && product.serving_quantity > 0) {
-    return {
-      grams: product.serving_quantity,
-      label: product.serving_size || `${product.serving_quantity} g`,
-    };
-  }
-  return { grams: 100 };
-}
-
-function fromOFF(product: OFFProduct): NutritionResult | null {
-  if (!product.product_name || !product.nutriments) return null;
-
-  const n = product.nutriments;
-  const serving = parseServingSize(product);
-
-  // O Open Food Facts pode informar os valores por 100 g ou por porção.
-  const per100g =
-    product.nutrition_data_per === '100g' ||
-    product.nutrition_data_per === '100 g' ||
-    n['energy-kcal_100g'] !== undefined
-      ? {
-          calories: n['energy-kcal_100g'] ?? 0,
-          protein: n.proteins_100g ?? 0,
-          carbs: n.carbohydrates_100g ?? 0,
-          fat: n.fat_100g ?? 0,
-        }
-      : {
-          // Valores são por porção — converte para 100 g.
-          calories: ((n['energy-kcal_100g'] ?? 0) / serving.grams) * 100,
-          protein: ((n.proteins_100g ?? 0) / serving.grams) * 100,
-          carbs: ((n.carbohydrates_100g ?? 0) / serving.grams) * 100,
-          fat: ((n.fat_100g ?? 0) / serving.grams) * 100,
-        };
-
-  const scaled = scaleToServing(per100g, serving.grams);
-
-  return {
-    key: `off-${product.code ?? product.product_name}`,
-    name: product.product_name,
-    brand: product.brands?.split(',')[0]?.trim(),
-    barcode: product.code,
-    servingSizeG: serving.grams,
-    servingLabel: serving.label,
-    calories: scaled.calories,
-    proteinG: scaled.proteinG,
-    carbsG: scaled.carbsG,
-    fatG: scaled.fatG,
-    fiberG: Math.round((n.fiber_100g ?? 0) * 10) / 10,
-    sugarG: Math.round((n.sugars_100g ?? 0) * 10) / 10,
-    sodiumMg: Math.round((n.sodium_100g ?? n.salt_100g ?? 0) * 10) / 10,
-    vitamins: {},
-    minerals: {},
-    source: 'open_food_facts',
-    sourceUrl: product.url ?? `https://world.openfoodfacts.org/product/${product.code}`,
-    inDatabase: false,
-  };
+export function fromOFF(product: OFFProduct): NutritionResult | null {
+  const n=product.nutriments;
+  if(product.nutrition_data_per && product.nutrition_data_per !== '100g') return null;
+  if(!product.product_name || !n || !Number.isFinite(n['energy-kcal_100g']) || !Number.isFinite(n.proteins_100g) || !Number.isFinite(n.carbohydrates_100g) || !Number.isFinite(n.fat_100g)) return null;
+  const grams=Number(product.serving_quantity)>0?Number(product.serving_quantity):100;
+  const scaled=scaleToServing({calories:n['energy-kcal_100g']!,protein:n.proteins_100g!,carbs:n.carbohydrates_100g!,fat:n.fat_100g!},grams);
+  const scale=(v:number|undefined,multiplier=1)=>typeof v==='number'&&Number.isFinite(v)?Math.round(v*grams/100*multiplier*100)/100:null;
+  return {key:`off-${product.code ?? product.product_name}`,name:product.product_name,brand:product.brands?.split(',')[0]?.trim(),barcode:product.code,servingSizeG:grams,servingLabel:product.serving_size ?? `${grams} g`,...scaled,fiberG:scale(n.fiber_100g),sugarG:scale(n.sugars_100g),sodiumMg:scale(n.sodium_100g ?? (n.salt_100g!==undefined?n.salt_100g*400:undefined),1000),vitamins:{},minerals:{},source:'open_food_facts',sourceUrl:product.url ?? `https://world.openfoodfacts.org/product/${product.code}`,inDatabase:false};
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
    USDA FoodData Central
    ───────────────────────────────────────────────────────────────────────────── */
 
-interface USDAFoodNutrient {
-  nutrientId: number;
-  nutrientName: string;
-  value: number;
-  unitName: string;
-}
-
-interface USDAFood {
-  fdcId: number;
-  description: string;
-  brandOwner?: string;
-  servingSize?: number;
-  servingSizeUnit?: string;
-  foodNutrients?: USDAFoodNutrient[];
-}
-
-const USDA_NUTRIENT_IDS = {
-  calories: 1008, // Energy (kcal)
-  protein: 1003, // Protein
-  carbs: 1005, // Carbohydrate
-  fat: 1004, // Total lipid (fat)
-  fiber: 1079, // Fiber, total dietary
-  sugar: 2000, // Total Sugars
-  sodium: 1093, // Sodium, Na
-} as const;
-
-function fromUSDA(food: USDAFood): NutritionResult | null {
-  const nutrients = food.foodNutrients ?? [];
-  if (nutrients.length === 0) return null;
-
-  const get = (id: number): number => {
-    const found = nutrients.find((n) => n.nutrientId === id);
-    return found ? Math.round(found.value * 10) / 10 : 0;
-  };
-
-  const servingG = food.servingSize && food.servingSize > 0 ? food.servingSize : 100;
-
-  // Os valores do USDA vêm por 100 g.
-  const per100g = {
-    calories: get(USDA_NUTRIENT_IDS.calories),
-    protein: get(USDA_NUTRIENT_IDS.protein),
-    carbs: get(USDA_NUTRIENT_IDS.carbs),
-    fat: get(USDA_NUTRIENT_IDS.fat),
-  };
-
-  const scaled = scaleToServing(per100g, servingG);
-
-  // Vitaminas e minerais: agrupa os nutrientes relevantes.
-  const vitamins: Record<string, number> = {};
-  const minerals: Record<string, number> = {};
-
-  const VITAMIN_IDS: Record<string, number> = {
-    'Vitamina A': 1106,
-    'Vitamina C': 1162,
-    'Vitamina D': 1114,
-    'Vitamina E': 1109,
-    'Vitamina K': 1185,
-    'Vitamina B12': 1178,
-  };
-  const MINERAL_IDS: Record<string, number> = {
-    Cálcio: 1087,
-    Ferro: 1089,
-    Magnésio: 1090,
-    Potássio: 1092,
-    Zinco: 1095,
-    Fósforo: 1091,
-  };
-
-  for (const [label, id] of Object.entries(VITAMIN_IDS)) {
-    const value = get(id);
-    if (value > 0) vitamins[label] = value;
-  }
-  for (const [label, id] of Object.entries(MINERAL_IDS)) {
-    const value = get(id);
-    if (value > 0) minerals[label] = value;
-  }
-
-  return {
-    key: `usda-${food.fdcId}`,
-    name: food.description,
-    brand: food.brandOwner,
-    servingSizeG: servingG,
-    servingLabel: `${servingG} g`,
-    calories: scaled.calories,
-    proteinG: scaled.proteinG,
-    carbsG: scaled.carbsG,
-    fatG: scaled.fatG,
-    fiberG: Math.round((get(USDA_NUTRIENT_IDS.fiber) / 100) * servingG * 10) / 10,
-    sugarG: Math.round((get(USDA_NUTRIENT_IDS.sugar) / 100) * servingG * 10) / 10,
-    sodiumMg: Math.round((get(USDA_NUTRIENT_IDS.sodium) / 100) * servingG * 10) / 10,
-    vitamins,
-    minerals,
-    source: 'usda',
-    sourceUrl: `https://fdc.nal.usda.gov/fdc-app.html#/food-details/${food.fdcId}/nutrients`,
-    inDatabase: false,
-  };
-}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Busca unificada
@@ -316,27 +170,18 @@ export async function searchFoods(
 
   if (results.length >= limit) return results.slice(0, limit);
 
-  // ── 2. Open Food Facts ──────────────────────────────────────────────────
+  // Verified ingredient matches work offline and do not depend on barcode access.
+  const { searchReferenceFoods } = await import('@/data/foodCatalog');
+  for (const food of searchReferenceFoods(query)) {
+    if (!results.some(r => r.key.endsWith(food.id))) results.push(foodToResult(food) as NutritionResult);
+  }
+  if (results.length >= limit) return results.slice(0, limit);
   if (query.trim()) {
-    try {
-      const offResults = await searchOpenFoodFacts(query, limit - results.length);
-      results.push(...offResults);
-    } catch {
-      // API indisponível — segue para o USDA.
-    }
+    const offResults = await searchOpenFoodFacts(query, limit-results.length);
+    results.push(...offResults);
   }
+  return results.slice(0,limit);
 
-  // ── 3. USDA ─────────────────────────────────────────────────────────────
-  if (results.length < limit && query.trim()) {
-    try {
-      const usdaResults = await searchUSDA(query, limit - results.length);
-      results.push(...usdaResults);
-    } catch {
-      // Sem USDA também.
-    }
-  }
-
-  return results.slice(0, limit);
 }
 
 /** Busca exata por código de barras (Open Food Facts). */
@@ -347,7 +192,7 @@ export async function lookupByBarcode(barcode: string): Promise<NutritionResult[
   try {
     const res = await fetch(
       `${OPEN_FOOD_FACTS}/api/v2/product/${clean}.json?fields=product_name,brands,serving_size,serving_quantity,nutriments,nutrition_data_per,code,url`,
-      { headers: { 'User-Agent': 'ATHLETIX/2.0 (open-source training app)' } },
+      { headers: { 'User-Agent': 'ATHLETIX/2.0 (open-source training app)' }, signal: AbortSignal.timeout(8000) },
     );
 
     if (!res.ok) return [];
@@ -374,7 +219,7 @@ async function searchOpenFoodFacts(
   url.searchParams.set('page_size', String(Math.min(limit, 20)));
   url.searchParams.set('fields', 'code,product_name,brands,serving_size,serving_quantity,nutriments,nutrition_data_per,url');
 
-  const res = await fetch(url.toString(), {
+  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(8000),
     headers: { 'User-Agent': 'ATHLETIX/2.0 (open-source training app)' },
   });
 
@@ -386,25 +231,6 @@ async function searchOpenFoodFacts(
     .filter((r): r is NutritionResult => r !== null);
 }
 
-async function searchUSDA(query: string, limit: number): Promise<NutritionResult[]> {
-  // A API key da USDA é opcional. Sem ela, usamos o endpoint de busca
-  // por substantem (que funciona sem key, com limite menor).
-  const apiKey = import.meta.env.VITE_USDA_API_KEY;
-
-  const url = new URL(`${USDA}/fdc/v1/foods/search`);
-  url.searchParams.set('query', query);
-  url.searchParams.set('pageSize', String(Math.min(limit, 25)));
-  url.searchParams.set('dataType', 'Foundation,SR Legacy,Survey (FNDDS),Branded');
-  if (apiKey) url.searchParams.set('api_key', apiKey);
-
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`USDA: HTTP ${res.status}`);
-
-  const data = (await res.json()) as { foods?: USDAFood[] };
-  return (data.foods ?? [])
-    .map(fromUSDA)
-    .filter((r): r is NutritionResult => r !== null);
-}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Item personalizado
@@ -446,9 +272,9 @@ export async function createCustomFood(
       protein_g: food.proteinG,
       carbs_g: food.carbsG,
       fat_g: food.fatG,
-      fiber_g: food.fiberG ?? 0,
-      sugar_g: food.sugarG ?? 0,
-      sodium_mg: food.sodiumMg ?? 0,
+      fiber_g: food.fiberG ?? null,
+      sugar_g: food.sugarG ?? null,
+      sodium_mg: food.sodiumMg ?? null,
     })
     .select()
     .single();
@@ -494,4 +320,15 @@ export async function importFood(result: NutritionResult): Promise<string | null
 
   if (error) throw error;
   return data.id;
+}
+/** Freeze the actual selected portion, all macros and provenance in one transaction. */
+export async function recordMeal(diaryId:string, mealType:string, items:{food: NutritionResult;grams:number}[]) {
+  if(items.some(i=>!Number.isFinite(i.grams)||i.grams<=0||i.grams>5000))throw new Error('Porção inválida.');
+  const entries=await Promise.all(items.map(async({food,grams})=>{
+    const id=await importFood(food);const factor=grams/food.servingSizeG;
+    const scale=(value:number|null)=>value===null?0:value*factor;
+    return {food_id:id,food_name:food.name,grams,calories:scale(food.calories),protein_g:scale(food.proteinG),carbs_g:scale(food.carbsG),fat_g:scale(food.fatG),source:food.source,metadata:{grams,sourceUrl:food.sourceUrl,servingSizeG:food.servingSizeG,fiberG:scale(food.fiberG),sugarG:scale(food.sugarG),sodiumMg:scale(food.sodiumMg),unknownNutrients:[food.fiberG===null&&'fiber',food.sugarG===null&&'sugar',food.sodiumMg===null&&'sodium'].filter(Boolean)}};
+  }));
+  const {data,error}=await supabase.rpc('add_meal_entries',{p_diary_id:diaryId,p_meal_type:mealType,p_entries:entries});
+  if(error)throw error;return data;
 }

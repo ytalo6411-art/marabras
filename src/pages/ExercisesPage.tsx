@@ -1,7 +1,8 @@
+import { t } from '@/i18n/runtime';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { searchExercises, getCategories, type ExerciseResult } from '@/services/exercises';
-import { Button, EmptyState, SkeletonList } from '@/components/ui';
+import { Button, EmptyState, SkeletonList, Field } from '@/components/ui';
 import { IconSearch, IconX } from '@/components/icons';
 import type { ExerciseCategory } from '@/types/database';
 
@@ -39,11 +40,14 @@ export default function ExercisesPage() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [muscle, setMuscle] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<string | null>(null);
+  const [equipment,setEquipment] = useState<string | null>(null);
+  const [retry,setRetry] = useState(0);
   const [categories, setCategories] = useState<ExerciseCategory[]>([]);
   const [results, setResults] = useState<ExerciseResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  const [hasMore,setHasMore] = useState(false);
 
   const PAGE_SIZE = 24;
 
@@ -55,6 +59,8 @@ export default function ExercisesPage() {
     }, 350);
     return () => window.clearTimeout(id);
   }, [query]);
+
+  useEffect(() => { setPage(0); }, [muscle, difficulty, equipment]);
 
   useEffect(() => {
     getCategories()
@@ -71,12 +77,14 @@ export default function ExercisesPage() {
       query: debouncedQuery,
       muscle: muscle ?? undefined,
       difficulty: difficulty ?? undefined,
+      equipment: equipment ?? undefined,
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,
     })
       .then((data) => {
         if (cancelled) return;
         setResults((prev) => (page === 0 ? data : [...prev, ...data]));
+        setHasMore(data.length === PAGE_SIZE);
       })
       .catch(() => {
         if (cancelled) return;
@@ -89,16 +97,18 @@ export default function ExercisesPage() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, muscle, difficulty, page]);
+  }, [debouncedQuery, muscle, difficulty, equipment, page, retry]);
 
   const activeFilters = useMemo(
-    () => [muscle, difficulty].filter(Boolean).length,
-    [muscle, difficulty],
+    () => [muscle, difficulty, equipment].filter(Boolean).length,
+    [muscle, difficulty, equipment],
   );
 
   function clearFilters() {
+    setPage(0);
     setMuscle(null);
     setDifficulty(null);
+    setEquipment(null);
     setQuery('');
   }
 
@@ -146,7 +156,8 @@ export default function ExercisesPage() {
           className="chip"
           aria-pressed={muscle === null}
           onClick={() => {
-            setMuscle(null);
+            setPage(0);
+    setMuscle(null);
             setPage(0);
           }}
         >
@@ -163,11 +174,12 @@ export default function ExercisesPage() {
               setPage(0);
             }}
           >
-            {c.name_pt}
+            {t(c.name_pt)}
           </button>
         ))}
       </div>
 
+      <Field label="Equipamento" htmlFor="equipment-filter"><select id="equipment-filter" value={equipment ?? ''} onChange={e=>setEquipment(e.target.value||null)}><option value="">Todos os equipamentos</option>{[['bodyweight','Peso corporal'],['barbell','Barra'],['dumbbell','Halteres'],['band','Elástico'],['machine','Máquina'],['cable','Polia'],['bench','Banco'],['pullup_bar','Barra de pull-up']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></Field>
       {/* Dificuldade */}
       <div className="chips" role="group" aria-label="Filtrar por dificuldade">
         <button
@@ -204,7 +216,7 @@ export default function ExercisesPage() {
 
       {error && (
         <div className="alert alert-error" role="alert">
-          <span>{error}</span>
+          <span>{error}</span><Button variant="secondary" onClick={()=>setRetry(v=>v+1)}>Tentar novamente</Button>
         </div>
       )}
 
@@ -229,14 +241,14 @@ export default function ExercisesPage() {
                 key={ex.key}
                 to={`/app/exercises/${ex.slug}`}
                 className="exercise-card"
-                aria-label={`Ver detalhes de ${ex.name}`}
+                aria-label={`Ver detalhes de ${t(ex.name)}`}
               >
                 <div className="exercise-card__thumb">
-                  {ex.thumbnailUrl ? (
+                  {(ex.thumbnailUrl || ex.imageUrl) ? (
                     <img
-                      src={ex.thumbnailUrl}
+                      src={ex.thumbnailUrl ?? ex.imageUrl}
                       alt=""
-                      loading="lazy"
+                      loading="lazy" width="320" height="180"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
@@ -246,7 +258,7 @@ export default function ExercisesPage() {
                   )}
                 </div>
                 <div className="exercise-card__body">
-                  <div className="exercise-card__name">{ex.name}</div>
+                  <div className="exercise-card__name">{t(ex.name)}</div>
                   <div className="row row-wrap" style={{ gap: 4 }}>
                     <span className="badge">{MUSCLE_LABELS[ex.primaryMuscle] ?? ex.primaryMuscle}</span>
                     {ex.videoUrl && <span className="badge badge-accent">vídeo</span>}
@@ -256,7 +268,7 @@ export default function ExercisesPage() {
             ))}
           </div>
 
-          {results.length >= PAGE_SIZE && (
+          {hasMore && (
             <div className="center" style={{ marginTop: 'var(--sp-5)' }}>
               <Button variant="secondary" onClick={() => setPage((p) => p + 1)} loading={loading}>
                 Carregar mais

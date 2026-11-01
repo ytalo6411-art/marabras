@@ -53,7 +53,7 @@ export function testCatalog(): CatalogExercise[] {
   }));
 }
 
-const BASE_PROFILE: PlanGenerationProfile = {
+export const BASE_PROFILE: PlanGenerationProfile = {
   level: 'beginner',
   goal: 'active_routine',
   secondaryGoals: [],

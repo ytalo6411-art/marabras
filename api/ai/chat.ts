@@ -41,7 +41,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   try {
     const completion = await completeJson(config, [
-      { role: 'system', content: CHAT_SYSTEM_PROMPT },
+      { role: 'system', content: `${CHAT_SYSTEM_PROMPT}\nIdioma obrigatório da resposta: ${parsed.data.locale}.` },
       {
         role: 'user',
         content: `Contexto do plano (JSON): ${JSON.stringify(parsed.data.context).slice(0, 6000)}

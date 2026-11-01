@@ -1,344 +1,70 @@
-import { useEffect, useState } from 'react';
+import { t } from '@/i18n/runtime';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
-import { Button, Card, EmptyState, SkeletonList } from '@/components/ui';
-import { IconPlus, IconWater, IconTrash, IconBarcode, IconSearch } from '@/components/icons';
+import { Alert, Button, Card, Field, Modal, SkeletonList } from '@/components/ui';
+import { IconPlus, IconTrash, IconBarcode, IconSearch } from '@/components/icons';
 import { todayISO, formatNumber } from '@/utils/format';
+import { REFERENCE_FOODS, searchReferenceFoods } from '@/data/foodCatalog';
+import { defaultNutritionPreferences, nutritionPreferencesSchema, suggestMeals, mealTotals, substituteIngredient, foodToResult, type NutritionPreferences, type SuggestedMeal } from '@/services/mealPlanning';
+import { searchFoods, recordMeal, createCustomFood, lookupByBarcode, type NutritionResult } from '@/services/nutrition';
 import type { FoodDiary, MealEntry, MealType } from '@/types/database';
-
-const MEAL_LABELS: Record<MealType, string> = {
-  breakfast: 'Café da manhã',
-  lunch: 'Almoço',
-  dinner: 'Jantar',
-  snack: 'Lanche',
-  pre_workout: 'Pré-treino',
-  post_workout: 'Pós-treino',
-};
-
-const MEAL_ORDER: MealType[] = [
-  'breakfast',
-  'pre_workout',
-  'lunch',
-  'snack',
-  'post_workout',
-  'dinner',
-];
-
-/**
- * Diário alimentar.
- *
- * Registro de refeições com valores congelados no momento do lançamento
- * (se a fonte corrigir o dado, o histórico não muda retroativamente).
- */
-export default function NutritionPage() {
-  const { user, preferences } = useAuthStore();
-  const toast = useToast();
-
-  const [date, setDate] = useState(todayISO());
-  const [diary, setDiary] = useState<FoodDiary | null>(null);
-  const [entries, setEntries] = useState<MealEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pickerMeal, setPickerMeal] = useState<MealType | null>(null);
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<
-    { key: string; name: string; calories: number; proteinG: number; source: string }[]
-  >([]);
-  const [searching, setSearching] = useState(false);
-
-  async function load() {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const { data: diaryRow } = await supabase
-        .from('food_diary')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('entry_date', date)
-        .maybeSingle();
-
-      if (!diaryRow) {
-        // Cria o diário do dia se ainda não existir.
-        const { data: created } = await supabase
-          .from('food_diary')
-          .insert({ user_id: user.id, entry_date: date })
-          .select()
-          .single();
-        setDiary(created);
-        setEntries([]);
-        return;
-      }
-
-      setDiary(diaryRow);
-      const { data: mealRows } = await supabase
-        .from('meal_entries')
-        .select('*')
-        .eq('diary_id', diaryRow.id)
-        .order('created_at', { ascending: true });
-
-      setEntries(mealRows ?? []);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, user]);
-
-  // Busca de alimentos com debounce.
-  useEffect(() => {
-    if (!pickerMeal) return;
-
-    const timer = window.setTimeout(async () => {
-      if (!query.trim()) {
-        setResults([]);
-        return;
-      }
-      setSearching(true);
-      try {
-        const { searchFoods } = await import('@/services/nutrition');
-        const foods = await searchFoods({ query, limit: 12 });
-        setResults(
-          foods.map((f) => ({
-            key: f.key,
-            name: f.brand ? `${f.name} — ${f.brand}` : f.name,
-            calories: f.calories,
-            proteinG: f.proteinG,
-            source: f.source,
-          })),
-        );
-      } catch {
-        setResults([]);
-      } finally {
-        setSearching(false);
-      }
-    }, 350);
-
-    return () => window.clearTimeout(timer);
-  }, [query, pickerMeal]);
-
-  const totals = entries.reduce(
-    (acc, e) => ({
-      calories: acc.calories + e.calories,
-      protein: acc.protein + e.protein_g,
-      carbs: acc.carbs + e.carbs_g,
-      fat: acc.fat + e.fat_g,
-    }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0 },
-  );
-
-  const calorieTarget = preferences?.daily_calorie_target ?? null;
-
-  async function addFood(name: string, calories: number, proteinG: number) {
-    if (!diary || !pickerMeal) return;
-    try {
-      await supabase.from('meal_entries').insert({
-        diary_id: diary.id,
-        meal_type: pickerMeal,
-        quantity: 1,
-        calories,
-        protein_g: proteinG,
-        carbs_g: 0,
-        fat_g: 0,
-        food_name: name,
-        source: 'manual',
-        eaten_at: new Date().toISOString(),
-      });
-      toast.show('Alimento registrado', 'success');
-      await load();
-    } catch {
-      toast.show('Não foi possível registrar.', 'error');
-    }
-  }
-
-  async function removeEntry(entryId: string) {
-    await supabase.from('meal_entries').delete().eq('id', entryId);
-    await load();
-  }
-
-  return (
-    <>
-      <h1 className="page-title">Nutrição</h1>
-      <p className="page-subtitle">Diário alimentar e informações nutricionais.</p>
-
-      {/* Seletor de data */}
-      <div className="row row-wrap" style={{ marginBottom: 'var(--sp-4)' }}>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          aria-label="Data do diário"
-          style={{ minHeight: 44, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '0 12px', color: 'var(--text)' }}
-        />
-        {date !== todayISO() && (
-          <Button variant="ghost" size="sm" onClick={() => setDate(todayISO())}>
-            Hoje
-          </Button>
-        )}
-      </div>
-
-      {/* Totais */}
-      <div className="stat-grid" style={{ marginBottom: 'var(--sp-5)' }}>
-        <div className="stat">
-          <div className="stat-label">Calorias</div>
-          <div className="stat-value">{formatNumber(totals.calories)}</div>
-          {calorieTarget && (
-            <div className="stat-delta">meta: {calorieTarget} kcal</div>
-          )}
-        </div>
-        <div className="stat">
-          <div className="stat-label">Proteína</div>
-          <div className="stat-value">{formatNumber(totals.protein)}g</div>
-        </div>
-        <div className="stat">
-          <div className="stat-label">Carboidrato</div>
-          <div className="stat-value">{formatNumber(totals.carbs)}g</div>
-        </div>
-        <div className="stat">
-          <div className="stat-label">Gordura</div>
-          <div className="stat-value">{formatNumber(totals.fat)}g</div>
-        </div>
-      </div>
-
-      {loading ? (
-        <SkeletonList count={3} height={90} />
-      ) : (
-        <div className="stack stack-3">
-          {MEAL_ORDER.map((meal) => {
-            const mealEntries = entries.filter((e) => e.meal_type === meal);
-            if (mealEntries.length === 0 && meal !== 'breakfast') return null;
-
-            return (
-              <Card key={meal}>
-                <div className="card-header">
-                  <h2 className="card-title">{MEAL_LABELS[meal]}</h2>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setPickerMeal(pickerMeal === meal ? null : meal);
-                      setQuery('');
-                    }}
-                  >
-                    <IconPlus size={15} />
-                    Adicionar
-                  </Button>
-                </div>
-
-                {pickerMeal === meal && (
-                  <div style={{ marginBottom: 'var(--sp-4)' }}>
-                    <div className="input-group" style={{ marginBottom: 'var(--sp-3)' }}>
-                      <input
-                        type="search"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Buscar alimento (USDA, Open Food Facts)…"
-                        aria-label="Buscar alimento"
-                        autoFocus
-                        style={{ paddingLeft: 42 }}
-                      />
-                      <span
-                        style={{
-                          position: 'absolute',
-                          left: 13,
-                          display: 'grid',
-                          placeItems: 'center',
-                          color: 'var(--text-dim)',
-                          pointerEvents: 'none',
-                        }}
-                      >
-                        <IconSearch size={17} />
-                      </span>
-                    </div>
-
-                    <div className="row row-wrap" style={{ marginBottom: 'var(--sp-2)' }}>
-                      <Button variant="ghost" size="sm">
-                        <IconBarcode size={15} />
-                        Ler código de barras
-                      </Button>
-                    </div>
-
-                    {searching ? (
-                      <p className="text-sm text-muted">Buscando…</p>
-                    ) : results.length > 0 ? (
-                      <div className="stack stack-1" style={{ maxHeight: 260, overflowY: 'auto' }}>
-                        {results.map((r) => (
-                          <button
-                            key={r.key}
-                            type="button"
-                            className="row-between"
-                            onClick={() => addFood(r.name, r.calories, r.proteinG)}
-                            style={{
-                              padding: 'var(--sp-2) var(--sp-3)',
-                              borderRadius: 'var(--r-sm)',
-                              textAlign: 'left',
-                              width: '100%',
-                            }}
-                          >
-                            <span className="truncate">{r.name}</span>
-                            <span className="badge">{formatNumber(r.calories)} kcal</span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : query.trim() ? (
-                      <p className="text-sm text-muted">
-                        Nenhum resultado. Verifique a grafia ou cadastre manualmente.
-                      </p>
-                    ) : (
-                      <p className="text-sm text-muted">
-                        Digite o nome do alimento para buscar nas bases oficiais.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {mealEntries.length === 0 ? (
-                  <p className="text-sm text-dim">Nada registrado.</p>
-                ) : (
-                  <ul className="stack stack-2">
-                    {mealEntries.map((e) => (
-                      <li key={e.id} className="row-between">
-                        <div style={{ minWidth: 0 }}>
-                          <div className="truncate" style={{ fontWeight: 600 }}>
-                            {e.food_name}
-                          </div>
-                          <div className="text-xs text-muted">
-                            {formatNumber(e.calories)} kcal · {formatNumber(e.protein_g)}g prot
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => removeEntry(e.id)}
-                          aria-label={`Remover ${e.food_name}`}
-                        >
-                          <IconTrash size={15} />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </Card>
-            );
-          })}
-
-          {entries.length === 0 && (
-            <EmptyState
-              icon="🥗"
-              title="Nenhum alimento registrado hoje"
-              text="Registre suas refeições para acompanhar a evolução nutricional."
-            />
-          )}
-        </div>
-      )}
-
-      <p className="text-xs text-dim" style={{ marginTop: 'var(--sp-5)' }}>
-        <IconWater size={12} style={{ verticalAlign: '-2px' }} /> Dados nutricionais
-        provenientes de USDA FoodData Central e Open Food Facts. Valores são
-       informativos e não substituem acompanhamento nutricional profissional.
-      </p>
-    </>
-  );
+const MEALS:Record<MealType,string>={breakfast:'Café da manhã',lunch:'Almoço',dinner:'Jantar',snack:'Lanche',pre_workout:'Pré-treino',post_workout:'Pós-treino'};
+const ALLERGIES=[['milk','Leite'],['egg','Ovo'],['gluten','Glúten'],['fish','Peixe'],['soy','Soja'],['nuts','Nozes']];
+export default function NutritionPage(){
+ const {user}=useAuthStore();const toast=useToast();
+ const [tab,setTab]=useState<'suggestions'|'diary'|'profile'>('suggestions');
+ const [prefs,setPrefs]=useState<NutritionPreferences>(defaultNutritionPreferences);
+ const [meals,setMeals]=useState<SuggestedMeal[]>([]);
+ const [date,setDate]=useState(todayISO());const [diary,setDiary]=useState<FoodDiary|null>(null);const [entries,setEntries]=useState<MealEntry[]>([]);
+ const [loading,setLoading]=useState(true);const [busy,setBusy]=useState(false);const [error,setError]=useState('');
+ const [picker,setPicker]=useState<MealType|null>(null);const [query,setQuery]=useState('');const [category,setCategory]=useState('Todos');const [results,setResults]=useState<NutritionResult[]>([]);const [selected,setSelected]=useState<NutritionResult|null>(null);const [grams,setGrams]=useState(100);const [searching,setSearching]=useState(false);const [external,setExternal]=useState(false);
+ const [barcode,setBarcode]=useState('');const [manual,setManual]=useState(false);const [manualName,setManualName]=useState('');const [manualValues,setManualValues]=useState({calories:'',protein:'',carbs:'',fat:''});
+ const [detail,setDetail]=useState<SuggestedMeal|null>(null);
+ const load = useCallback(async function load(){if(!user)return;setLoading(true);setError('');try{
+  const [profileResult,planResult,diaryResult]=await Promise.all([
+   supabase.from('nutrition_profiles').select('*').eq('user_id',user.id).maybeSingle(),
+   supabase.from('nutrition_plans').select('plan').eq('user_id',user.id).maybeSingle(),
+   supabase.from('food_diary').select('*').eq('user_id',user.id).eq('entry_date',date).maybeSingle()]);
+  if(profileResult.error)throw profileResult.error;if(planResult.error)throw planResult.error;if(diaryResult.error)throw diaryResult.error;
+  const raw=profileResult.data?.questionnaire as Partial<NutritionPreferences>|undefined;
+  const parsed=nutritionPreferencesSchema.safeParse({...defaultNutritionPreferences,...raw});const p=parsed.success?parsed.data:defaultNutritionPreferences;setPrefs(p);
+  const stored=planResult.data?.plan;const valid=Array.isArray(stored)&&stored.length>0&&stored.every(m=>m&&typeof m.id==='string'&&typeof m.name==='string'&&typeof m.instructions==='string'&&['breakfast','lunch','dinner','snack'].includes(m.type)&&typeof m.image==='string'&&m.image.startsWith('/images/food/')&&Number.isFinite(m.minutes)&&Array.isArray(m.ingredients)&&m.ingredients.length>0&&m.ingredients.every((i:{foodId:string;grams:number;substituteIds:string[]})=>Number.isFinite(i.grams)&&i.grams>0&&Array.isArray(i.substituteIds)&&REFERENCE_FOODS.some(f=>f.id===i.foodId)));
+  setMeals(valid?stored:suggestMeals(p));setDiary(diaryResult.data);
+  if(diaryResult.data){const {data,error:e}=await supabase.from('meal_entries').select('*').eq('diary_id',diaryResult.data.id).order('created_at');if(e)throw e;setEntries(data??[]);}else setEntries([]);
+ }catch{setError('Não foi possível carregar a nutrição. A migração V10 precisa estar aplicada. Nenhuma refeição foi marcada como consumida.');}finally{setLoading(false);}},[user,date]);
+ useEffect(()=>{void load();},[load]);
+ useEffect(()=>{if(!picker)return;setQuery('');setCategory('Todos');setSelected(null);setResults(searchReferenceFoods('').map(foodToResult) as NutritionResult[]);},[picker]);
+ async function savePreferences(){if(!user)return;setBusy(true);setError('');try{const p=nutritionPreferencesSchema.parse(prefs);const plan=suggestMeals(p);const [a,b]=await Promise.all([
+ supabase.from('nutrition_profiles').upsert({user_id:user.id,dietary_style:p.diet,allergies:p.allergies,disliked_foods:p.disliked,calorie_target:null,questionnaire:p},{onConflict:'user_id'}),
+ supabase.from('nutrition_plans').upsert({user_id:user.id,plan,updated_at:new Date().toISOString()},{onConflict:'user_id'})]);if(a.error)throw a.error;if(b.error)throw b.error;await load();setMeals(plan);toast.show('Preferências e sugestões salvas','success');setTab('suggestions');}catch{setError('Não foi possível salvar as preferências. Tente novamente.');}finally{setBusy(false);}}
+ async function ensureDiary(){if(diary)return diary;const {data,error:e}=await supabase.from('food_diary').upsert({user_id:user!.id,entry_date:date},{onConflict:'user_id,entry_date'}).select().single();if(e)throw e;setDiary(data);return data as FoodDiary;}
+ async function add(items:{food:NutritionResult;grams:number}[],type:MealType){setBusy(true);setError('');try{const d=await ensureDiary();await recordMeal(d.id,type,items);toast.show('Refeição registrada com porções e fonte','success');setPicker(null);setDetail(null);await load();}catch{setError('O registro não foi concluído. Confira a porção e a conexão e tente novamente.');}finally{setBusy(false);}}
+ async function search(){setSearching(true);setError('');try{const local=searchReferenceFoods(query,category).map(foodToResult) as NutritionResult[];setResults(local);if(external){const remote=await searchFoods({query,limit:12});setResults([...local,...remote.filter(r=>!local.some(l=>l.name===r.name))]);}}catch{setError('Busca externa indisponível. Os ingredientes de referência continuam disponíveis; tente novamente ou use o cadastro manual.');}finally{setSearching(false);}}
+ async function barcodeSearch(){setSearching(true);setError('');try{const found=await lookupByBarcode(barcode);setResults(found);if(!found.length)setError('Produto não encontrado. Digite o código novamente, busque pelo nome ou use o rótulo para cadastrar manualmente.');}catch{setError('Não foi possível consultar o código. A câmera não é necessária: use a busca ou o cadastro manual.');}finally{setSearching(false);}}
+ async function manualSave(){if(!user||!manualName.trim()||Object.values(manualValues).some(v=>v===''||!Number.isFinite(Number(v))||Number(v)<0))return;setBusy(true);try{const food=await createCustomFood(user.id,{name:manualName.trim(),servingSizeG:100,servingLabel:'100 g',calories:Number(manualValues.calories),proteinG:Number(manualValues.protein),carbsG:Number(manualValues.carbs),fatG:Number(manualValues.fat)});setResults(r=>[{key:food.id,id:food.id,name:food.name,servingSizeG:100,calories:food.calories,proteinG:food.protein_g,carbsG:food.carbs_g,fatG:food.fat_g,fiberG:null,sugarG:null,sodiumMg:null,vitamins:{},minerals:{},source:'manual',inDatabase:true},...r]);setManual(false);toast.show('Alimento do rótulo cadastrado','success');}catch{setError('Não foi possível cadastrar o alimento.');}finally{setBusy(false);}}
+ async function remove(id:string){setBusy(true);try{const {error:e}=await supabase.from('meal_entries').delete().eq('id',id);if(e)throw e;await load();toast.show('Registro removido','success');}catch{setError('Não foi possível remover o registro.');}finally{setBusy(false);}}
+ const totals=entries.reduce((a,e)=>({calories:a.calories+e.calories,protein:a.protein+e.protein_g,carbs:a.carbs+e.carbs_g,fat:a.fat+e.fat_g}),{calories:0,protein:0,carbs:0,fat:0});
+ function toggleList(key:'allergies'|'available',value:string){setPrefs(p=>({...p,[key]:p[key].includes(value)?p[key].filter(v=>v!==value):[...p[key],value]}));}
+ function renderResults(){return <div className="stack stack-2">{results.map(food=><button key={food.key} className="food-result" onClick={()=>{setSelected(food);setGrams(food.servingSizeG);}}><span><strong>{t(food.name)}</strong><small>{food.source==='usda'?'USDA SR28':food.source==='manual'?'Rótulo informado por você':'Open Food Facts'} · {food.servingSizeG} g</small></span><span>{formatNumber(food.calories)} kcal</span></button>)}</div>;}
+ return <>
+  <section className="nutrition-hero"><img src="/images/food/rice-beans.jpg" width="1000" height="600" alt="Prato de arroz com feijão"/><div><span className="eyebrow">COMBINAÇÕES QUE FUNCIONAM</span><h1>Coma bem. Sem complicar.</h1><p>Monte refeições com ingredientes de verdade, porções visíveis e escolhas que cabem na sua rotina.</p></div></section>
+  <div className="chips" role="tablist" aria-label="Seções de nutrição">{([['suggestions','Sugestões'],['diary','Meu diário'],['profile','Preferências']] as const).map(([value,label])=><button key={value} role="tab" aria-selected={tab===value} className="chip" onClick={()=>setTab(value)}>{label}</button>)}</div>
+  {error&&<Alert variant="error">{error}</Alert>}
+  {loading?<SkeletonList count={3} height={160}/>:tab==='profile'?<Card><h2 className="card-title">Seu jeito de comer</h2><p className="text-muted">Sugestões gerais e flexíveis. Não é uma dieta clínica nem uma meta de restrição.</p><div className="grid-2"><Field label="Preferência alimentar" htmlFor="diet"><select id="diet" value={prefs.diet} onChange={e=>setPrefs(p=>({...p,diet:e.target.value as NutritionPreferences['diet']}))}><option value="omnivore">Variada</option><option value="vegetarian">Vegetariana</option><option value="vegan">Vegana</option><option value="pescatarian">Pescetariana</option></select></Field><Field label="Refeições por dia" htmlFor="meal-count"><select id="meal-count" value={prefs.meals} onChange={e=>setPrefs(p=>({...p,meals:Number(e.target.value)}))}>{[3,4,5,6].map(n=><option key={n}>{n}</option>)}</select></Field><Field label="Orçamento" htmlFor="budget"><select id="budget" value={prefs.budget} onChange={e=>setPrefs(p=>({...p,budget:e.target.value as NutritionPreferences['budget']}))}><option value="low">Econômico</option><option value="medium">Moderado</option><option value="flexible">Flexível</option></select></Field><Field label="Tempo de preparo" htmlFor="prep"><select id="prep" value={prefs.prepMinutes} onChange={e=>setPrefs(p=>({...p,prepMinutes:Number(e.target.value)}))}>{[5,10,15,20,25,45,60,90].map(n=><option key={n} value={n}>{n} minutos</option>)}</select></Field></div><fieldset><legend>Alergias e intolerâncias</legend><div className="chips chips--wrap">{ALLERGIES.map(([value,label])=><button key={value} className="chip" aria-pressed={prefs.allergies.includes(value!)} onClick={()=>toggleList('allergies',value!)}>{label}{prefs.allergies.includes(value!)?' ✓':''}</button>)}</div></fieldset><Field label="Outras restrições ou alimentos que prefere evitar" htmlFor="avoid"><input id="avoid" value={prefs.disliked.join(', ')} onChange={e=>setPrefs(p=>({...p,disliked:e.target.value.split(',')}))} placeholder="Ex.: cogumelos, coentro"/></Field><p className="text-sm text-muted">Alergias graves ou necessidades clínicas exigem orientação profissional. Confira sempre os rótulos: esta lista não garante ausência de contaminação cruzada.</p><fieldset><legend>Quais ingredientes você tem?</legend><p className="field-hint">Sem seleção, consideramos todos. Selecione apenas o que está disponível.</p><div className="chips chips--wrap">{REFERENCE_FOODS.map(f=><button key={f.id} className="chip" aria-pressed={prefs.available.includes(f.id)} onClick={()=>toggleList('available',f.id)}>{t(f.name)}{prefs.available.includes(f.id)?' ✓':''}</button>)}</div></fieldset><label className="row"><input type="checkbox" checked={prefs.minor} onChange={e=>setPrefs(p=>({...p,minor:e.target.checked}))}/>Tenho menos de 18 anos</label>{prefs.minor&&<Alert variant="info">Não calculamos metas agressivas de peso ou calorias. Converse com responsáveis e profissionais de saúde.</Alert>}<Button block loading={busy} onClick={()=>void savePreferences()}>Salvar e montar sugestões</Button></Card>:tab==='suggestions'?<>
+   <div className="row-between row-wrap"><div><h2 className="section-title">Um cardápio possível</h2><p className="text-muted">Sugestões, não registros de consumo. Toque para montar o prato.</p></div><Button variant="secondary" onClick={()=>setTab('profile')}>Personalizar</Button></div>
+   {prefs.minor&&<Alert variant="info">Porções ilustrativas, sem metas de emagrecimento. Adolescentes precisam de variedade e acompanhamento adequado.</Alert>}
+   {!meals.length?<Alert variant="warning">Não há combinações completas com esses ingredientes e tempo. Adicione ingredientes ou aumente o tempo de preparo. Não vamos sugerir alimentos excluídos.</Alert>:<div className="meal-grid">{meals.map((meal,index)=>{const total=mealTotals(meal);return <Card className="meal-card" key={`${meal.id}-${index}`}><img src={meal.image} width="600" height="300" loading="lazy" alt={`Ilustração de ${t(meal.name)}`}/><div className="meal-card__body"><span className="eyebrow">{MEALS[meal.type]} · {meal.minutes} MIN</span><h3>{t(meal.name)}</h3><p className="text-sm text-muted">{formatNumber(total.calories)} kcal estimadas · {formatNumber(total.protein)} g de proteína</p><div>{meal.ingredients.map(i=><div className="meal-ingredient" key={i.foodId}><span>{t(i.name)}</span><strong>{t(i.household)}</strong></div>)}</div><Button block style={{marginTop:16}} onClick={()=>setDetail(meal)}>Montar refeição</Button><p className="photo-credit">{t(meal.credit)}</p></div></Card>;})}</div>}
+   <p className="photo-credit">Valores por ingrediente: USDA SR28, 2015. Estimativas variam com marca e preparo. Não substituem orientação nutricional.</p>
+  </>:<>
+   <div className="row-between row-wrap"><h2 className="section-title">O que você consumiu</h2><input type="date" aria-label="Data do diário" value={date} onChange={e=>{if(e.target.value)setDate(e.target.value);}}/></div><div className="metric-grid">{[['Calorias',totals.calories,'kcal'],['Proteínas',totals.protein,'g'],['Carboidratos',totals.carbs,'g'],['Gorduras',totals.fat,'g']].map(([label,value,unit])=><div key={String(label)}><span>{label}</span><strong>{formatNumber(Number(value))}</strong><span>{unit}</span></div>)}</div>
+   <div className="stack stack-3">{(Object.keys(MEALS) as MealType[]).map(type=><Card key={type}><div className="card-header"><h3 className="card-title">{MEALS[type]}</h3><Button variant="secondary" onClick={()=>setPicker(type)}><IconPlus size={16}/>Adicionar</Button></div>{entries.filter(e=>e.meal_type===type).map(entry=><div className="row-between" key={entry.id}><div><strong>{t(entry.food_name)}</strong><p className="text-sm text-muted">{formatNumber(entry.calories)} kcal · {formatNumber(entry.protein_g)} g proteína · {entry.source==='usda'?'USDA':entry.source==='manual'?'Manual':'Open Food Facts'}</p></div><Button variant="ghost" disabled={busy} aria-label={`Remover ${t(entry.food_name)}`} onClick={()=>void remove(entry.id)}><IconTrash size={17}/></Button></div>)}{!entries.some(e=>e.meal_type===type)&&<p className="text-sm text-muted">Nada registrado.</p>}</Card>)}</div>
+  </>}
+  <Modal open={!!detail} onClose={()=>setDetail(null)} title={detail?.name??'Refeição'} footer={detail&&<Button block loading={busy} onClick={()=>void add(detail.ingredients.map(i=>({food:foodToResult(REFERENCE_FOODS.find(f=>f.id===i.foodId)!) as NutritionResult,grams:i.grams})),detail.type)}>Registrar como consumida</Button>}>{detail&&<><img className="exercise-photo" src={detail.image} width="600" height="338" alt={`Ilustração de ${t(detail.name)}`}/><p className="text-sm text-muted">Ajuste as substituições antes de registrar. Só o botão abaixo adiciona ao diário.</p>{detail.ingredients.map(i=><div key={i.foodId} className="meal-ingredient"><span><strong>{t(i.name)}</strong><small style={{display:'block'}}>{t(i.household)} · {i.grams} g</small></span>{!!i.substituteIds.length&&<select aria-label={`Substituir ${t(i.name)}`} value={i.foodId} onChange={e=>{const next=substituteIngredient(detail,i.foodId,e.target.value);if(next)setDetail(next);}}><option value={i.foodId}>{t(i.name)}</option>{i.substituteIds.map(id=><option key={id} value={id}>{t(REFERENCE_FOODS.find(f=>f.id===id)?.name??'')}</option>)}</select>}</div>)}<h3>Preparo</h3><p className="text-muted">{t(detail.instructions)}</p><Alert variant="info">Estimativa, não medida exata. Marcas, óleo e acompanhamentos adicionais alteram os valores.</Alert></>}</Modal>
+  <Modal open={!!picker} onClose={()=>setPicker(null)} title={selected?'Escolha a porção':'Adicionar alimento'} footer={selected&&<Button loading={busy} block onClick={()=>void add([{food:selected,grams}],picker!)}>Registrar {grams} g</Button>}>
+   {selected?<><button className="btn btn-ghost" onClick={()=>setSelected(null)}>Voltar à busca</button><h3>{t(selected.name)}</h3><p className="text-muted">Fonte: {selected.source==='usda'?'USDA SR28':selected.source==='manual'?'Informada por você':'Open Food Facts'}{selected.sourceUrl&&<> · <a href={selected.sourceUrl} target="_blank" rel="noreferrer">Ver origem</a></>}</p><div className="chips chips--wrap">{REFERENCE_FOODS.find(f=>selected.key.endsWith(f.id))?.measures.map(m=><button className="chip" key={t(m.label)} onClick={()=>setGrams(m.grams)}>{t(m.label)} · {m.grams} g</button>)}<button className="chip" onClick={()=>setGrams(100)}>100 g</button></div><Field label="Quantidade em gramas" htmlFor="grams"><input id="grams" type="number" min={1} max={5000} value={grams} onChange={e=>setGrams(Number(e.target.value))}/></Field><p>{formatNumber(selected.calories*grams/selected.servingSizeG)} kcal estimadas · {formatNumber(selected.proteinG*grams/selected.servingSizeG)} g proteína</p><p className="field-hint">Medidas caseiras são referências da fonte, não do produto da sua marca.</p>{selected.source==='open_food_facts'&&<Alert variant="info">Valores informados pelo fabricante no Open Food Facts. Nutrientes ausentes na origem não são estimados como zero; confira o rótulo.</Alert>}</>:<><div className="input-group"><input type="search" aria-label="Buscar alimento" placeholder="Nome, ingrediente ou categoria…" value={query} onChange={e=>{setQuery(e.target.value);setResults(searchReferenceFoods(e.target.value,category).map(foodToResult) as NutritionResult[]);}} onKeyDown={e=>{if(e.key==='Enter')void search();}}/><button aria-label="Pesquisar" onClick={()=>void search()}><IconSearch size={18}/></button></div><div className="row row-wrap"><select aria-label="Categoria de alimento" value={category} onChange={e=>{setCategory(e.target.value);setResults(searchReferenceFoods(query,e.target.value).map(foodToResult) as NutritionResult[]);}}><option>Todos</option>{[...new Set(REFERENCE_FOODS.map(f=>f.category))].map(c=><option key={c}>{c}</option>)}</select><label className="row"><input type="checkbox" checked={external} onChange={e=>setExternal(e.target.checked)}/>Incluir produtos externos</label></div>{searching&&<p role="status">Buscando…</p>}{renderResults()}<details><summary>Código de barras opcional</summary><div className="input-group"><input aria-label="Código de barras" inputMode="numeric" value={barcode} onChange={e=>setBarcode(e.target.value)} placeholder="Digite o código do rótulo"/><button aria-label="Consultar código" disabled={searching} onClick={()=>void barcodeSearch()}><IconBarcode size={20}/></button></div><p className="field-hint">Nenhuma câmera é necessária. Fonte: Open Food Facts.</p></details><Button variant="secondary" onClick={()=>setManual(true)}>Cadastrar usando o rótulo</Button></>}
+  </Modal>
+  <Modal open={manual} onClose={()=>setManual(false)} title="Cadastrar alimento" footer={<Button loading={busy} onClick={()=>void manualSave()}>Salvar alimento</Button>}><p className="text-muted">Copie os valores por 100 g do rótulo. Não invente valores ausentes.</p><Field label="Nome do alimento" htmlFor="manual-name"><input id="manual-name" value={manualName} onChange={e=>setManualName(e.target.value)}/></Field>{([['calories','Calorias (kcal)'],['protein','Proteínas (g)'],['carbs','Carboidratos (g)'],['fat','Gorduras (g)']] as const).map(([key,label])=><Field key={key} label={label} htmlFor={`manual-${key}`}><input id={`manual-${key}`} type="number" min={0} value={manualValues[key]} onChange={e=>setManualValues(v=>({...v,[key]:e.target.value}))}/></Field>)}</Modal>
+ </>;
 }

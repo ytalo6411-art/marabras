@@ -1,5 +1,6 @@
+import { t, hasTranslation } from '@/i18n/runtime';
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getExerciseBySlug, importExercise, type ExerciseResult } from '@/services/exercises';
 import { useToast } from '@/components/useToast';
 import { Button, Skeleton, Alert } from '@/components/ui';
@@ -55,6 +56,7 @@ const SOURCE_LABELS: Record<string, string> = {
 export default function ExerciseDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const toast = useToast();
+  const navigate = useNavigate();
 
   const [exercise, setExercise] = useState<ExerciseResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,7 +79,9 @@ export default function ExerciseDetailPage() {
     if (!exercise) return;
     setAdding(true);
     try {
-      await importExercise(exercise);
+      const id = await importExercise(exercise);
+      if (!id) throw new Error('Import failed');
+      navigate(`/app/workouts/new?exercise=${encodeURIComponent(id)}`);
       toast.show('Exercício adicionado. Agora monte seu treino.', 'success');
     } catch {
       toast.show('Não foi possível salvar o exercício.', 'error');
@@ -123,7 +127,7 @@ export default function ExerciseDetailPage() {
         Biblioteca
       </Link>
 
-      <h1 className="page-title">{exercise.name}</h1>
+      <h1 className="page-title">{t(exercise.name)}</h1>
 
       <div className="row row-wrap" style={{ marginBottom: 'var(--sp-4)' }}>
         <span className="badge badge-accent">
@@ -139,12 +143,14 @@ export default function ExerciseDetailPage() {
         ))}
       </div>
 
+      {![exercise.name,exercise.instructions??'',exercise.description??''].every(text=>hasTranslation(text)) && <Alert variant="info">Alguns nomes ou instruções ainda não têm tradução revisada e são exibidos no idioma original da fonte. Consulte a demonstração e um profissional se houver dúvida.</Alert>}
+      {exercise.imageUrl?.startsWith('/images/exercises/') && <p className="photo-credit">Foto ilustrativa do movimento: Free Exercise DB (yuhonas), Unlicense. Não pressupõe a carga ou a variação exata.</p>}
       {/* Vídeo sob demanda */}
       <div style={{ marginBottom: 'var(--sp-5)' }}>
         <VideoPlayer
           src={exercise.videoUrl}
           poster={exercise.thumbnailUrl ?? exercise.imageUrl}
-          title={exercise.name}
+          title={t(exercise.name)}
         />
       </div>
 
@@ -190,7 +196,7 @@ export default function ExerciseDetailPage() {
                 >
                   {i + 1}
                 </span>
-                <span className="text-muted">{line}</span>
+                <span className="text-muted">{t(line)}</span>
               </li>
             ))}
           </ol>
@@ -202,7 +208,7 @@ export default function ExerciseDetailPage() {
           <h2 className="card-title" style={{ marginBottom: 'var(--sp-2)' }}>
             Sobre o exercício
           </h2>
-          <p className="text-muted">{exercise.description}</p>
+          <p className="text-muted">{t(exercise.description ?? '')}</p>
         </div>
       )}
 

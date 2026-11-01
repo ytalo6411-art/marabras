@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { ToastContext } from './toastContext';
+import { translate } from '@/i18n/runtime';
 import { IconCheck, IconX } from './icons';
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -204,6 +205,8 @@ export function Progress({
    Modal
    ───────────────────────────────────────────────────────────────────────────── */
 
+let modalLocks=0;
+let originalBodyOverflow='';
 export function Modal({
   open,
   onClose,
@@ -218,24 +221,27 @@ export function Modal({
   footer?: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-
-  // Fecha com Esc e prende o foco dentro do modal.
+  const closeRef = useRef(onClose);
+  useEffect(() => { closeRef.current = onClose; }, [onClose]);
   useEffect(() => {
     if (!open) return;
-
+    const previous = document.activeElement as HTMLElement | null;
+    if (modalLocks++ === 0) originalBodyOverflow=document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusable = () => Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]') ?? []);
+    (focusable()[0] ?? ref.current)?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') { e.preventDefault(); closeRef.current(); }
+      if (e.key === 'Tab') {
+        const nodes = focusable(); const first = nodes[0]; const last = nodes[nodes.length-1];
+        if (!first) { e.preventDefault(); return; }
+        if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     };
     document.addEventListener('keydown', onKey);
-
-    const previous = document.activeElement as HTMLElement | null;
-    ref.current?.focus();
-
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      previous?.focus?.();
-    };
-  }, [open, onClose]);
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = --modalLocks === 0 ? originalBodyOverflow : 'hidden'; previous?.focus?.(); };
+  }, [open]);
 
   if (!open) return null;
 
@@ -254,14 +260,14 @@ export function Modal({
         tabIndex={-1}
         ref={ref}
       >
-        <div className="card-header">
+        <div className="card-header modal__header">
           <h2 className="card-title">{title}</h2>
           <button className="btn btn-ghost btn-sm" onClick={onClose} aria-label="Fechar">
             <IconX size={18} />
           </button>
         </div>
-        {children}
-        {footer && <div className="row row-wrap" style={{ marginTop: 'var(--sp-4)' }}>{footer}</div>}
+        <div className="modal__body">{children}</div>
+        {footer && <div className="row row-wrap modal__footer">{footer}</div>}
       </div>
     </div>,
     document.body,
@@ -285,7 +291,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const show = useCallback((message: string, variant: Toast['variant'] = 'info') => {
     const id = ++counter.current;
-    setToasts((prev) => [...prev, { id, message, variant }]);
+    setToasts((prev) => [...prev, { id, message: translate(message), variant }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4500);

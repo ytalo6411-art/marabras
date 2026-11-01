@@ -59,7 +59,7 @@ function PrivacyContent() {
       <section>
         <h2 className="section-title">3. Login com Google</h2>
         <p className="text-muted">
-          Ao entrar com Google, recebemos da Google as informações basicadas no escopo
+          Ao entrar com Google, recebemos da Google as informações básicas no escopo
           solicitado: endereço de e-mail, nome e foto de perfil. Não temos acesso aos seus
           contatos, e-mails ou histórico de navegação. A sessão é gerenciada pelo
           Supabase Auth, com tokens de curta duração e rotação automática.
@@ -148,7 +148,7 @@ function TermsContent() {
           O ATHLETIX é uma ferramenta de registro e acompanhamento. As informações,
           exercícios, rótulos nutricionais e sugestões exibidas são informativos. O
           serviço <strong>não é</strong> prescrição médica, avaliação nutricional ou
-          orientação de treinamento personalizada.
+          substituição de um profissional de educação física.
         </p>
       </section>
 
@@ -177,7 +177,7 @@ function TermsContent() {
         <p className="text-muted">
           Inicie qualquer programa de treino de forma progressiva e sob orientação
           profissional quando houver dúvida. Relate qualquer dor, lesão ou condição de
-          saúde antes de aumentar intensidade. Usuentes menores de idade devem fazer isso
+          saúde antes de aumentar intensidade. Usuários menores de idade devem fazer isso
           com acompanhamento de profissional habilitado.
         </p>
       </section>
@@ -185,7 +185,7 @@ function TermsContent() {
       <section>
         <h2 className="section-title">6. Disponibilidade e alterações</h2>
         <p className="text-muted">
-          Worked on free-tier infrastructure; some features may be limited. Podemos
+          Parte da infraestrutura utiliza planos gratuitos; algumas funcionalidades podem ter limites. Podemos
           alterar ou descontinuar funcionalidades, sempre com aviso razoável. Podemos
           suspender contas que violem estes Termos.
         </p>
