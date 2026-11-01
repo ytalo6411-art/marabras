@@ -139,5 +139,29 @@ await check(async()=>{
   assert.equal((await as(A,'select count(*)::int n from public.exercise_history')).rows[0].n,1);
   assert.equal((await as(B,'select count(*)::int n from public.exercise_history')).rows[0].n,0);
 });
-console.log(`PASS: ${assertions} security scenarios; two isolated users + anon; actual migrations, grants, cross-tenant IDs, public-row writes, admin boundaries, malicious JSON, quotas/replay across separate transactions.`);
+// Regression: account deletion used to abort because audit_row_change() wrote
+// audit_logs.user_id after auth.users was already gone (FK 23503), rolling the
+// whole delete back. A dedicated user keeps the other fixtures intact.
+await check(async()=>{
+  const C='10000000-0000-4000-8000-00000000000c';
+  const CPLAN='10000000-0000-4000-8000-00000000000d';
+  await db.exec(`insert into auth.users(id,email) values('${C}','carol@test.invalid');
+    insert into public.workout_plans(id,user_id,name) values('${CPLAN}','${C}','Carol plan');
+    insert into public.food_diary(id,user_id,entry_date) values('10000000-0000-4000-8000-00000000000e','${C}',current_date);
+    insert into public.training_profiles(user_id,questionnaire) values('${C}','{}'::jsonb);`);
+  await rejects(null,'select public.delete_own_account()');
+  // The RPC takes no target id: it can only ever resolve to auth.uid(), so B
+  // has no way to name C's account. C deletes only its own rows.
+  const removed=(await as(C,'select public.delete_own_account()')).rows[0].delete_own_account;
+  assert.equal(removed,C,'server must confirm the deleted id');
+  assert.equal((await db.query('select count(*)::int n from auth.users where id=$1',[C])).rows[0].n,0);
+  for(const table of ['workout_plans','food_diary','training_profiles','profiles','user_preferences']){
+    const col=table==='profiles'?'id':'user_id';
+    assert.equal((await db.query(`select count(*)::int n from public.${table} where ${col}=$1`,[C])).rows[0].n,0,`${table} must cascade`);
+  }
+  // B and A are untouched by C's deletion.
+  assert.equal((await db.query('select count(*)::int n from auth.users where id=$1',[A])).rows[0].n,1);
+  assert.equal((await db.query('select count(*)::int n from public.workout_plans where id=$1',[PLAN])).rows[0].n,1);
+});
+console.log(`PASS: ${assertions} security scenarios; two isolated users + anon; actual migrations, grants, cross-tenant IDs, public-row writes, admin boundaries, malicious JSON, quotas/replay across separate transactions, account deletion cascade.`);
 await db.close();

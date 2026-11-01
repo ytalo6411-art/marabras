@@ -6,16 +6,93 @@
  * dia da semana → foco → exercícios → ação principal.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
 import { startSession } from '@/services/workoutSession';
+import { supabase } from '@/lib/supabase';
 import { useToast } from './useToast';
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { IconChevronRight, IconClock, IconDumbbell, IconPlay, IconSparkles } from './icons';
 import type { WorkoutPlan } from '@/types/database';
 import { WEEKDAYS_SHORT, planWeekdayLabel } from '@/services/trainingOverview';
+
+/* ─── Resumo de exercícios do dia ──────────────────────────────────────────── */
+
+interface PlanExerciseSummary {
+  id: string;
+  name: string;
+  slug: string;
+  sets: number;
+  reps: string;
+}
+
+/**
+ * Busca os exercícios reais de um plano.
+ *
+ * Bug corrigido: o card do dia mostrava só o título e os botões, então o usuário
+ * gerava o plano e não via exercício nenhum — parecia que a geração tinha
+ * falhado, mesmo com os itens gravados no banco.
+ */
+function usePlanExercises(planId: string, enabled: boolean) {
+  const [state, setState] = useState<{
+    items: PlanExerciseSummary[];
+    loading: boolean;
+    error: boolean;
+  }>({ items: [], loading: enabled, error: false });
+
+  useEffect(() => {
+    if (!enabled) return;
+    let active = true;
+
+    void (async () => {
+      const { data: items, error } = await supabase
+        .from('workout_exercises')
+        .select('id, sets, reps, position, exercise_id')
+        .eq('plan_id', planId)
+        .order('position');
+
+      if (!active) return;
+      if (error) { setState({ items: [], loading: false, error: true }); return; }
+
+      const rows = items ?? [];
+      if (rows.length === 0) { setState({ items: [], loading: false, error: false }); return; }
+
+      const ids = [...new Set(rows.map((row) => String(row.exercise_id)))];
+      const { data: exercises, error: exError } = await supabase
+        .from('exercises')
+        .select('id, name, slug')
+        .in('id', ids);
+
+      if (!active) return;
+      if (exError) { setState({ items: [], loading: false, error: true }); return; }
+
+      const byId = new Map((exercises ?? []).map((exercise) => [String(exercise.id), exercise]));
+      setState({
+        loading: false,
+        error: false,
+        items: rows
+          .map((row) => {
+            const exercise = byId.get(String(row.exercise_id));
+            if (!exercise) return null;
+            return {
+              id: String(row.id),
+              name: String(exercise.name),
+              slug: String(exercise.slug),
+              sets: Number(row.sets),
+              reps: String(row.reps),
+            };
+          })
+          .filter((item): item is PlanExerciseSummary => item !== null),
+      });
+    })();
+
+    return () => { active = false; };
+  }, [planId, enabled]);
+
+  return state;
+}
 
 /* ─── Cartão de opção (questionário) ───────────────────────────────────────── */
 
@@ -104,6 +181,9 @@ export function PlanDayCard({
   const user = useAuthStore(s => s.user);
   const navigate = useNavigate();
   const toast = useToast();
+  // O dia precisa mostrar o treino real, não só o título.
+  const { items: exercises, loading: exercisesLoading, error: exercisesError } =
+    usePlanExercises(plan.id, true);
   async function start() {
     if(!user || starting)return;
     setStarting(true);setError('');
@@ -133,6 +213,38 @@ export function PlanDayCard({
 
       {plan.description && !compact && (
         <p className="text-sm text-muted plan-day__desc">{plan.description}</p>
+      )}
+
+      {exercisesLoading ? (
+        <p className="text-sm text-muted" style={{ marginTop: 'var(--sp-3)' }}>
+          Carregando exercícios…
+        </p>
+      ) : exercisesError ? (
+        <p className="field-error" role="alert" style={{ marginTop: 'var(--sp-3)' }}>
+          Não foi possível carregar os exercícios deste dia. Abra o treino para tentar novamente.
+        </p>
+      ) : exercises.length > 0 ? (
+        <ol className="plan-day__exercises" aria-label={`Exercícios de ${plan.name}`}>
+          {(compact ? exercises.slice(0, 3) : exercises).map((exercise, index) => (
+            <li key={exercise.id}>
+              <ExerciseLine
+                index={index + 1}
+                name={exercise.name}
+                detail={`${exercise.sets} × ${exercise.reps}`}
+                href={`/app/exercises/${exercise.slug}`}
+              />
+            </li>
+          ))}
+          {compact && exercises.length > 3 && (
+            <li className="text-sm text-muted plan-day__more">
+              +{exercises.length - 3} exercício(s) neste dia
+            </li>
+          )}
+        </ol>
+      ) : (
+        <p className="text-sm text-muted" style={{ marginTop: 'var(--sp-3)' }}>
+          Este dia ainda não tem exercícios. Abra o treino para adicionar.
+        </p>
       )}
 
       <div className="row row-wrap" style={{ gap: 8, marginTop: 'var(--sp-3)' }}>

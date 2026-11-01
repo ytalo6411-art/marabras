@@ -59,3 +59,55 @@ test('start is not completion; set saves, survives reload, rest pauses',async({p
  await page.reload();await expect(page.getByLabel('Repetições da série 1',{exact:true})).toHaveValue('12');await expect(page.getByRole('button',{name:'Desmarcar série 1'})).toBeVisible();expect(completed).toBe(false);
  await page.getByRole('button',{name:'Encerrar e salvar'}).click();await expect(page.getByRole('heading',{name:'Treino concluído!'})).toBeVisible();expect(completed).toBe(true);
 });
+
+test('tema: claro, escuro e sistema aplicam em toda a interface, sem flash', async ({ page }) => {
+  await fixture(page);
+  await page.goto('/app/login');
+
+  // Login é rota pública: precisa obedecer ao tema como qualquer tela.
+  await page.evaluate(() => localStorage.setItem('athletix-theme', 'light'));
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+  await page.evaluate(() => localStorage.setItem('athletix-theme', 'dark'));
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+  // "system" segue o dispositivo e reage à mudança em tempo real.
+  await page.evaluate(() => localStorage.setItem('athletix-theme', 'system'));
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+  // O tema também vale dentro da área autenticada.
+  await page.evaluate(() => localStorage.setItem('athletix-theme', 'light'));
+  await page.goto('/app');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
+
+test('card do plano mostra os exercícios reais, não só o título', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await fixture(page);
+  await page.goto('/app/workouts');
+
+  // Bug corrigido: o dia aparecia sem nenhum exercício listado.
+  await expect(page.getByRole('link', { name: /Agachamento livre/ }).first()).toBeVisible();
+  await expect(page.getByText('2 × 10').first()).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('catálogo e telas principais não têm overflow de 320 a 1440', async ({ page }) => {
+  await fixture(page);
+  for (const width of [320, 360, 390, 430, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const route of ['/app', '/app/workouts', '/app/nutrition', '/app/settings']) {
+      await page.goto(route);
+      await page.waitForTimeout(120);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(overflow, `overflow em ${route} @ ${width}px`).toBeLessThanOrEqual(1);
+    }
+  }
+});

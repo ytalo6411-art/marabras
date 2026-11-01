@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useAuthStore } from '@/stores/auth';
+import { useTheme } from './themeContext';
 import { Avatar, Button, Modal } from '@/components/ui';
 import {
   IconHome,
@@ -56,30 +57,9 @@ function useRouteFocus() {
   }, [location.pathname]);
 }
 
-function useTheme() {
-  const preferences = useAuthStore((s) => s.preferences);
-  const [theme, setTheme] = useState<'light' | 'dark'>(
-    () => (localStorage.getItem('athletix-theme') as 'light' | 'dark') || 'dark',
-  );
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('athletix-theme', theme);
-  }, [theme]);
-
-  // Mantém em sincronia com a preferência salva no perfil.
-  useEffect(() => {
-    if (preferences?.theme === 'light' || preferences?.theme === 'dark') {
-      setTheme(preferences.theme);
-    }
-  }, [preferences?.theme]);
-
-  return { theme, toggle: () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')) };
-}
-
 export default function AppShell() {
   const { profile, isAdmin, signOut, profileError, refreshProfile } = useAuthStore();
-  const { theme, toggle } = useTheme();
+  const { resolved: theme, toggle } = useTheme();
   useRouteFocus();
 
   const [menuOpen,setMenuOpen] = useState(false);
