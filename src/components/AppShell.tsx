@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useAuthStore } from '@/stores/auth';
+import { useTheme } from './themeContext';
 import { Avatar, Button, Modal } from '@/components/ui';
 import {
   IconHome,
@@ -15,6 +16,7 @@ import {
   IconLogout,
   IconShield,
   IconSparkles,
+  IconUsers,
 } from './icons';
 
 interface NavItem {
@@ -25,14 +27,17 @@ interface NavItem {
   primary?: boolean;
 }
 
+// Os 5 destinos principais ficam na barra inferior do mobile; o restante vive
+// no menu "Explorar", acessível pelo cabeçalho.
 const NAV_ITEMS: NavItem[] = [
   { to: '/app', label: 'Início', icon: IconHome, primary: true },
-  { to: '/app/exercises', label: 'Exercícios', icon: IconDumbbell, primary: true },
   { to: '/app/workouts', label: 'Treinos', icon: IconChart, primary: true },
-  { to: '/app/coach', label: 'Treinador', icon: IconSparkles },
+  { to: '/app/exercises', label: 'Exercícios', icon: IconDumbbell, primary: true },
   { to: '/app/nutrition', label: 'Nutrição', icon: IconNutrition, primary: true },
+  { to: '/app/profile', label: 'Perfil', icon: IconUser, primary: true },
+  { to: '/app/community', label: 'Comunidade', icon: IconUsers },
+  { to: '/app/coach', label: 'Treinador', icon: IconSparkles },
   { to: '/app/progress', label: 'Evolução', icon: IconChart },
-  { to: '/app/profile', label: 'Perfil', icon: IconUser },
   { to: '/app/settings', label: 'Configurações', icon: IconSettings },
 ];
 
@@ -56,30 +61,9 @@ function useRouteFocus() {
   }, [location.pathname]);
 }
 
-function useTheme() {
-  const preferences = useAuthStore((s) => s.preferences);
-  const [theme, setTheme] = useState<'light' | 'dark'>(
-    () => (localStorage.getItem('athletix-theme') as 'light' | 'dark') || 'dark',
-  );
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('athletix-theme', theme);
-  }, [theme]);
-
-  // Mantém em sincronia com a preferência salva no perfil.
-  useEffect(() => {
-    if (preferences?.theme === 'light' || preferences?.theme === 'dark') {
-      setTheme(preferences.theme);
-    }
-  }, [preferences?.theme]);
-
-  return { theme, toggle: () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')) };
-}
-
 export default function AppShell() {
   const { profile, isAdmin, signOut, profileError, refreshProfile } = useAuthStore();
-  const { theme, toggle } = useTheme();
+  const { resolved: theme, toggle } = useTheme();
   useRouteFocus();
 
   const [menuOpen,setMenuOpen] = useState(false);

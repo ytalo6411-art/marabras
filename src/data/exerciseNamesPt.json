@@ -1,0 +1,1587 @@
+[
+  {
+    "slug": "45-degree-hyperextension-0489",
+    "name_en": "45 Degree Hyperextension",
+    "name_pt": "Hiperextensão lombar no banco 45°"
+  },
+  {
+    "slug": "45-degree-bicycle-twisting-crunch-drv-45-degree-bycicle-twisting-crunch",
+    "name_en": "45-Degree Bicycle Twisting Crunch",
+    "name_pt": "Abdominal bicicleta com rotação a 45°"
+  },
+  {
+    "slug": "45-degree-bicycle-twisting-crunch-abdominals",
+    "name_en": "45-Degree Bicycle Twisting Crunch (abdominals)",
+    "name_pt": "Abdominal bicicleta com rotação a 45° (reto abdominal)"
+  },
+  {
+    "slug": "all-fours-groin-stretch-drv-stretching-all-fours-squad-stretch",
+    "name_en": "All Fours Groin Stretch",
+    "name_pt": "Alongamento de virilha em quatro apoios"
+  },
+  {
+    "slug": "band-assisted-pull-up-0970",
+    "name_en": "Band Assisted Pull-up",
+    "name_pt": "Barra fixa assistida com elástico"
+  },
+  {
+    "slug": "band-bent-over-rear-lateral-raise-drv-band-bent-over-rear-lateral-raise",
+    "name_en": "Band Bent-Over Rear Lateral Raise",
+    "name_pt": "Elevação posterior de ombro curvado com elástico"
+  },
+  {
+    "slug": "band-hip-abduction-3006",
+    "name_en": "Band Hip Abduction",
+    "name_pt": "Abdução de quadril com elástico"
+  },
+  {
+    "slug": "band-hip-adduction-drv-band-hip-adduction",
+    "name_en": "Band Hip Adduction",
+    "name_pt": "Adução de quadril com elástico"
+  },
+  {
+    "slug": "band-kneeling-one-arm-pulldown-0983",
+    "name_en": "Band Kneeling One Arm Pulldown",
+    "name_pt": "Puxada unilateral ajoelhado com elástico"
+  },
+  {
+    "slug": "band-one-arm-front-raise-1017",
+    "name_en": "Band One Arm Front Raise",
+    "name_pt": "Elevação frontal unilateral com elástico"
+  },
+  {
+    "slug": "band-one-leg-kickback-bent-position-drv-band-one-leg-kickback-bent-position",
+    "name_en": "Band One-Leg Kickback (Bent Position)",
+    "name_pt": "Extensão de quadril unilateral com elástico"
+  },
+  {
+    "slug": "band-overhead-triceps-extension-new-band-overhead-triceps-extension",
+    "name_en": "Band Overhead Triceps Extension",
+    "name_pt": "Tríceps francês com elástico"
+  },
+  {
+    "slug": "band-prone-leg-curl-0976",
+    "name_en": "Band Prone Leg Curl",
+    "name_pt": "Mesa flexora deitado com elástico"
+  },
+  {
+    "slug": "band-pull-through-0991",
+    "name_en": "Band Pull Through",
+    "name_pt": "Extensão de quadril com elástico (pull-through)"
+  },
+  {
+    "slug": "band-resisted-decline-sit-up-drv-band-decline-sit-ups",
+    "name_en": "Band Resisted Decline Sit-Up",
+    "name_pt": "Abdominal declinado com elástico"
+  },
+  {
+    "slug": "band-seated-leg-extension-0980",
+    "name_en": "Band Seated Leg Extension",
+    "name_pt": "Cadeira extensora sentado com elástico"
+  },
+  {
+    "slug": "band-seated-row-0990",
+    "name_en": "Band Seated Row",
+    "name_pt": "Remada sentada com elástico"
+  },
+  {
+    "slug": "band-shoulder-warm-up-stretch-drv-stretching-band-warm-up-shoulder-stretch",
+    "name_en": "Band Shoulder Warm-Up Stretch",
+    "name_pt": "Aquecimento de ombro com elástico"
+  },
+  {
+    "slug": "band-side-bend-0002",
+    "name_en": "Band Side Bend",
+    "name_pt": "Flexão lateral de tronco com elástico"
+  },
+  {
+    "slug": "band-standing-calf-raise-0999",
+    "name_en": "Band Standing Calf Raise",
+    "name_pt": "Elevação de panturrilha em pé com elástico"
+  },
+  {
+    "slug": "band-standing-crunch-1005",
+    "name_en": "Band Standing Crunch",
+    "name_pt": "Abdominal supra em pé com elástico"
+  },
+  {
+    "slug": "band-standing-leg-curl-0988",
+    "name_en": "Band Standing Leg Curl",
+    "name_pt": "Mesa flexora em pé com elástico"
+  },
+  {
+    "slug": "band-standing-lift-1408",
+    "name_en": "Band Standing Lift",
+    "name_pt": "Rotação de tronco em pé com elástico"
+  },
+  {
+    "slug": "band-standing-rear-delt-row-1022",
+    "name_en": "Band Standing Rear Delt Row",
+    "name_pt": "Remada para deltoide posterior em pé com elástico"
+  },
+  {
+    "slug": "band-straight-back-seated-row-3144",
+    "name_en": "Band Straight-Back Seated Row",
+    "name_pt": "Remada sentada com coluna neutra e elástico"
+  },
+  {
+    "slug": "band-triceps-pushdown-new-band-triceps-pushdown",
+    "name_en": "Band Triceps Pushdown",
+    "name_pt": "Tríceps com elástico (pushdown)"
+  },
+  {
+    "slug": "barbell-back-squat-1435",
+    "name_en": "Barbell Back Squat",
+    "name_pt": "Agachamento com barra nas costas"
+  },
+  {
+    "slug": "barbell-bench-press-0025",
+    "name_en": "Barbell Bench Press",
+    "name_pt": "Supino reto com barra"
+  },
+  {
+    "slug": "barbell-clean-and-press-0028",
+    "name_en": "Barbell Clean And Press",
+    "name_pt": "Arremesso e desenvolvimento com barra"
+  },
+  {
+    "slug": "barbell-close-grip-bench-press-0030",
+    "name_en": "Barbell Close Grip Bench Press",
+    "name_pt": "Supino com pegada fechada e barra"
+  },
+  {
+    "slug": "barbell-curl-0031",
+    "name_en": "Barbell Curl",
+    "name_pt": "Rosca direta com barra"
+  },
+  {
+    "slug": "barbell-decline-bench-press-0033",
+    "name_en": "Barbell Decline Bench Press",
+    "name_pt": "Supino declinado com barra"
+  },
+  {
+    "slug": "barbell-drag-curl-0038",
+    "name_en": "Barbell Drag Curl",
+    "name_pt": "Rosca arrastada com barra"
+  },
+  {
+    "slug": "barbell-front-raise-0041",
+    "name_en": "Barbell Front Raise",
+    "name_pt": "Elevação frontal com barra"
+  },
+  {
+    "slug": "barbell-front-squat-0042",
+    "name_en": "Barbell Front Squat",
+    "name_pt": "Agachamento frontal com barra"
+  },
+  {
+    "slug": "barbell-incline-bench-press-0047",
+    "name_en": "Barbell Incline Bench Press",
+    "name_pt": "Supino inclinado com barra"
+  },
+  {
+    "slug": "barbell-lunge-0054",
+    "name_en": "Barbell Lunge",
+    "name_pt": "Avanço com barra"
+  },
+  {
+    "slug": "barbell-prone-incline-curl-0072",
+    "name_en": "Barbell Prone Incline Curl",
+    "name_pt": "Rosca no banco inclinado deitado de frente com barra"
+  },
+  {
+    "slug": "barbell-rear-delt-raise-0075",
+    "name_en": "Barbell Rear Delt Raise",
+    "name_pt": "Elevação posterior de ombro com barra"
+  },
+  {
+    "slug": "barbell-reverse-wrist-curl-0082",
+    "name_en": "Barbell Reverse Wrist Curl",
+    "name_pt": "Rosca de punho inversa com barra"
+  },
+  {
+    "slug": "barbell-seated-behind-the-neck-press-drv-barbell-seated-behind-head-military-press",
+    "name_en": "Barbell Seated Behind-The-Neck Press",
+    "name_pt": "Desenvolvimento por trás da nuca sentado com barra"
+  },
+  {
+    "slug": "barbell-shrug-0095",
+    "name_en": "Barbell Shrug",
+    "name_pt": "Encolhimento de ombros com barra"
+  },
+  {
+    "slug": "barbell-standing-back-wrist-curl-0104",
+    "name_en": "Barbell Standing Back Wrist Curl",
+    "name_pt": "Rosca de punho inversa em pé com barra"
+  },
+  {
+    "slug": "barbell-straight-leg-deadlift-0116",
+    "name_en": "Barbell Straight Leg Deadlift",
+    "name_pt": "Levantamento terra com pernas estendidas e barra"
+  },
+  {
+    "slug": "barbell-underhand-bent-over-row-0027",
+    "name_en": "Barbell Underhand Bent-Over Row",
+    "name_pt": "Remada curvada com pegada supinada"
+  },
+  {
+    "slug": "barbell-wide-grip-upright-row-0123",
+    "name_en": "Barbell Wide-Grip Upright Row",
+    "name_pt": "Remada alta com pegada aberta"
+  },
+  {
+    "slug": "battling-ropes-0128",
+    "name_en": "Battling Ropes",
+    "name_pt": "Corda naval"
+  },
+  {
+    "slug": "bench-crunch-drv-crunch-on-bench",
+    "name_en": "Bench Crunch",
+    "name_pt": "Abdominal supra no banco"
+  },
+  {
+    "slug": "bench-dips-drv-bench-dips",
+    "name_en": "Bench Dips",
+    "name_pt": "Mergulho de tríceps no banco"
+  },
+  {
+    "slug": "bench-pull-up-0570",
+    "name_en": "Bench Pull-Up",
+    "name_pt": "Barra fixa com apoio no banco"
+  },
+  {
+    "slug": "bent-knee-lying-twist-on-stability-ball-3639",
+    "name_en": "Bent Knee Lying Twist on Stability Ball",
+    "name_pt": "Rotação de tronco deitado na bola suíça"
+  },
+  {
+    "slug": "bridge-pose-setu-bandhasana-drv-stretching-bridge-pose-setu-bandhasana",
+    "name_en": "Bridge Pose (Setu Bandhasana)",
+    "name_pt": "Ponte de glúteos"
+  },
+  {
+    "slug": "bridge-pose-setu-bandhasana-glutes",
+    "name_en": "Bridge Pose (Setu Bandhasana) (glutes)",
+    "name_pt": "Ponte de glúteos (foco em glúteos)"
+  },
+  {
+    "slug": "burpee-1160",
+    "name_en": "Burpee",
+    "name_pt": "Burpee"
+  },
+  {
+    "slug": "butterfly-yoga-pose-1494",
+    "name_en": "Butterfly Yoga Pose",
+    "name_pt": "Postura da borboleta (alongamento de adutores)"
+  },
+  {
+    "slug": "cable-close-grip-lat-pulldown-0974",
+    "name_en": "Cable Close Grip Lat Pulldown",
+    "name_pt": "Puxada de dorsal na polia com pegada fechada"
+  },
+  {
+    "slug": "cable-crossover-reverse-fly-0154",
+    "name_en": "Cable Crossover Reverse Fly",
+    "name_pt": "Crucifixo inverso na polia (crossover)"
+  },
+  {
+    "slug": "cable-kneeling-crunch-0175",
+    "name_en": "Cable Kneeling Crunch",
+    "name_pt": "Abdominal ajoelhado na polia"
+  },
+  {
+    "slug": "cable-lateral-raise-0178",
+    "name_en": "Cable Lateral Raise",
+    "name_pt": "Elevação lateral na polia"
+  },
+  {
+    "slug": "cable-lying-triceps-extension-0186",
+    "name_en": "Cable Lying Triceps Extension",
+    "name_pt": "Extensão de tríceps deitado na polia"
+  },
+  {
+    "slug": "cable-one-arm-curl-0190",
+    "name_en": "Cable One Arm Curl",
+    "name_pt": "Rosca unilateral na polia"
+  },
+  {
+    "slug": "cable-one-arm-front-raise-0162",
+    "name_en": "Cable One Arm Front Raise",
+    "name_pt": "Elevação frontal unilateral na polia"
+  },
+  {
+    "slug": "cable-one-arm-lateral-pulldown-2616",
+    "name_en": "Cable One Arm Lateral Pulldown",
+    "name_pt": "Puxada unilateral na polia"
+  },
+  {
+    "slug": "cable-one-arm-lateral-raise-0192",
+    "name_en": "Cable One Arm Lateral Raise",
+    "name_pt": "Elevação lateral unilateral na polia"
+  },
+  {
+    "slug": "cable-one-arm-twisting-seated-row-0861",
+    "name_en": "Cable One-Arm Twisting Seated Row",
+    "name_pt": "Remada sentada unilateral com rotação na polia"
+  },
+  {
+    "slug": "cable-pulldown-0198",
+    "name_en": "Cable Pulldown",
+    "name_pt": "Puxada na polia"
+  },
+  {
+    "slug": "cable-rear-delt-row-with-rope-0203",
+    "name_en": "Cable Rear Delt Row (with rope)",
+    "name_pt": "Remada para deltoide posterior na polia com corda"
+  },
+  {
+    "slug": "cable-rope-overhead-triceps-extension-0194",
+    "name_en": "Cable Rope Overhead Triceps Extension",
+    "name_pt": "Tríceps francês na polia com corda"
+  },
+  {
+    "slug": "cable-rope-triceps-pushdown-0200",
+    "name_en": "Cable Rope Triceps Pushdown",
+    "name_pt": "Tríceps na polia com corda"
+  },
+  {
+    "slug": "cable-seated-high-row-v-bar-0213",
+    "name_en": "Cable Seated High Row (V-bar)",
+    "name_pt": "Remada alta sentada na polia com triângulo"
+  },
+  {
+    "slug": "cable-standing-crunch-0226",
+    "name_en": "Cable Standing Crunch",
+    "name_pt": "Abdominal supra em pé na polia"
+  },
+  {
+    "slug": "cable-standing-fly-1269",
+    "name_en": "Cable Standing Fly",
+    "name_pt": "Crucifixo em pé na polia"
+  },
+  {
+    "slug": "cable-standing-inner-curl-0229",
+    "name_en": "Cable Standing Inner Curl",
+    "name_pt": "Rosca direta em pé na polia"
+  },
+  {
+    "slug": "cable-standing-lift-0230",
+    "name_en": "Cable Standing Lift",
+    "name_pt": "Rotação de tronco em pé na polia"
+  },
+  {
+    "slug": "cable-standing-one-arm-triceps-extension-0231",
+    "name_en": "Cable Standing One Arm Triceps Extension",
+    "name_pt": "Extensão de tríceps unilateral em pé na polia"
+  },
+  {
+    "slug": "cable-straight-arm-pulldown-0238",
+    "name_en": "Cable Straight Arm Pulldown",
+    "name_pt": "Puxada com braços estendidos na polia"
+  },
+  {
+    "slug": "cable-triceps-pushdown-1723",
+    "name_en": "Cable Triceps Pushdown",
+    "name_pt": "Tríceps na polia (pushdown)"
+  },
+  {
+    "slug": "cable-twist-up-down-0862",
+    "name_en": "Cable Twist (up-down)",
+    "name_pt": "Rotação de tronco na polia (alto e baixo)"
+  },
+  {
+    "slug": "calf-stretch-with-rope-1378",
+    "name_en": "Calf Stretch with Rope",
+    "name_pt": "Alongamento de panturrilha com corda"
+  },
+  {
+    "slug": "calf-stretch-with-strap-1599",
+    "name_en": "Calf Stretch with Strap",
+    "name_pt": "Alongamento de panturrilha com faixa"
+  },
+  {
+    "slug": "cambered-bar-lying-row-0248",
+    "name_en": "Cambered Bar Lying Row",
+    "name_pt": "Remada deitado com barra curvada"
+  },
+  {
+    "slug": "cardio-exercise-drv-cardio-exercises",
+    "name_en": "Cardio Exercise",
+    "name_pt": "Exercício cardiovascular"
+  },
+  {
+    "slug": "cardio-machine-exercise-drv-cardio-exercises-machine",
+    "name_en": "Cardio Machine Exercise",
+    "name_pt": "Exercício cardiovascular em máquina"
+  },
+  {
+    "slug": "cardio-machine-workouts-drv-cardio-exercises-machines",
+    "name_en": "Cardio Machine Workouts",
+    "name_pt": "Treino cardiovascular em máquina"
+  },
+  {
+    "slug": "chest-dips-drv-chest-dips",
+    "name_en": "Chest Dips",
+    "name_pt": "Mergulho nas paralelas com foco em peitoral"
+  },
+  {
+    "slug": "chest-lift-with-rotation-drv-chest-lift-with-rotation",
+    "name_en": "Chest Lift with Rotation",
+    "name_pt": "Elevação de tronco com rotação"
+  },
+  {
+    "slug": "chin-to-chest-stretch-drv-stretching-chin-to-chest-stretch",
+    "name_en": "Chin-to-Chest Stretch",
+    "name_pt": "Alongamento de pescoço (queixo ao peito)"
+  },
+  {
+    "slug": "chin-ups-narrow-parallel-grip-0253",
+    "name_en": "Chin-ups (narrow parallel grip)",
+    "name_pt": "Barra fixa com pegada neutra fechada"
+  },
+  {
+    "slug": "close-feet-leg-press-drv-close-feet-leg-press",
+    "name_en": "Close Feet Leg Press",
+    "name_pt": "Leg press com pés juntos"
+  },
+  {
+    "slug": "close-grip-chin-up-2987",
+    "name_en": "Close Grip Chin-Up",
+    "name_pt": "Barra fixa supinada com pegada fechada"
+  },
+  {
+    "slug": "close-grip-push-up-0259",
+    "name_en": "Close-Grip Push-Up",
+    "name_pt": "Flexão de braço com pegada fechada"
+  },
+  {
+    "slug": "commando-pull-up-drv-commando-pull-up",
+    "name_en": "Commando Pull-Up",
+    "name_pt": "Barra fixa comando"
+  },
+  {
+    "slug": "crossover-kneeling-hip-flexor-stretch-drv-stretching-crossover-kneeling-hip-flexor-stretch",
+    "name_en": "Crossover Kneeling Hip Flexor Stretch",
+    "name_pt": "Alongamento de flexor do quadril ajoelhado"
+  },
+  {
+    "slug": "decline-dumbbell-bench-press-0301",
+    "name_en": "Decline Dumbbell Bench Press",
+    "name_pt": "Supino declinado com halteres"
+  },
+  {
+    "slug": "decline-dumbbell-fly-0302",
+    "name_en": "Decline Dumbbell Fly",
+    "name_pt": "Crucifixo declinado com halteres"
+  },
+  {
+    "slug": "deep-push-up-1274",
+    "name_en": "Deep Push-Up",
+    "name_pt": "Flexão de braço com amplitude aumentada"
+  },
+  {
+    "slug": "donkey-calf-raise-0284",
+    "name_en": "Donkey Calf Raise",
+    "name_pt": "Elevação de panturrilha inclinado (donkey)"
+  },
+  {
+    "slug": "dumbbell-alternating-shoulder-press-0361",
+    "name_en": "Dumbbell Alternating Shoulder Press",
+    "name_pt": "Desenvolvimento alternado com halteres"
+  },
+  {
+    "slug": "dumbbell-arnold-press-2137",
+    "name_en": "Dumbbell Arnold Press",
+    "name_pt": "Desenvolvimento Arnold com halteres"
+  },
+  {
+    "slug": "dumbbell-behind-the-back-wrist-curl-0364",
+    "name_en": "Dumbbell Behind-the-Back Wrist Curl",
+    "name_pt": "Rosca de punho por trás do corpo"
+  },
+  {
+    "slug": "dumbbell-bent-over-row-0293",
+    "name_en": "Dumbbell Bent-Over Row",
+    "name_pt": "Remada curvada com halteres"
+  },
+  {
+    "slug": "dumbbell-biceps-curl-0294",
+    "name_en": "Dumbbell Biceps Curl",
+    "name_pt": "Rosca direta com halteres"
+  },
+  {
+    "slug": "dumbbell-close-grip-press-0296",
+    "name_en": "Dumbbell Close-Grip Press",
+    "name_pt": "Supino com pegada fechada e halteres"
+  },
+  {
+    "slug": "dumbbell-concentration-curl-0297",
+    "name_en": "Dumbbell Concentration Curl",
+    "name_pt": "Rosca concentrada com halter"
+  },
+  {
+    "slug": "dumbbell-cross-body-hammer-curl-0298",
+    "name_en": "Dumbbell Cross Body Hammer Curl",
+    "name_pt": "Rosca martelo cruzada"
+  },
+  {
+    "slug": "dumbbell-deadlift-0300",
+    "name_en": "Dumbbell Deadlift",
+    "name_pt": "Levantamento terra com halteres"
+  },
+  {
+    "slug": "dumbbell-fly-0308",
+    "name_en": "Dumbbell Fly",
+    "name_pt": "Crucifixo com halteres"
+  },
+  {
+    "slug": "dumbbell-fly-on-exercise-ball-1277",
+    "name_en": "Dumbbell Fly On Exercise Ball",
+    "name_pt": "Crucifixo com halteres na bola suíça"
+  },
+  {
+    "slug": "dumbbell-front-raise-0310",
+    "name_en": "Dumbbell Front Raise",
+    "name_pt": "Elevação frontal com halteres"
+  },
+  {
+    "slug": "dumbbell-goblet-squat-1760",
+    "name_en": "Dumbbell Goblet Squat",
+    "name_pt": "Agachamento goblet com halter"
+  },
+  {
+    "slug": "dumbbell-hammer-grip-incline-bench-row-1330",
+    "name_en": "Dumbbell Hammer Grip Incline Bench Row",
+    "name_pt": "Remada no banco inclinado com pegada neutra"
+  },
+  {
+    "slug": "dumbbell-incline-bench-press-0314",
+    "name_en": "Dumbbell Incline Bench Press",
+    "name_pt": "Supino inclinado com halteres"
+  },
+  {
+    "slug": "dumbbell-incline-biceps-curl-0322",
+    "name_en": "Dumbbell Incline Biceps Curl",
+    "name_pt": "Rosca direta no banco inclinado"
+  },
+  {
+    "slug": "dumbbell-incline-curl-0318",
+    "name_en": "Dumbbell Incline Curl",
+    "name_pt": "Rosca no banco inclinado com halter"
+  },
+  {
+    "slug": "dumbbell-incline-fly-0319",
+    "name_en": "Dumbbell Incline Fly",
+    "name_pt": "Crucifixo inclinado com halteres"
+  },
+  {
+    "slug": "dumbbell-incline-fly-on-exercise-ball-1278",
+    "name_en": "Dumbbell Incline Fly On Exercise Ball",
+    "name_pt": "Crucifixo inclinado com halteres na bola suíça"
+  },
+  {
+    "slug": "dumbbell-incline-hammer-curl-0320",
+    "name_en": "Dumbbell Incline Hammer Curl",
+    "name_pt": "Rosca martelo no banco inclinado"
+  },
+  {
+    "slug": "dumbbell-incline-hammer-press-0321",
+    "name_en": "Dumbbell Incline Hammer Press",
+    "name_pt": "Supino inclinado com pegada neutra e halteres"
+  },
+  {
+    "slug": "dumbbell-incline-rear-lateral-raise-0326",
+    "name_en": "Dumbbell Incline Rear Lateral Raise",
+    "name_pt": "Elevação posterior de ombro no banco inclinado"
+  },
+  {
+    "slug": "dumbbell-incline-row-0327",
+    "name_en": "Dumbbell Incline Row",
+    "name_pt": "Remada no banco inclinado com halteres"
+  },
+  {
+    "slug": "dumbbell-incline-shrug-0329",
+    "name_en": "Dumbbell Incline Shrug",
+    "name_pt": "Encolhimento de ombros no banco inclinado"
+  },
+  {
+    "slug": "dumbbell-incline-triceps-extension-0330",
+    "name_en": "Dumbbell Incline Triceps Extension",
+    "name_pt": "Extensão de tríceps no banco inclinado"
+  },
+  {
+    "slug": "dumbbell-iron-cross-0332",
+    "name_en": "Dumbbell Iron Cross",
+    "name_pt": "Crucifixo isométrico com halteres (cruz de ferro)"
+  },
+  {
+    "slug": "dumbbell-kickback-0333",
+    "name_en": "Dumbbell Kickback",
+    "name_pt": "Tríceps coice com halter"
+  },
+  {
+    "slug": "dumbbell-lateral-raise-0334",
+    "name_en": "Dumbbell Lateral Raise",
+    "name_pt": "Elevação lateral com halteres"
+  },
+  {
+    "slug": "dumbbell-lunge-0336",
+    "name_en": "Dumbbell Lunge",
+    "name_pt": "Avanço com halteres"
+  },
+  {
+    "slug": "dumbbell-lying-alternate-extension-1729",
+    "name_en": "Dumbbell Lying Alternate Extension",
+    "name_pt": "Extensão de tríceps alternada deitado com halteres"
+  },
+  {
+    "slug": "dumbbell-lying-hammer-press-0340",
+    "name_en": "Dumbbell Lying Hammer Press",
+    "name_pt": "Supino reto com pegada neutra e halteres"
+  },
+  {
+    "slug": "dumbbell-lying-leg-curl-0343",
+    "name_en": "Dumbbell Lying Leg Curl",
+    "name_pt": "Mesa flexora deitado com halter"
+  },
+  {
+    "slug": "dumbbell-lying-rear-delt-row-1328",
+    "name_en": "Dumbbell Lying Rear Delt Row",
+    "name_pt": "Remada para deltoide posterior deitado"
+  },
+  {
+    "slug": "dumbbell-lying-triceps-extension-0351",
+    "name_en": "Dumbbell Lying Triceps Extension",
+    "name_pt": "Tríceps testa deitado com halteres"
+  },
+  {
+    "slug": "dumbbell-one-arm-lateral-raise-0355",
+    "name_en": "Dumbbell One Arm Lateral Raise",
+    "name_pt": "Elevação lateral unilateral com halter"
+  },
+  {
+    "slug": "dumbbell-one-arm-zottman-preacher-curl-1672",
+    "name_en": "Dumbbell One Arm Zottman Preacher Curl",
+    "name_pt": "Rosca Zottman unilateral no banco Scott"
+  },
+  {
+    "slug": "dumbbell-one-arm-triceps-extension-0306",
+    "name_en": "Dumbbell One-Arm Triceps Extension",
+    "name_pt": "Extensão de tríceps unilateral com halter"
+  },
+  {
+    "slug": "dumbbell-over-bench-wrist-curl-0369",
+    "name_en": "Dumbbell Over Bench Wrist Curl",
+    "name_pt": "Rosca de punho apoiada no banco"
+  },
+  {
+    "slug": "dumbbell-palm-rotational-bent-over-row-1329",
+    "name_en": "Dumbbell Palm Rotational Bent Over Row",
+    "name_pt": "Remada curvada com rotação de punho"
+  },
+  {
+    "slug": "dumbbell-preacher-curl-over-exercise-ball-1673",
+    "name_en": "Dumbbell Preacher Curl Over Exercise Ball",
+    "name_pt": "Rosca Scott com halter na bola suíça"
+  },
+  {
+    "slug": "dumbbell-pronate-grip-triceps-extension-0373",
+    "name_en": "Dumbbell Pronate-grip Triceps Extension",
+    "name_pt": "Extensão de tríceps com pegada pronada"
+  },
+  {
+    "slug": "dumbbell-prone-incline-curl-0374",
+    "name_en": "Dumbbell Prone Incline Curl",
+    "name_pt": "Rosca no banco inclinado deitado de frente"
+  },
+  {
+    "slug": "dumbbell-rear-delt-row-0377",
+    "name_en": "Dumbbell Rear Delt Row",
+    "name_pt": "Remada para deltoide posterior com halteres"
+  },
+  {
+    "slug": "dumbbell-seated-calf-raise-1379",
+    "name_en": "Dumbbell Seated Calf Raise",
+    "name_pt": "Elevação de panturrilha sentado com halteres"
+  },
+  {
+    "slug": "dumbbell-seated-front-raise-0392",
+    "name_en": "Dumbbell Seated Front Raise",
+    "name_pt": "Elevação frontal sentado com halteres"
+  },
+  {
+    "slug": "dumbbell-seated-kickback-0394",
+    "name_en": "Dumbbell Seated Kickback",
+    "name_pt": "Tríceps coice sentado com halter"
+  },
+  {
+    "slug": "dumbbell-seated-lateral-raise-0396",
+    "name_en": "Dumbbell Seated Lateral Raise",
+    "name_pt": "Elevação lateral sentado com halteres"
+  },
+  {
+    "slug": "dumbbell-seated-neutral-wrist-curl-0397",
+    "name_en": "Dumbbell Seated Neutral Wrist Curl",
+    "name_pt": "Rosca de punho com pegada neutra sentado"
+  },
+  {
+    "slug": "dumbbell-seated-preacher-curl-0402",
+    "name_en": "Dumbbell Seated Preacher Curl",
+    "name_pt": "Rosca no banco Scott sentado com halter"
+  },
+  {
+    "slug": "dumbbell-seated-triceps-extension-2188",
+    "name_en": "Dumbbell Seated Triceps Extension",
+    "name_pt": "Extensão de tríceps sentado com halteres"
+  },
+  {
+    "slug": "dumbbell-shrug-0406",
+    "name_en": "Dumbbell Shrug",
+    "name_pt": "Encolhimento de ombros com halteres"
+  },
+  {
+    "slug": "dumbbell-side-bend-0407",
+    "name_en": "Dumbbell Side Bend",
+    "name_pt": "Flexão lateral de tronco com halter"
+  },
+  {
+    "slug": "dumbbell-single-leg-calf-raise-0409",
+    "name_en": "Dumbbell Single Leg Calf Raise",
+    "name_pt": "Elevação de panturrilha unilateral com halter"
+  },
+  {
+    "slug": "dumbbell-single-leg-squat-0411",
+    "name_en": "Dumbbell Single Leg Squat",
+    "name_pt": "Agachamento unilateral com halter"
+  },
+  {
+    "slug": "dumbbell-squat-0413",
+    "name_en": "Dumbbell Squat",
+    "name_pt": "Agachamento com halteres"
+  },
+  {
+    "slug": "dumbbell-standing-calf-raise-0417",
+    "name_en": "Dumbbell Standing Calf Raise",
+    "name_pt": "Elevação de panturrilha em pé com halteres"
+  },
+  {
+    "slug": "dumbbell-stiff-leg-deadlift-0432",
+    "name_en": "Dumbbell Stiff Leg Deadlift",
+    "name_pt": "Levantamento terra stiff com halteres"
+  },
+  {
+    "slug": "dumbbell-sumo-squat-new-dumbbell-sumo-squat",
+    "name_en": "Dumbbell Sumo Squat",
+    "name_pt": "Agachamento sumô com halteres"
+  },
+  {
+    "slug": "dumbbell-upright-row-0437",
+    "name_en": "Dumbbell Upright Row",
+    "name_pt": "Remada alta com halteres"
+  },
+  {
+    "slug": "dynamic-chest-stretch-1167",
+    "name_en": "Dynamic Chest Stretch",
+    "name_pt": "Alongamento dinâmico de peitoral"
+  },
+  {
+    "slug": "elliptical-trainer-2141",
+    "name_en": "Elliptical Trainer",
+    "name_pt": "Elíptico (transport)"
+  },
+  {
+    "slug": "exercise-ball-sit-up-1338",
+    "name_en": "Exercise Ball Sit-Up",
+    "name_pt": "Abdominal supra na bola suíça"
+  },
+  {
+    "slug": "exercise-ball-spinal-stretch-1339",
+    "name_en": "Exercise Ball Spinal Stretch",
+    "name_pt": "Alongamento de coluna na bola suíça"
+  },
+  {
+    "slug": "ez-bar-biceps-curl-2407",
+    "name_en": "EZ Bar Biceps Curl",
+    "name_pt": "Rosca direta com barra W"
+  },
+  {
+    "slug": "ez-bar-lying-triceps-extension-0061",
+    "name_en": "EZ Bar Lying Triceps Extension",
+    "name_pt": "Tríceps testa deitado com barra W"
+  },
+  {
+    "slug": "ez-barbell-anti-gravity-press-0445",
+    "name_en": "EZ Barbell Anti Gravity Press",
+    "name_pt": "Desenvolvimento antigravidade com barra W"
+  },
+  {
+    "slug": "feet-and-ankles-rotation-stretch-drv-stretching-feet-and-ankles-rotation-stretch",
+    "name_en": "Feet and Ankles Rotation Stretch",
+    "name_pt": "Circundução de pés e tornozelos"
+  },
+  {
+    "slug": "feet-and-ankles-stretch-drv-stretching-feet-and-ankles-stretch",
+    "name_en": "Feet and Ankles Stretch",
+    "name_pt": "Alongamento de pés e tornozelos"
+  },
+  {
+    "slug": "flat-bench-cable-fly-0620",
+    "name_en": "Flat Bench Cable Fly",
+    "name_pt": "Crucifixo na polia em banco reto"
+  },
+  {
+    "slug": "flexion-leg-sit-up-stretch-drv-stretching-flexion-leg-sit-up",
+    "name_en": "Flexion Leg Sit-Up Stretch",
+    "name_pt": "Alongamento abdominal com pernas flexionadas"
+  },
+  {
+    "slug": "floor-crunch-0274",
+    "name_en": "Floor Crunch",
+    "name_pt": "Abdominal supra no solo"
+  },
+  {
+    "slug": "front-plank-0464",
+    "name_en": "Front Plank",
+    "name_pt": "Prancha frontal"
+  },
+  {
+    "slug": "front-toe-touch-stretch-drv-stretching-front-toe-touch",
+    "name_en": "Front Toe Touch Stretch",
+    "name_pt": "Alongamento de posterior com toque nos pés"
+  },
+  {
+    "slug": "glute-bridge-drv-hip-raise-bridge",
+    "name_en": "Glute Bridge",
+    "name_pt": "Ponte de glúteos"
+  },
+  {
+    "slug": "hanging-leg-hip-raise-1764",
+    "name_en": "Hanging Leg Hip Raise",
+    "name_pt": "Elevação de pernas e quadril suspenso na barra"
+  },
+  {
+    "slug": "hanging-straight-leg-raise-0474",
+    "name_en": "Hanging Straight Leg Raise",
+    "name_pt": "Elevação de pernas estendidas suspenso na barra"
+  },
+  {
+    "slug": "hip-circles-stretch-0257",
+    "name_en": "Hip Circles Stretch",
+    "name_pt": "Circundução de quadril"
+  },
+  {
+    "slug": "hip-extension-stretch-drv-stretching-hip-extension-stretch",
+    "name_en": "Hip Extension Stretch",
+    "name_pt": "Alongamento em extensão de quadril"
+  },
+  {
+    "slug": "hip-flexor-and-quadriceps-stretch-1564",
+    "name_en": "Hip Flexor and Quadriceps Stretch",
+    "name_pt": "Alongamento de flexor do quadril e quadríceps"
+  },
+  {
+    "slug": "incline-leg-hip-raise-0325",
+    "name_en": "Incline Leg Hip Raise",
+    "name_pt": "Elevação de pernas no banco inclinado"
+  },
+  {
+    "slug": "incline-push-up-0493",
+    "name_en": "Incline Push-Up",
+    "name_pt": "Flexão de braço com mãos elevadas"
+  },
+  {
+    "slug": "inverted-row-between-chairs-0499",
+    "name_en": "Inverted Row Between Chairs",
+    "name_pt": "Remada invertida entre cadeiras"
+  },
+  {
+    "slug": "inverted-row-with-straps-0498",
+    "name_en": "Inverted Row With Straps",
+    "name_pt": "Remada invertida em fitas de suspensão"
+  },
+  {
+    "slug": "iron-cross-stretch-1419",
+    "name_en": "Iron Cross Stretch",
+    "name_pt": "Alongamento em cruz de ferro"
+  },
+  {
+    "slug": "jackknife-drv-jackknife-pilates",
+    "name_en": "Jackknife",
+    "name_pt": "Abdominal canivete"
+  },
+  {
+    "slug": "jackknife-floor-0981",
+    "name_en": "Jackknife Floor",
+    "name_pt": "Abdominal canivete no solo"
+  },
+  {
+    "slug": "jackknife-split-crunch-drv-jack-split-crunches",
+    "name_en": "Jackknife Split Crunch",
+    "name_pt": "Abdominal canivete alternado"
+  },
+  {
+    "slug": "jump-rope-2612",
+    "name_en": "Jump Rope",
+    "name_pt": "Pular corda"
+  },
+  {
+    "slug": "jump-step-up-drv-jump-step-up",
+    "name_en": "Jump Step-Up",
+    "name_pt": "Subida no banco com salto"
+  },
+  {
+    "slug": "jumping-jack-new-low-impact-jumping-jack",
+    "name_en": "Jumping Jack",
+    "name_pt": "Polichinelo"
+  },
+  {
+    "slug": "kettlebell-deadlift-drv-kettlebell-deadlift",
+    "name_en": "Kettlebell Deadlift",
+    "name_pt": "Levantamento terra com kettlebell"
+  },
+  {
+    "slug": "kneeling-back-rotation-stretch-drv-stretching-kneeling-back-rotation-stretch",
+    "name_en": "Kneeling Back Rotation Stretch",
+    "name_pt": "Alongamento de coluna torácica com rotação ajoelhado"
+  },
+  {
+    "slug": "kneeling-lat-stretch-1346",
+    "name_en": "Kneeling Lat Stretch",
+    "name_pt": "Alongamento de dorsais ajoelhado"
+  },
+  {
+    "slug": "kneeling-triceps-stretch-1771",
+    "name_en": "Kneeling Triceps Stretch",
+    "name_pt": "Alongamento de tríceps ajoelhado"
+  },
+  {
+    "slug": "landmine-180-0562",
+    "name_en": "Landmine 180",
+    "name_pt": "Rotação de tronco com barra em landmine (180°)"
+  },
+  {
+    "slug": "leg-raise-crunch-0600",
+    "name_en": "Leg Raise Crunch",
+    "name_pt": "Abdominal com elevação de pernas"
+  },
+  {
+    "slug": "leg-raise-with-hip-lift-drv-leg-raise-hip-lift",
+    "name_en": "Leg Raise with Hip Lift",
+    "name_pt": "Elevação de pernas com elevação de quadril"
+  },
+  {
+    "slug": "lever-back-extension-0573",
+    "name_en": "Lever Back Extension",
+    "name_pt": "Extensão lombar em máquina"
+  },
+  {
+    "slug": "lever-high-row-0581",
+    "name_en": "Lever High Row",
+    "name_pt": "Remada alta em máquina"
+  },
+  {
+    "slug": "lever-horizontal-leg-press-2611",
+    "name_en": "Lever Horizontal Leg Press",
+    "name_pt": "Leg press horizontal em máquina"
+  },
+  {
+    "slug": "lever-incline-hammer-chest-press-1299",
+    "name_en": "Lever Incline Hammer Chest Press",
+    "name_pt": "Supino inclinado com pegada neutra em máquina"
+  },
+  {
+    "slug": "lever-kneeling-leg-curl-0582",
+    "name_en": "Lever Kneeling Leg Curl",
+    "name_pt": "Mesa flexora ajoelhado em máquina"
+  },
+  {
+    "slug": "lever-lateral-raise-0584",
+    "name_en": "Lever Lateral Raise",
+    "name_pt": "Elevação lateral em máquina"
+  },
+  {
+    "slug": "lever-leg-extension-0585",
+    "name_en": "Lever Leg Extension",
+    "name_pt": "Cadeira extensora em máquina"
+  },
+  {
+    "slug": "lever-lying-chest-press-0577",
+    "name_en": "Lever Lying Chest Press",
+    "name_pt": "Supino reto em máquina"
+  },
+  {
+    "slug": "lever-lying-leg-curl-0586",
+    "name_en": "Lever Lying Leg Curl",
+    "name_pt": "Mesa flexora deitado em máquina"
+  },
+  {
+    "slug": "lever-preacher-curl-0592",
+    "name_en": "Lever Preacher Curl",
+    "name_pt": "Rosca no banco Scott em máquina"
+  },
+  {
+    "slug": "lever-reverse-hyperextension-0593",
+    "name_en": "Lever Reverse Hyperextension",
+    "name_pt": "Hiperextensão reversa em máquina"
+  },
+  {
+    "slug": "lever-reverse-t-bar-row-1349",
+    "name_en": "Lever Reverse T-Bar Row",
+    "name_pt": "Remada T-bar reversa em máquina"
+  },
+  {
+    "slug": "lever-seated-calf-raise-0594",
+    "name_en": "Lever Seated Calf Raise",
+    "name_pt": "Elevação de panturrilha sentado em máquina"
+  },
+  {
+    "slug": "lever-seated-crunch-1452",
+    "name_en": "Lever Seated Crunch",
+    "name_pt": "Abdominal supra sentado em máquina"
+  },
+  {
+    "slug": "lever-seated-dip-1451",
+    "name_en": "Lever Seated Dip",
+    "name_pt": "Mergulho de tríceps sentado em máquina"
+  },
+  {
+    "slug": "lever-seated-hip-abduction-0597",
+    "name_en": "Lever Seated Hip Abduction",
+    "name_pt": "Abdução de quadril sentado em máquina"
+  },
+  {
+    "slug": "lever-seated-hip-adduction-0598",
+    "name_en": "Lever Seated Hip Adduction",
+    "name_pt": "Adução de quadril sentado em máquina"
+  },
+  {
+    "slug": "lever-seated-leg-curl-0599",
+    "name_en": "Lever Seated Leg Curl",
+    "name_pt": "Mesa flexora sentado em máquina"
+  },
+  {
+    "slug": "lever-seated-reverse-fly-0602",
+    "name_en": "Lever Seated Reverse Fly",
+    "name_pt": "Crucifixo inverso sentado em máquina"
+  },
+  {
+    "slug": "lever-shrug-0604",
+    "name_en": "Lever Shrug",
+    "name_pt": "Encolhimento de ombros em máquina"
+  },
+  {
+    "slug": "lever-standing-calf-raise-0605",
+    "name_en": "Lever Standing Calf Raise",
+    "name_pt": "Elevação de panturrilha em pé em máquina"
+  },
+  {
+    "slug": "lever-standing-hip-extension-2286",
+    "name_en": "Lever Standing Hip Extension",
+    "name_pt": "Extensão de quadril em pé em máquina"
+  },
+  {
+    "slug": "lever-standing-rear-kick-drv-lever-standing-rear-kick",
+    "name_en": "Lever Standing Rear Kick",
+    "name_pt": "Extensão de quadril para trás em máquina"
+  },
+  {
+    "slug": "lever-t-bar-row-drv-lever-t-bar-row",
+    "name_en": "Lever T-Bar Row",
+    "name_pt": "Remada T-bar em máquina"
+  },
+  {
+    "slug": "lever-triceps-extension-0607",
+    "name_en": "Lever Triceps Extension",
+    "name_pt": "Extensão de tríceps em máquina"
+  },
+  {
+    "slug": "lying-hip-lift-on-stability-ball-drv-lying-hip-lift-on-stability-ball",
+    "name_en": "Lying Hip Lift on Stability Ball",
+    "name_pt": "Elevação de quadril na bola suíça"
+  },
+  {
+    "slug": "lying-leg-raise-0865",
+    "name_en": "Lying Leg Raise",
+    "name_pt": "Elevação de pernas deitado"
+  },
+  {
+    "slug": "lying-quadriceps-stretch-drv-stretching-quadriceps-lying-stretch",
+    "name_en": "Lying Quadriceps Stretch",
+    "name_pt": "Alongamento de quadríceps deitado"
+  },
+  {
+    "slug": "lying-scissor-kick-drv-lying-scissor-kick-female",
+    "name_en": "Lying Scissor Kick",
+    "name_pt": "Tesoura deitado"
+  },
+  {
+    "slug": "lying-straight-leg-raise-1002",
+    "name_en": "Lying Straight Leg Raise",
+    "name_pt": "Elevação de pernas estendidas deitado"
+  },
+  {
+    "slug": "medicine-ball-wall-sit-up-0640",
+    "name_en": "Medicine Ball Wall Sit-Up",
+    "name_pt": "Abdominal supra na parede com bola medicinal"
+  },
+  {
+    "slug": "middle-back-stretch-1405",
+    "name_en": "Middle Back Stretch",
+    "name_pt": "Alongamento do meio das costas"
+  },
+  {
+    "slug": "military-press-0553",
+    "name_en": "Military Press",
+    "name_pt": "Desenvolvimento militar em pé"
+  },
+  {
+    "slug": "neck-side-stretch-1403",
+    "name_en": "Neck Side Stretch",
+    "name_pt": "Alongamento lateral de pescoço"
+  },
+  {
+    "slug": "old-school-reverse-extensions-drv-old-school-reverse-extensions",
+    "name_en": "Old School Reverse Extensions",
+    "name_pt": "Extensão de tríceps reversa (old school)"
+  },
+  {
+    "slug": "otis-up-drv-otis-ups",
+    "name_en": "Otis-Up",
+    "name_pt": "Abdominal Otis"
+  },
+  {
+    "slug": "overhead-chest-stretch-1259",
+    "name_en": "Overhead Chest Stretch",
+    "name_pt": "Alongamento de peitoral com braços elevados"
+  },
+  {
+    "slug": "pec-deck-fly-drv-lever-pec-deck-fly",
+    "name_en": "Pec Deck Fly",
+    "name_pt": "Crucifixo no peck deck"
+  },
+  {
+    "slug": "peroneals-stretch-1388",
+    "name_en": "Peroneals Stretch",
+    "name_pt": "Alongamento de fibulares"
+  },
+  {
+    "slug": "pilates-corkscrew-drv-corkscrew-pilates",
+    "name_en": "Pilates Corkscrew",
+    "name_pt": "Saca-rolhas (Pilates)"
+  },
+  {
+    "slug": "pilates-hundred-drv-hundred-pilates",
+    "name_en": "Pilates Hundred",
+    "name_pt": "Cem abdominais (Pilates)"
+  },
+  {
+    "slug": "plyometric-side-lunge-stretch-drv-stretching-plyo-side-lunge-stretch",
+    "name_en": "Plyometric Side Lunge Stretch",
+    "name_pt": "Alongamento de avanço lateral pliométrico"
+  },
+  {
+    "slug": "pull-up-wide-grip-1429",
+    "name_en": "Pull-Up (Wide Grip)",
+    "name_pt": "Barra fixa com pegada aberta"
+  },
+  {
+    "slug": "pull-up-chin-up-drv-chin-ups-pull-ups",
+    "name_en": "Pull-Up / Chin-Up",
+    "name_pt": "Barra fixa pronada e supinada"
+  },
+  {
+    "slug": "push-up-drv-push-ups",
+    "name_en": "Push-Up",
+    "name_pt": "Flexão de braço"
+  },
+  {
+    "slug": "rear-decline-bridge-0668",
+    "name_en": "Rear Decline Bridge",
+    "name_pt": "Ponte de glúteos declinada"
+  },
+  {
+    "slug": "rear-deltoid-stretch-0669",
+    "name_en": "Rear Deltoid Stretch",
+    "name_pt": "Alongamento de deltoide posterior"
+  },
+  {
+    "slug": "rear-foot-elevated-hip-flexor-stretch-drv-stretching-hip-flexor-stretch-rear-foot-elevated",
+    "name_en": "Rear Foot Elevated Hip Flexor Stretch",
+    "name_pt": "Alongamento de flexor do quadril com pé de trás elevado"
+  },
+  {
+    "slug": "resistance-band-high-fly-drv-band-high-fly",
+    "name_en": "Resistance Band High Fly",
+    "name_pt": "Crucifixo alto com elástico"
+  },
+  {
+    "slug": "reverse-crunch-0872",
+    "name_en": "Reverse Crunch",
+    "name_pt": "Abdominal infra"
+  },
+  {
+    "slug": "reverse-dip-stretch-0672",
+    "name_en": "Reverse Dip Stretch",
+    "name_pt": "Alongamento de tríceps em mergulho reverso"
+  },
+  {
+    "slug": "reverse-grip-machine-lat-pulldown-0673",
+    "name_en": "Reverse Grip Machine Lat Pulldown",
+    "name_pt": "Puxada de dorsal em máquina com pegada inversa"
+  },
+  {
+    "slug": "reverse-grip-pull-up-2327",
+    "name_en": "Reverse Grip Pull-Up",
+    "name_pt": "Barra fixa com pegada supinada"
+  },
+  {
+    "slug": "reverse-grip-cable-lat-pulldown-0207",
+    "name_en": "Reverse-Grip Cable Lat Pulldown",
+    "name_pt": "Puxada de dorsal na polia com pegada inversa"
+  },
+  {
+    "slug": "ring-high-row-drv-ring-high-row",
+    "name_en": "Ring High Row",
+    "name_pt": "Remada alta nas argolas"
+  },
+  {
+    "slug": "rotational-push-up-drv-rotate-push-up-female",
+    "name_en": "Rotational Push-Up",
+    "name_pt": "Flexão de braço com rotação de tronco"
+  },
+  {
+    "slug": "runner-s-stretch-1585",
+    "name_en": "Runner's Stretch",
+    "name_pt": "Alongamento do corredor"
+  },
+  {
+    "slug": "running-drv-running",
+    "name_en": "Running",
+    "name_pt": "Corrida"
+  },
+  {
+    "slug": "russian-twist-on-stability-ball-arms-straight-0211",
+    "name_en": "Russian Twist on Stability Ball (Arms Straight)",
+    "name_pt": "Abdominal com rotação na bola suíça"
+  },
+  {
+    "slug": "scapula-dips-3012",
+    "name_en": "Scapula Dips",
+    "name_pt": "Mergulho escapular"
+  },
+  {
+    "slug": "seated-alternating-dumbbell-curl-0285",
+    "name_en": "Seated Alternating Dumbbell Curl",
+    "name_pt": "Rosca alternada sentada com halteres"
+  },
+  {
+    "slug": "seated-bent-over-back-stretch-drv-stretching-sitting-bent-over-back-stretch",
+    "name_en": "Seated Bent Over Back Stretch",
+    "name_pt": "Alongamento de costas curvado sentado"
+  },
+  {
+    "slug": "seated-boat-stretch-drv-stretching-boat-stretch",
+    "name_en": "Seated Boat Stretch",
+    "name_pt": "Alongamento em postura do barco sentado"
+  },
+  {
+    "slug": "seated-cable-row-v-grip-0208",
+    "name_en": "Seated Cable Row (V-Grip)",
+    "name_pt": "Remada sentada na polia com triângulo"
+  },
+  {
+    "slug": "seated-cable-row-wide-grip-0218",
+    "name_en": "Seated Cable Row (Wide-Grip)",
+    "name_pt": "Remada sentada na polia com pegada aberta"
+  },
+  {
+    "slug": "seated-calf-stretch-1390",
+    "name_en": "Seated Calf Stretch",
+    "name_pt": "Alongamento de panturrilha sentado"
+  },
+  {
+    "slug": "seated-dumbbell-shoulder-press-0289",
+    "name_en": "Seated Dumbbell Shoulder Press",
+    "name_pt": "Desenvolvimento sentado com halteres"
+  },
+  {
+    "slug": "seated-lower-back-stretch-0690",
+    "name_en": "Seated Lower Back Stretch",
+    "name_pt": "Alongamento lombar sentado"
+  },
+  {
+    "slug": "seated-shoulder-flexor-depressor-retractor-stretch-2203",
+    "name_en": "Seated Shoulder Flexor, Depressor, Retractor Stretch",
+    "name_pt": "Alongamento de ombro (flexão, depressão e retração)"
+  },
+  {
+    "slug": "seated-straight-arm-twist-1011",
+    "name_en": "Seated Straight Arm Twist",
+    "name_pt": "Rotação de tronco sentado com braços estendidos"
+  },
+  {
+    "slug": "seated-twist-on-stability-ball-0849",
+    "name_en": "Seated Twist on Stability Ball",
+    "name_pt": "Rotação de tronco na bola suíça"
+  },
+  {
+    "slug": "seated-twist-stretch-straight-arm-drv-stretching-seated-twist-straight-arm",
+    "name_en": "Seated Twist Stretch (Straight Arm)",
+    "name_pt": "Alongamento com rotação sentado e braços estendidos"
+  },
+  {
+    "slug": "seated-wide-angle-pose-sequence-1587",
+    "name_en": "Seated Wide Angle Pose Sequence",
+    "name_pt": "Sequência da postura do ângulo aberto sentado"
+  },
+  {
+    "slug": "shoulder-width-pull-up-0651",
+    "name_en": "Shoulder-Width Pull-Up",
+    "name_pt": "Barra fixa"
+  },
+  {
+    "slug": "side-bend-on-stability-ball-0850",
+    "name_en": "Side Bend on Stability Ball",
+    "name_pt": "Flexão lateral de tronco na bola suíça"
+  },
+  {
+    "slug": "side-bend-stretch-drv-stretching-slopes-towards-stretch",
+    "name_en": "Side Bend Stretch",
+    "name_pt": "Alongamento lateral de tronco"
+  },
+  {
+    "slug": "side-plank-0705",
+    "name_en": "Side Plank",
+    "name_pt": "Prancha lateral"
+  },
+  {
+    "slug": "side-wrist-pull-stretch-0721",
+    "name_en": "Side Wrist Pull Stretch",
+    "name_pt": "Alongamento de punho com tração lateral"
+  },
+  {
+    "slug": "single-dumbbell-stiff-leg-deadlift-1757",
+    "name_en": "Single Dumbbell Stiff-Leg Deadlift",
+    "name_pt": "Levantamento terra stiff unilateral com halter"
+  },
+  {
+    "slug": "single-leg-stretch-bent-knee-drv-stretching-single-leg-stretch-bent-knee",
+    "name_en": "Single Leg Stretch (Bent Knee)",
+    "name_pt": "Alongamento unilateral com joelho flexionado"
+  },
+  {
+    "slug": "single-straight-leg-stretch-drv-stretching-single-straight-leg-stretch",
+    "name_en": "Single Straight Leg Stretch",
+    "name_pt": "Alongamento unilateral com perna estendida"
+  },
+  {
+    "slug": "sit-up-drv-sit-ups",
+    "name_en": "Sit-Up",
+    "name_pt": "Abdominal supra"
+  },
+  {
+    "slug": "sit-up-rectus-abdominis",
+    "name_en": "Sit-Up (rectus abdominis)",
+    "name_pt": "Abdominal supra (reto abdominal)"
+  },
+  {
+    "slug": "sled-45-degree-calf-press-0738",
+    "name_en": "Sled 45 Degree Calf Press",
+    "name_pt": "Elevação de panturrilha no leg press 45°"
+  },
+  {
+    "slug": "sled-45-degree-wide-leg-press-0740",
+    "name_en": "Sled 45 Degree Wide Leg Press",
+    "name_pt": "Leg press 45° com pés afastados"
+  },
+  {
+    "slug": "sled-hack-squat-0743",
+    "name_en": "Sled Hack Squat",
+    "name_pt": "Agachamento hack em máquina"
+  },
+  {
+    "slug": "smith-chair-squat-0750",
+    "name_en": "Smith Chair Squat",
+    "name_pt": "Agachamento no Smith com apoio"
+  },
+  {
+    "slug": "smith-machine-calf-raise-1393",
+    "name_en": "Smith Machine Calf Raise",
+    "name_pt": "Elevação de panturrilha no Smith"
+  },
+  {
+    "slug": "smith-machine-deadlift-0752",
+    "name_en": "Smith Machine Deadlift",
+    "name_pt": "Levantamento terra no Smith"
+  },
+  {
+    "slug": "smith-machine-leg-press-0748",
+    "name_en": "Smith Machine Leg Press",
+    "name_pt": "Leg press no Smith"
+  },
+  {
+    "slug": "smith-seated-shoulder-press-0765",
+    "name_en": "Smith Seated Shoulder Press",
+    "name_pt": "Desenvolvimento sentado no Smith"
+  },
+  {
+    "slug": "spell-caster-0777",
+    "name_en": "Spell Caster",
+    "name_pt": "Rotação de tronco com halteres"
+  },
+  {
+    "slug": "spine-stretch-1363",
+    "name_en": "Spine Stretch",
+    "name_pt": "Alongamento de coluna"
+  },
+  {
+    "slug": "squat-drv-squat",
+    "name_en": "Squat",
+    "name_pt": "Agachamento livre"
+  },
+  {
+    "slug": "stability-ball-leg-curl-0353",
+    "name_en": "Stability Ball Leg Curl",
+    "name_pt": "Mesa flexora na bola suíça"
+  },
+  {
+    "slug": "stability-ball-leg-elevated-crunch-0271",
+    "name_en": "Stability Ball Leg Elevated Crunch",
+    "name_pt": "Abdominal com pernas apoiadas na bola suíça"
+  },
+  {
+    "slug": "stairs-calf-stretch-drv-stretching-stairs-calf-stretch",
+    "name_en": "Stairs Calf Stretch",
+    "name_pt": "Alongamento de panturrilha em degrau"
+  },
+  {
+    "slug": "standing-adductor-stretch-drv-stretching-adductor-stretch",
+    "name_en": "Standing Adductor Stretch",
+    "name_pt": "Alongamento de adutores em pé"
+  },
+  {
+    "slug": "standing-back-rotation-stretch-drv-stretching-standing-back-rotation-stretch",
+    "name_en": "Standing Back Rotation Stretch",
+    "name_pt": "Alongamento de costas com rotação em pé"
+  },
+  {
+    "slug": "standing-bench-calf-stretch-drv-stretching-standing-bench-calf-stretch",
+    "name_en": "Standing Bench Calf Stretch",
+    "name_pt": "Alongamento de panturrilha em pé no banco"
+  },
+  {
+    "slug": "standing-hamstring-stretch-1511",
+    "name_en": "Standing Hamstring Stretch",
+    "name_pt": "Alongamento de posterior de coxa em pé"
+  },
+  {
+    "slug": "standing-hip-flexor-and-abdominal-stretch-drv-stretching-ceiling-look-stretch",
+    "name_en": "Standing Hip Flexor and Abdominal Stretch",
+    "name_pt": "Alongamento de flexor do quadril e abdômen em pé"
+  },
+  {
+    "slug": "standing-knee-raise-stretch-0484",
+    "name_en": "Standing Knee Raise Stretch",
+    "name_pt": "Alongamento com elevação de joelho em pé"
+  },
+  {
+    "slug": "standing-lateral-stretch-0794",
+    "name_en": "Standing Lateral Stretch",
+    "name_pt": "Alongamento lateral em pé"
+  },
+  {
+    "slug": "standing-quadriceps-stretch-drv-stretching-quadriceps-stretch",
+    "name_en": "Standing Quadriceps Stretch",
+    "name_pt": "Alongamento de quadríceps em pé"
+  },
+  {
+    "slug": "standing-reach-up-back-rotation-stretch-drv-stretching-standing-reach-up-back-rotation-stretch",
+    "name_en": "Standing Reach Up Back Rotation Stretch",
+    "name_pt": "Alongamento de costas com rotação e braços elevados"
+  },
+  {
+    "slug": "standing-side-bend-stretch-bent-arm-drv-stretching-standing-side-bend-bent-arm",
+    "name_en": "Standing Side Bend Stretch (Bent Arm)",
+    "name_pt": "Alongamento lateral em pé com braço flexionado"
+  },
+  {
+    "slug": "standing-wheel-rollout-0796",
+    "name_en": "Standing Wheel Rollout",
+    "name_pt": "Roda abdominal em pé"
+  },
+  {
+    "slug": "stationary-bike-2138",
+    "name_en": "Stationary Bike",
+    "name_pt": "Bicicleta ergométrica"
+  },
+  {
+    "slug": "straight-leg-up-crunch-drv-crunch-straight-leg-up",
+    "name_en": "Straight-Leg Up Crunch",
+    "name_pt": "Abdominal com pernas estendidas para cima"
+  },
+  {
+    "slug": "supine-dumbbell-biceps-curl-0350",
+    "name_en": "Supine Dumbbell Biceps Curl",
+    "name_pt": "Rosca direta deitado com halteres"
+  },
+  {
+    "slug": "treadmill-running-drv-treadmill-running",
+    "name_en": "Treadmill Running",
+    "name_pt": "Corrida em esteira"
+  },
+  {
+    "slug": "triceps-dips-drv-triceps-dips",
+    "name_en": "Triceps Dips",
+    "name_pt": "Mergulho de tríceps nas paralelas"
+  },
+  {
+    "slug": "twisting-crunch-0985",
+    "name_en": "Twisting Crunch",
+    "name_pt": "Abdominal com rotação"
+  },
+  {
+    "slug": "v-up-drv-v-up",
+    "name_en": "V-Up",
+    "name_pt": "Abdominal em V"
+  },
+  {
+    "slug": "vertical-leg-raise-on-parallel-bars-0826",
+    "name_en": "Vertical Leg Raise (on parallel bars)",
+    "name_pt": "Elevação de pernas nas barras paralelas"
+  },
+  {
+    "slug": "walk-wave-machine-drv-walk-wave-machine",
+    "name_en": "Walk Wave Machine",
+    "name_pt": "Máquina de onda (walk wave)"
+  },
+  {
+    "slug": "weighted-leg-extension-crunch-0832",
+    "name_en": "Weighted Leg Extension Crunch",
+    "name_pt": "Abdominal com extensão de pernas e carga"
+  },
+  {
+    "slug": "weighted-lying-twist-0846",
+    "name_en": "Weighted Lying Twist",
+    "name_pt": "Rotação de tronco deitado com carga"
+  },
+  {
+    "slug": "weighted-sissy-squat-0851",
+    "name_en": "Weighted Sissy Squat",
+    "name_pt": "Agachamento sissy com carga"
+  },
+  {
+    "slug": "weighted-standing-curl-0853",
+    "name_en": "Weighted Standing Curl",
+    "name_pt": "Rosca direta em pé com carga"
+  },
+  {
+    "slug": "wide-grip-cable-lat-pulldown-drv-cable-bar-lateral-pulldown-wide-shoulder-grip",
+    "name_en": "Wide Grip Cable Lat Pulldown",
+    "name_pt": "Puxada de dorsal na polia com pegada aberta"
+  },
+  {
+    "slug": "wrist-circles-1428",
+    "name_en": "Wrist Circles",
+    "name_pt": "Circundução de punhos"
+  }
+]

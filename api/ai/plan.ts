@@ -11,9 +11,10 @@
  *  • normaliza e valida a saída antes de responder.
  */
 
-import { jsonError, rateLimit, readHeader, type ApiRequest, type ApiResponse } from '../_lib/http';
+import { type ApiRequest, type ApiResponse } from '../_lib/http';
+import { securityHeaders, checkRequest, userClient, reserve, finish, estimateTokens, handleSecurityError, SecurityError } from '../_lib/security';
 import { verifyUser } from '../_lib/auth';
-import { completeJson, ProviderError, readProviderConfig } from '../_lib/provider';
+import { completeJson, readProviderConfig } from '../_lib/provider';
 import {
   aiPlanSchema,
   buildPlanMessages,
@@ -42,108 +43,71 @@ function normalizeExercise(
   };
 }
 
+export const config = { maxDuration: 60 };
+
 export default async function handler(req: ApiRequest, res: ApiResponse) {
-  res.setHeader('Cache-Control', 'no-store');
-
-  if (req.method !== 'POST') {
-    return jsonError(res, 405, 'Método não permitido.');
-  }
-
-  const config = readProviderConfig();
-  if (!config) {
-    return jsonError(res, 503, 'Serviço de IA não configurado no servidor.', {
-      code: 'ai_not_configured',
-    });
-  }
-
-  const parsed = planRequestSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return jsonError(res, 400, 'Requisição inválida.');
-  }
-
-  const request = parsed.data;
-
-  const token = request.token ?? readHeader(req, 'authorization')?.replace(/^Bearer\s+/i, '');
-  const user = await verifyUser(token);
-  if (!user) {
-    return jsonError(res, 401, 'Sessão inválida. Entre novamente.');
-  }
-
-  if (!rateLimit(`plan:${user.id}`, 8, 60 * 60 * 1000)) {
-    return jsonError(res, 429, 'Limite de gerações por hora atingido. Tente mais tarde.');
-  }
-
+  securityHeaders(res);
+  let lease: Awaited<ReturnType<typeof reserve>> | undefined;
+  let totalTokens: number | null = null;
   try {
-    const completion = await completeJson(config, buildPlanMessages(request));
-    const raw = aiPlanSchema.safeParse(JSON.parse(completion.text));
-
-    if (!raw.success) {
-      return jsonError(res, 422, 'A IA não devolveu um plano no formato esperado.');
+    if (req.method !== 'POST') { res.setHeader('Allow','POST'); throw new SecurityError(405,'Método não permitido.'); }
+    const token = checkRequest(req);
+    const parsed = planRequestSchema.safeParse(req.body);
+    if (!parsed.success) throw new SecurityError(400,'Requisição inválida.');
+    const request = parsed.data;
+    const user = await verifyUser(token);
+    if (!user) throw new SecurityError(401,'Sessão inválida. Entre novamente.');
+    const config = readProviderConfig();
+    if (!config) throw new SecurityError(503,'Serviço de IA não configurado.','ai_not_configured');
+    const client = userClient(user.token);
+    // Never trust client-supplied exercise metadata/IDs as a catalog authority.
+    const { data: rows, error: catalogError } = await client.from('exercises')
+      .select('id,name,primary_muscle,equipment,difficulty')
+      .in('id',request.candidates.map(c=>c.id)).eq('is_active',true).limit(200);
+    if (catalogError) throw new SecurityError(503,'Catálogo indisponível.');
+    const byId = new Map((rows ?? []).map(row=>[row.id,row] as const));
+    const candidates: Candidate[] = [];
+    for (const supplied of request.candidates) {
+      const row = byId.get(supplied.id);
+      if (!row) continue;
+      const candidate = { id:row.id,name:row.name,muscle:row.primary_muscle,equipment:row.equipment as string[],
+        difficulty:row.difficulty,pattern:supplied.pattern };
+      if (candidate.equipment.some(eq=>!request.profile.equipment.includes(eq) && eq!=='bodyweight') ||
+          (request.profile.level==='beginner' && candidate.difficulty!=='beginner') ||
+          (request.profile.level==='intermediate' && candidate.difficulty==='advanced')) continue;
+      candidates.push(candidate);
     }
-
-    const candidates = new Map(request.candidates.map((candidate) => [candidate.id, candidate]));
-
-    const days = raw.data.days
-      .map((day) => {
-        const exercises = day.exercises
-          .map((exercise) => {
-            const candidate = candidates.get(exercise.exerciseId);
-            return candidate ? normalizeExercise(exercise, candidate) : null;
-          })
-          .filter((exercise): exercise is NonNullable<typeof exercise> => exercise !== null);
-
-        // Remove duplicatas dentro do dia (a IA às vezes repete).
-        const seen = new Set<string>();
-        const unique = exercises.filter((exercise) => {
-          if (seen.has(exercise.exerciseId)) return false;
-          seen.add(exercise.exerciseId);
-          return true;
-        });
-
-        const workSeconds = unique.reduce(
-          (total, exercise) =>
-            total + (exercise.durationSeconds ?? exercise.sets * 40) + exercise.restSeconds * Math.max(0, exercise.sets - 1),
-          0,
-        );
-
-        return {
-          label: day.label.slice(0, 24),
-          name: day.name.slice(0, 120),
-          weekday: day.weekday,
-          estimatedMinutes: Math.min(180, Math.max(10, Math.round(workSeconds / 60) + 8)),
-          muscles: [...new Set(unique.map((exercise) => exercise.primaryMuscle))],
-          rationale: day.rationale,
-          exercises: unique,
-        };
-      })
-      .filter((day) => day.exercises.length > 0);
-
-    if (days.length !== request.profile.sessionsPerWeek) {
-      return jsonError(res, 422, 'A IA não respeitou a frequência semanal.');
-    }
-    if (days.length === 0) {
-      return jsonError(res, 422, 'A IA não sugeriu exercícios válidos do catálogo.');
-    }
-
-    res.status(200).json({
-      model: completion.model,
-      program: {
-        name: raw.data.name,
-        goal: request.profile.goal,
-        level: request.profile.level,
-        environment: request.profile.environment,
-        split: days.length <= 2 ? 'full_body' : 'split',
-        days,
-        rationale: raw.data.rationale,
-        warnings: raw.data.warnings,
-        source: 'ai',
-        seed: request.seed,
-      },
+    if (!candidates.length) throw new SecurityError(422,'Nenhum candidato autorizado e compatível.');
+    const trustedRequest = {...request,candidates};
+    lease = await reserve(client,user.id,'plan',request.requestId,estimateTokens(trustedRequest,2200));
+    const completion = await completeJson(config,buildPlanMessages(trustedRequest),2200);
+    totalTokens = completion.totalTokens;
+    let unknown: unknown;
+    try { unknown=JSON.parse(completion.text); } catch { throw new SecurityError(422,'A IA devolveu um formato inválido.'); }
+    const raw=aiPlanSchema.safeParse(unknown);
+    if (!raw.success) throw new SecurityError(422,'A IA não devolveu um plano válido.');
+    const catalog=new Map(candidates.map(c=>[c.id,c] as const));
+    const days=raw.data.days.map(day=>{
+      const seen=new Set<string>();
+      const exercises=day.exercises.flatMap(exercise=>{
+        const candidate=catalog.get(exercise.exerciseId);
+        if (!candidate || seen.has(candidate.id)) return [];
+        seen.add(candidate.id);
+        return [normalizeExercise(exercise,candidate)];
+      });
+      const workSeconds=exercises.reduce((total,e)=>total+(e.durationSeconds??e.sets*40)+e.restSeconds*Math.max(0,e.sets-1),0);
+      return {label:day.label,name:day.name,weekday:day.weekday,
+        estimatedMinutes:Math.min(180,Math.max(10,Math.round(workSeconds/60)+8)),
+        muscles:[...new Set(exercises.map(e=>e.primaryMuscle))],rationale:day.rationale,exercises};
     });
-  } catch (error) {
-    if (error instanceof ProviderError) {
-      return jsonError(res, 502, 'O provedor de IA não respondeu. Tente novamente.');
+    if (days.length!==request.profile.sessionsPerWeek || days.some(day=>!day.exercises.length)) {
+      throw new SecurityError(422,'A IA não respeitou o catálogo e a frequência semanal.');
     }
-    return jsonError(res, 500, 'Não foi possível gerar o plano com IA.');
-  }
+    await finish(lease,totalTokens,true);
+    return res.status(200).json({model:completion.model,program:{name:raw.data.name,
+      goal:request.profile.goal,level:request.profile.level,environment:request.profile.environment,
+      split:days.length<=2?'full_body':'split',days,rationale:raw.data.rationale,
+      warnings:raw.data.warnings,source:'ai',seed:request.seed}});
+  } catch(error) { return handleSecurityError(res,error); }
+  finally { if(lease) { try { await finish(lease,totalTokens,false); } catch { /* charged lease expires */ } } }
 }

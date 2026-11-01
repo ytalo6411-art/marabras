@@ -19,6 +19,8 @@ const CoachPage = lazy(() => import('@/pages/CoachPage'));
 const WorkoutBuilderPage = lazy(() => import('@/pages/WorkoutBuilderPage'));
 const WorkoutSessionPage = lazy(() => import('@/pages/WorkoutSessionPage'));
 const NutritionPage = lazy(() => import('@/pages/NutritionPage'));
+const CommunityPage = lazy(() => import('@/pages/CommunityPage'));
+const SharedWorkoutPage = lazy(() => import('@/pages/SharedWorkoutPage'));
 const ProgressPage = lazy(() => import('@/pages/ProgressPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -115,6 +117,8 @@ export default function App() {
               <Route path="workouts/:id" element={<WorkoutBuilderPage />} />
               <Route path="session/:id" element={<WorkoutSessionPage />} />
               <Route path="nutrition" element={<NutritionPage />} />
+              <Route path="community" element={<CommunityPage />} />
+              <Route path="community/:id" element={<SharedWorkoutPage />} />
               <Route path="progress" element={<ProgressPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />

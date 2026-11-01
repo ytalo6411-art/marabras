@@ -34,7 +34,7 @@ export default function AdminPage() {
     async function load() {
       try {
         const [usersRes, sessionsRes, exRes, plansRes, foodRes, auditRes] = await Promise.all([
-          supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(50),
+          supabase.from('admin_user_directory').select('*').order('created_at', { ascending: false }).limit(50),
           supabase.from('workout_sessions').select('id', { count: 'exact', head: true }),
           supabase.from('exercises').select('*', { count: 'exact', head: true }),
           supabase.from('workout_plans').select('id', { count: 'exact', head: true }),

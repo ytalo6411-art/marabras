@@ -10,6 +10,7 @@
  */
 
 import { z } from 'zod';
+import { privateStorage } from '@/lib/privateStorage';
 import { supabase } from '@/lib/supabase';
 import type {
   AgeRange,
@@ -297,9 +298,9 @@ function localDraftKey(userId: string): string {
 
 /** Rascunho local (usado só enquanto a tabela não existe no banco). */
 export function saveLocalDraft(userId: string, answers: QuestionnaireAnswers): boolean {
-  if (typeof localStorage === 'undefined') return false;
+  const storage=privateStorage(); if (!storage) return false;
   try {
-    localStorage.setItem(localDraftKey(userId), JSON.stringify(answers));
+    storage.setItem(localDraftKey(userId), JSON.stringify(answers));
     return true;
   } catch {
     return false;
@@ -307,9 +308,9 @@ export function saveLocalDraft(userId: string, answers: QuestionnaireAnswers): b
 }
 
 export function loadLocalDraft(userId: string): QuestionnaireAnswers | null {
-  if (typeof localStorage === 'undefined') return null;
+  const storage=privateStorage(); if (!storage) return null;
   try {
-    const raw = localStorage.getItem(localDraftKey(userId));
+    const raw = storage.getItem(localDraftKey(userId));
     if (!raw) return null;
     const parsed = questionnaireSchema.safeParse(JSON.parse(raw));
     return parsed.success ? (parsed.data as QuestionnaireAnswers) : null;
@@ -319,9 +320,9 @@ export function loadLocalDraft(userId: string): QuestionnaireAnswers | null {
 }
 
 export function clearLocalDraft(userId: string): void {
-  if (typeof localStorage === 'undefined') return;
+  const storage=privateStorage(); if (!storage) return;
   try {
-    localStorage.removeItem(localDraftKey(userId));
+    storage.removeItem(localDraftKey(userId));
   } catch {
     // Ignora: não é crítico.
   }

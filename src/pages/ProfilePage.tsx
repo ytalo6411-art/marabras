@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
-import { Button, Card, Field, Avatar, Alert, ConfirmDialog } from '@/components/ui';
+import { Button, Card, Field, Alert, ConfirmDialog } from '@/components/ui';
+import { AvatarEditor } from '@/components/AvatarEditor';
 import { IconEdit, IconTarget, IconDownload, IconTrash, IconSparkles, IconRefresh } from '@/components/icons';
 import { formatDate } from '@/utils/format';
 import type { FitnessGoal, TrainingProfile } from '@/types/database';
@@ -190,12 +191,10 @@ export default function ProfilePage() {
       <h1 className="page-title">Perfil</h1>
 
       <Card style={{ marginBottom: 'var(--sp-4)' }}>
-        <div className="row" style={{ marginBottom: 'var(--sp-4)' }}>
-          <Avatar
-            name={profile?.full_name}
-            src={profile?.avatar_url}
-            size="xl"
-          />
+        <div className="profile-head" style={{ marginBottom: 'var(--sp-4)' }}>
+          {user && (
+            <AvatarEditor name={profile?.full_name} src={profile?.avatar_url} userId={user.id} />
+          )}
           <div className="grow">
             <h2 className="card-title">{profile?.full_name ?? 'Seu nome'}</h2>
             <p className="text-sm text-muted">{profile?.email}</p>

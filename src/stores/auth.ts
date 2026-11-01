@@ -1,3 +1,7 @@
+import { clearPrivateUserData } from '@/lib/privateStorage';
+import { clearCatalogCache } from '@/services/catalog';
+import { clearSchemaCapabilities } from '@/services/dbCapabilities';
+import { clearAiSessionCache } from '@/services/aiCoach';
 import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -42,6 +46,7 @@ interface AuthState {
   setNewPassword: (password: string) => Promise<AuthError | null>;
   signOut: () => Promise<void>;
   clearError: () => void;
+  resetLocalSession: () => void;
   refreshProfile: () => Promise<void>;
   refreshUnreadCount: () => Promise<void>;
 }
@@ -66,6 +71,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
    * haver um pequeno atraso entre o login e a disponibilidade da linha —
    * por isso tentamos uma vez e, se falhar, reagimos ao evento de sessão.
    */
+  resetLocalSession: () => {
+    clearPrivateUserData(); clearCatalogCache(); clearSchemaCapabilities(); clearAiSessionCache();
+    set({session:null,user:null,profile:null,preferences:null,isAdmin:false,unreadCount:0,profileError:null,error:null});
+  },
+
   initialize: async () => {
     if (!isSupabaseConfigured) {
       set({ initializing: false });
@@ -74,6 +84,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const session = await getSession();
+      if (session && (!session.user.email_confirmed_at && session.user.app_metadata?.provider === 'email')) {
+        await supabaseSignOut(); clearPrivateUserData(); set({initializing:false}); return;
+      }
       set({ session, user: session?.user ?? null, initializing: false });
 
       if (session?.user) {
@@ -92,6 +105,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       if (event === 'SIGNED_OUT') {
+        get().resetLocalSession();
         set({ profile: null, preferences: null, isAdmin: false, unreadCount: 0 });
       }
     });
@@ -210,13 +224,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     set({ loading: true });
     const { error } = await supabaseSignOut();
-    if (error) { set({ loading: false, error }); return; }
+    clearPrivateUserData(); clearCatalogCache(); clearSchemaCapabilities(); clearAiSessionCache();
     set({
       session: null,
       user: null,
       profile: null,
       preferences: null,
       isAdmin: false,
+      unreadCount:0,
+      profileError:null,
+      error,
       loading: false,
     });
   },

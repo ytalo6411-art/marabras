@@ -31,6 +31,7 @@ export interface AiStatus {
 }
 
 let statusCache: AiStatus | null = null;
+export function clearAiSessionCache() { statusCache=null; }
 const STATUS_TTL = 5 * 60 * 1000;
 
 /**
@@ -132,13 +133,13 @@ export async function requestAiPlan(params: {
     const response = await postJson<{ program?: unknown; error?: string }>(
       '/api/ai/plan',
       {
-        token,
+        requestId: crypto.randomUUID(),
         profile: sanitizeProfile(params.profile),
         candidates,
         seed: params.seed,
         locale: getLocale(),
       },
-      { timeoutMs: 45_000 },
+      { timeoutMs: 45_000, headers: { Authorization: `Bearer ${token}` } },
     );
 
     if (!response.program) {
@@ -194,17 +195,18 @@ export async function askCoach(params: {
   if (!token) return { available: false, reason: 'Sessão expirada.' };
 
   try {
-    const response = await postJson<{ answer?: string; error?: string }>('/api/ai/chat', {
-      token,
+    const response = await postJson<{ answer?: string; model?: string; error?: string }>('/api/ai/chat', {
+      requestId: crypto.randomUUID(),
       question: params.question,
       context: params.context,
       locale: getLocale(),
-    }, { timeoutMs: 30_000 });
+    }, { timeoutMs: 45_000, headers: { Authorization: `Bearer ${token}` } });
 
     if (!response.answer) {
       return { available: false, reason: response.error ?? 'Sem resposta.' };
     }
 
+    if (typeof response.answer !== 'string' || !response.answer.trim() || response.answer.length > 2000 || typeof response.model !== 'string') return { available:false, reason:'Resposta inválida do servidor.' };
     return { available: true, answer: response.answer };
   } catch {
     return { available: false, reason: 'O serviço de IA não respondeu.' };

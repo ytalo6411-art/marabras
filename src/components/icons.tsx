@@ -326,3 +326,47 @@ export const IconSend = (p: IconProps) => (
     <path d="m21 3-10.5 10.5" />
   </Base>
 );
+
+/* ─── Comunidade ───────────────────────────────────────────────────────────── */
+
+export const IconComment = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M20 15a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9Z" />
+  </Base>
+);
+
+export const IconShare = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="18" cy="5" r="2.6" />
+    <circle cx="6" cy="12" r="2.6" />
+    <circle cx="18" cy="19" r="2.6" />
+    <path d="m8.3 10.7 7.4-4.3M8.3 13.3l7.4 4.3" />
+  </Base>
+);
+
+export const IconFlag = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M5 21V4M5 4h11l-1.6 3.5L16 11H5" />
+  </Base>
+);
+
+export const IconBlock = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m5.6 5.6 12.8 12.8" />
+  </Base>
+);
+
+export const IconGlobe = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3Z" />
+  </Base>
+);
+
+export const IconLock = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+    <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7" />
+  </Base>
+);

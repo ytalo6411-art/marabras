@@ -2,15 +2,18 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
-import { Button, Card, Field, ConfirmDialog, Alert } from '@/components/ui';
+import { Button, Card, Field, Alert } from '@/components/ui';
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
+import { CommunityPrivacyCard } from '@/components/CommunityPrivacyCard';
 import { IconTrash, IconMoon, IconSun } from '@/components/icons';
+import { useTheme } from '@/components/themeContext';
 
 /** Configurações: preferências, tema, privacidade e exclusão de conta. */
 export default function SettingsPage() {
   const { user, preferences, refreshProfile, signOut } = useAuthStore();
   const toast = useToast();
-
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(preferences?.theme ?? 'system');
+  // Tema vem do provider global: aplicar na hora, sem esperar o "Salvar".
+  const { choice: theme, setChoice: setTheme } = useTheme();
   const [units, setUnits] = useState<'metric' | 'imperial'>(preferences?.preferred_units ?? 'metric');
   const [waterTarget, setWaterTarget] = useState(preferences?.water_target_ml ?? 2000);
   const [weeklySessions, setWeeklySessions] = useState(preferences?.weekly_goal_sessions ?? 3);
@@ -21,12 +24,9 @@ export default function SettingsPage() {
   );
   const [saving, setSaving] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState('');
-  const [deleting,setDeleting] = useState(false);
 
   useEffect(() => {
     if (!preferences) return;
-    setTheme(preferences.theme);
     setUnits(preferences.preferred_units);
     setWaterTarget(preferences.water_target_ml);
     setWeeklySessions(preferences.weekly_goal_sessions);
@@ -42,7 +42,6 @@ export default function SettingsPage() {
       const { error } = await supabase
         .from('user_preferences')
         .update({
-          theme,
           preferred_units: units,
           water_target_ml: waterTarget,
           weekly_goal_sessions: weeklySessions,
@@ -53,7 +52,6 @@ export default function SettingsPage() {
         .eq('user_id', user.id);
 
       if (error) throw error;
-      if (theme === 'system') { localStorage.setItem('athletix-theme', window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); }
       await refreshProfile();
       toast.show('Preferências salvas', 'success');
     } catch {
@@ -64,27 +62,13 @@ export default function SettingsPage() {
   }
 
   /**
-   * Exclusão de conta (LGPD — direito ao esquecimento).
-   * O trigger `on_auth_user_created` e as FKs `on delete cascade` removem
-   * todos os dados relacionados automaticamente.
+   * Chamado apenas depois de o servidor confirmar a exclusão.
+   * A limpeza local acontece no signOut (SIGNED_OUT limpa caches e rascunhos).
    */
-  async function deleteAccount() {
-    if (!user || deleting) return;
-    if (deleteConfirm !== 'EXCLUIR') return;
-    setDeleting(true);
-
-    try {
-      const { error } = await supabase.rpc('delete_own_account');
-      if (error) {
-        toast.show('Não foi possível excluir a conta. Tente novamente ou fale com o suporte.', 'error');
-        setDeleting(false);
-        return;
-      }
-      toast.show('Conta excluída', 'success');
-      await signOut();
-    } catch {
-      toast.show('Não foi possível excluir a conta agora. Fale com o suporte.', 'error');
-    } finally { setDeleting(false); }
+  async function handleAccountDeleted() {
+    setShowDelete(false);
+    toast.show('Conta excluída. Todos os seus dados foram removidos.', 'success');
+    await signOut();
   }
 
   return (
@@ -224,6 +208,12 @@ export default function SettingsPage() {
       </Card>
 
       {/* Exclusão */}
+      {user && (
+        <div style={{ marginBottom: 'var(--sp-4)' }}>
+          <CommunityPrivacyCard userId={user.id} />
+        </div>
+      )}
+
       <Card style={{ borderColor: 'rgba(248, 113, 113, 0.3)' }}>
         <h2 className="card-title" style={{ marginBottom: 'var(--sp-3)' }}>
           Zona de risco
@@ -238,39 +228,10 @@ export default function SettingsPage() {
         </Button>
       </Card>
 
-      <ConfirmDialog
+      <DeleteAccountDialog
         open={showDelete}
-        title="Excluir conta"
-        message={
-          <>
-            Digite <strong>EXCLUIR</strong> para confirmar. Todos os seus dados serão
-            removidos permanentemente.
-            <input
-              type="text"
-              value={deleteConfirm}
-              onChange={(e) => setDeleteConfirm(e.target.value)}
-              placeholder="EXCLUIR"
-              aria-label="Confirmação de exclusão"
-              style={{
-                width: '100%',
-                marginTop: 'var(--sp-3)',
-                minHeight: 44,
-                padding: '0 12px',
-                background: 'var(--bg-elevated)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--r-md)',
-                color: 'var(--text)',
-              }}
-            />
-          </>
-        }
-        confirmLabel="Excluir conta"
-        danger
-        onConfirm={() => { void deleteAccount(); }}
-        onCancel={() => {
-          setShowDelete(false);
-          setDeleteConfirm('');
-        }}
+        onClose={() => setShowDelete(false)}
+        onDeleted={handleAccountDeleted}
       />
     </>
   );

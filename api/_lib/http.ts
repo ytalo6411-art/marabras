@@ -34,18 +34,14 @@ export function jsonError(
   res.status(status).json({ error: message, ...extra });
 }
 
-/** Limite simples em memória por instância (best-effort contra abuso). */
+/** Defense-in-depth only. Security/cost quotas use the shared database lease. */
 const buckets = new Map<string, { count: number; resetAt: number }>();
-
 export function rateLimit(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now();
+  for (const [k,v] of buckets) if (now >= v.resetAt) buckets.delete(k);
+  if (buckets.size >= 10_000 && !buckets.has(key)) return false;
   const bucket = buckets.get(key);
-
-  if (!bucket || now > bucket.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
-    return true;
-  }
-
+  if (!bucket || now >= bucket.resetAt) { buckets.set(key,{count:1,resetAt:now+windowMs});return true; }
   if (bucket.count >= limit) return false;
   bucket.count += 1;
   return true;

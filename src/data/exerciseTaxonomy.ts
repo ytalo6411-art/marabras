@@ -177,22 +177,63 @@ const MUSCLE_TO_PATTERN: Record<string, MovementPattern> = {
  * "leg extension" e "leg press" são ambos quadríceps, mas um é isolamento de
  * joelho e o outro é empurrar. O nome resolve isso.
  */
+/**
+ * A ORDEM IMPORTA: a primeira regra que casa vence. Por isso os padrões mais
+ * específicos vêm antes dos genéricos.
+ *
+ * Bugs reais que esta ordem corrige (catálogo de 317 exercícios):
+ *  • "Bench Dips" casava em `bench` → push_horizontal (é tríceps).
+ *  • "Bench Pull-Up" casava em `bench` → push_horizontal (é dorsal).
+ *  • "Bench Crunch" casava em `bench` → push_horizontal (é core).
+ *  • "Band Prone Leg Curl" casava em `curl` → elbow_flexion (é posterior).
+ *  • "Calf Stretch with Rope" casava em `calf` → calves (é mobilidade).
+ * `bench`/`incline`/`decline` são qualificadores de banco, não o movimento.
+ */
 const NAME_RULES: { test: RegExp; pattern: MovementPattern }[] = [
-  { test: /\b(bench|push[- ]?up|chest press|fly|crucifixo|supino|flexao)\b/i, pattern: 'push_horizontal' },
-  { test: /\b(overhead press|shoulder press|military press|arnold press|desenvolvimento)\b/i, pattern: 'push_vertical' },
-  { test: /\b(pull[- ]?up|chin[- ]?up|lat pull|pulldown|barra fixa|puxada)\b/i, pattern: 'pull_vertical' },
-  { test: /\b(row|remada|pulldown horizontal)\b/i, pattern: 'pull_horizontal' },
-  { test: /\b(deadlift|romanian|rdl|levantamento terra|stiff|good morning)\b/i, pattern: 'hinge' },
-  { test: /\b(hip thrust|glute bridge|ponte|elevacao pelvica|kickback|pull[- ]through)\b/i, pattern: 'hinge' },
-  { test: /\b(squat|agachamento|leg press|hack|smith)\b/i, pattern: 'squat' },
-  { test: /\b(lunge|afundo|avanco|step[- ]?up|split squat|passada)\b/i, pattern: 'lunge' },
-  { test: /\b(curl|rosca)\b/i, pattern: 'elbow_flexion' },
-  { test: /\b(triceps|tríceps|skull|kickback|mergulho|dip)\b/i, pattern: 'elbow_extension' },
-  { test: /\b(lateral raise|front raise|reverse fly|elevacao lateral|elevação lateral|crucifixo inverso)\b/i, pattern: 'shoulder_isolation' },
-  { test: /\b(calf|panturrilha|gêmeos|gemeos)\b/i, pattern: 'calves' },
-  { test: /\b(plank|prancha|crunch|abdominal|hollow|dead bug|russian twist|mountain climber)\b/i, pattern: 'core' },
-  { test: /\b(run|corrida|bike|bicicleta|rower|remo|jump rope|corda|burpee|ellip|escada|stair|walk|caminhada|sprint)\b/i, pattern: 'cardio' },
-  { test: /\b(stretch|alongamento|mobility|mobilidade|cat[- ]?cow|yoga|rotacao|rotação)\b/i, pattern: 'mobility' },
+  // 1. Mobilidade/alongamento antes de tudo: "Calf Stretch", "Chest Stretch".
+  { test: /\b(stretch|alongamento|mobility|mobilidade|cat[- ]?cow|yoga|pose|postura)\b/i, pattern: 'mobility' },
+
+  // 2. Cardio explícito.
+  { test: /\b(run|running|corrida|bike|bicicleta|cycling|rower|remo erg|jump rope|corda|burpee|elliptical|elíptico|escada|stair|walk|caminhada|sprint|cardio|battling ropes)\b/i, pattern: 'cardio' },
+
+  // 3. Core antes de empurrar: "Bench Crunch", "Exercise Ball Sit-Up".
+  { test: /\b(plank|prancha|crunch|abdominal|sit[- ]?up|hollow|dead bug|russian twist|mountain climber|side bend|flexão lateral|standing lift|twist|leg raise|elevacao de pernas)\b/i, pattern: 'core' },
+
+  // 4. Posterior de coxa: "leg curl" é joelho, não cotovelo.
+  { test: /\b(leg curl|mesa flexora|cadeira flexora|flexora|nordic|good morning)\b/i, pattern: 'hinge' },
+
+  // 5. Tríceps antes de peito: "Bench Dips", "Close-Grip Push-Up".
+  { test: /\b(triceps|tríceps|skull|mergulho|dips?|close[- ]grip push[- ]?up|pushdown|kickback)\b/i, pattern: 'elbow_extension' },
+
+  // 6. Puxar vertical antes de "row": "Bench Pull-Up", "Chin-ups".
+  { test: /\b(pull[- ]?up|chin[- ]?up|lat pull|pulldown|pull[- ]down|barra fixa|puxada)\b/i, pattern: 'pull_vertical' },
+
+  // 7. Remadas.
+  { test: /\b(row|remada|shrug|encolhimento)\b/i, pattern: 'pull_horizontal' },
+
+  // 8. Cadeia posterior.
+  { test: /\b(deadlift|romanian|rdl|levantamento terra|stiff|hip thrust|glute bridge|ponte|elevacao pelvica|pull[- ]through|hyperextension|hiperextensao|back extension)\b/i, pattern: 'hinge' },
+
+  // 9. Unilateral antes de agachamento: "Split Squat", "Barbell Lunge".
+  { test: /\b(lunge|afundo|avanco|avanço|step[- ]?up|split squat|passada|bulgarian|búlgaro)\b/i, pattern: 'lunge' },
+
+  // 10. Agachamento / empurrar com as pernas.
+  { test: /\b(squat|agachamento|leg press|hack)\b/i, pattern: 'squat' },
+
+  // 11. Panturrilhas (depois de stretch, que já saiu).
+  { test: /\b(calf|panturrilha|gêmeos|gemeos|soleus|sóleo)\b/i, pattern: 'calves' },
+
+  // 12. Isolamento de ombro antes de empurrar vertical.
+  { test: /\b(lateral raise|front raise|reverse fly|rear delt|posterior delt|elevacao lateral|elevação lateral|crucifixo inverso|upright row|iron cross)\b/i, pattern: 'shoulder_isolation' },
+
+  // 13. Empurrar vertical.
+  { test: /\b(overhead press|shoulder press|military press|arnold press|desenvolvimento|behind[- ]the[- ]neck press)\b/i, pattern: 'push_vertical' },
+
+  // 14. Empurrar horizontal. `bench` só vale acompanhado de press/fly.
+  { test: /\b(push[- ]?up|chest press|bench press|fly|crucifixo|supino|flexao|flexão|crossover|close[- ]grip press|hammer press)\b/i, pattern: 'push_horizontal' },
+
+  // 15. Flexão de cotovelo por último: "curl" genérico (rosca).
+  { test: /\b(curl|rosca|wrist|punho)\b/i, pattern: 'elbow_flexion' },
 ];
 
 export function inferMovementPattern(name: string, primaryMuscle: string): MovementPattern {
