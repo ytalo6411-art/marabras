@@ -1,6 +1,7 @@
 import { t } from '@/i18n/runtime';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { privateStorage } from '@/lib/privateStorage';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
@@ -62,7 +63,7 @@ export default function WorkoutSessionPage() {
 
   useEffect(() => {
     if (!id || !user || loading || session?.status !== 'in_progress') return;
-    try {localStorage.setItem(progressStorageKey(user.id,id),JSON.stringify(progress));} catch { /* Nonessential mirror. */ }
+    try {privateStorage()?.setItem(progressStorageKey(user.id,id),JSON.stringify(progress));} catch { /* Nonessential mirror. */ }
     let retry: number | undefined;
     const timer = window.setTimeout(() => {void saveSessionProgress(id,user.id,progress).then(()=>setError(previous=>previous.startsWith('Progresso salvo')?'':previous)).catch(() => {setError('Progresso salvo neste dispositivo; a sincronização será tentada novamente.');retry=window.setTimeout(()=>setSyncAttempt(n=>n+1),5000);});},350);
     return () => {clearTimeout(timer);if(retry)clearTimeout(retry);};

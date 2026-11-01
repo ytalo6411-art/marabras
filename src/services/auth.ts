@@ -97,6 +97,18 @@ export function translateAuthError(error: unknown): AuthError {
   };
 }
 
+/** Best-effort browser cooldown, not an authorization boundary. Supabase Auth
+ * enforces native provider/IP limits; never replace them with this timer. */
+const authAttempts = new Map<string,{count:number;resetAt:number}>();
+export function authAttemptCooldown(action:'login'|'recovery', subject:string, now=Date.now()): number {
+  const key=`${action}:${subject.trim().toLowerCase()}`;
+  const current=authAttempts.get(key);
+  if (!current || now>=current.resetAt) { authAttempts.set(key,{count:1,resetAt:now+15*60_000});return 0; }
+  if (current.count>=(action==='login'?5:3)) return Math.ceil((current.resetAt-now)/1000);
+  current.count++;return 0;
+}
+export function clearAuthAttemptCooldowns(){authAttempts.clear();}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Google OAuth
 // ─────────────────────────────────────────────────────────────────────────────
@@ -238,7 +250,10 @@ export async function requestPasswordReset(
     redirectTo: `${APP_URL}/auth/reset-password`,
   });
 
-  return { error: error ? translateAuthError(error) : null };
+  // Do not disclose account existence or provider-specific recovery errors.
+  // Native Supabase IP/email rate limits still apply; UI adds a cooldown.
+  void error;
+  return { error: null };
 }
 
 /** Define a nova senha depois que o usuário clica no link do e-mail. */
@@ -267,7 +282,8 @@ export async function resendConfirmation(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function signOut(): Promise<{ error: AuthError | null }> {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: 'global' });
+  if (error) await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
   return { error: error ? translateAuthError(error) : null };
 }
 

@@ -5,6 +5,7 @@ import {
   signInWithEmail,
   signUpWithEmail,
   requestPasswordReset,
+  signOut,
 } from '@/services/auth';
 import { supabase } from '@/lib/supabase';
 
@@ -43,6 +44,7 @@ const mocked = supabase.auth as unknown as {
   signUp: ReturnType<typeof vi.fn>;
   signInWithPassword: ReturnType<typeof vi.fn>;
   resetPasswordForEmail: ReturnType<typeof vi.fn>;
+  signOut: ReturnType<typeof vi.fn>;
 };
 
 describe('translateAuthError', () => {
@@ -341,5 +343,29 @@ describe('requestPasswordReset', () => {
     const arg = mocked.resetPasswordForEmail.mock.calls[0]!;
     expect(arg[0]).toBe('user@test.com');
     expect(arg[1].redirectTo).toContain('/auth/reset-password');
+  });
+});
+
+describe('signOut', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('revoga globalmente quando o servidor responde', async () => {
+    mocked.signOut.mockResolvedValueOnce({ error: null });
+    const result = await signOut();
+    expect(result.error).toBeNull();
+    expect(mocked.signOut).toHaveBeenCalledTimes(1);
+    expect(mocked.signOut).toHaveBeenCalledWith({ scope: 'global' });
+  });
+
+  it('remove a sessão local mesmo se a revogação global falhar', async () => {
+    mocked.signOut
+      .mockResolvedValueOnce({ error: { message: 'network down', status: 500 } })
+      .mockResolvedValueOnce({ error: null });
+    const result = await signOut();
+    expect(result.error).not.toBeNull();
+    expect(mocked.signOut).toHaveBeenNthCalledWith(1, { scope: 'global' });
+    expect(mocked.signOut).toHaveBeenNthCalledWith(2, { scope: 'local' });
   });
 });

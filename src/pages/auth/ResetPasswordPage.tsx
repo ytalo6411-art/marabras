@@ -29,8 +29,8 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setLocalError(null);
 
-    if (password.length < 6) {
-      setLocalError('A senha precisa ter pelo menos 6 caracteres.');
+    if (password.length < 12) {
+      setLocalError('A senha precisa ter pelo menos 12 caracteres.');
       return;
     }
 
@@ -41,8 +41,10 @@ export default function ResetPasswordPage() {
 
     const err = await setNewPassword(password);
     if (!err) {
+      setPassword('');setConfirm('');
+      await useAuthStore.getState().signOut();
       setDone(true);
-      setTimeout(() => navigate('/app', { replace: true }), 2000);
+      setTimeout(() => navigate('/app/login', { replace: true }), 2000);
     }
   }
 
@@ -63,7 +65,7 @@ export default function ResetPasswordPage() {
 
           {done ? (
             <Alert variant="success">
-              Senha atualizada! Redirecionando para o painel…
+              Senha atualizada! Entre novamente com sua nova senha.
             </Alert>
           ) : !user ? (
             <Alert variant="warning">
@@ -88,7 +90,7 @@ export default function ResetPasswordPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       autoComplete="new-password"
                       required
-                      minLength={6}
+                      minLength={12}
                       placeholder="••••••••"
                     />
                     <button
@@ -109,7 +111,7 @@ export default function ResetPasswordPage() {
                     onChange={(e) => setConfirm(e.target.value)}
                     autoComplete="new-password"
                     required
-                    minLength={6}
+                    minLength={12}
                     placeholder="••••••••"
                   />
                 </Field>

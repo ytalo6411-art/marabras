@@ -12,6 +12,7 @@ import { createClient } from '@supabase/supabase-js';
 export interface VerifiedUser {
   id: string;
   email: string | null;
+  token: string;
 }
 
 interface SupabaseEnv {
@@ -26,18 +27,19 @@ export function readSupabaseEnv(): SupabaseEnv | null {
   return { url, anonKey };
 }
 
-export async function verifyUser(token: string | undefined): Promise<VerifiedUser | null> {
+export async function verifyUser(token: string | undefined | null): Promise<VerifiedUser | null> {
   if (!token || token.length < 20) return null;
 
   const env = readSupabaseEnv();
   if (!env) return null;
 
   const client = createClient(env.url, env.anonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(8_000), redirect: 'error' }) },
   });
 
   const { data, error } = await client.auth.getUser(token);
   if (error || !data.user) return null;
 
-  return { id: data.user.id, email: data.user.email ?? null };
+  return { id: data.user.id, email: data.user.email ?? null, token };
 }

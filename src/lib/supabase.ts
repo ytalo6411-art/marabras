@@ -70,4 +70,4 @@ export const supabase: SupabaseClient = createClient(
 );
 
 /** URL pública do app (usada nos callbacks OAuth e no PWA). */
-export const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
+export const APP_URL = import.meta.env.VITE_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');

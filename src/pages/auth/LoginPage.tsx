@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import LanguageSelector from '@/components/LanguageSelector';
 import { Link, Navigate, useLocation } from 'react-router-dom';
+import { authAttemptCooldown } from '@/services/auth';
 import { useAuthStore } from '@/stores/auth';
 import { Button, Field, Alert } from '@/components/ui';
 import { IconGoogle, IconEye, IconEyeOff } from '@/components/icons';
@@ -22,6 +23,8 @@ export default function LoginPage() {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [localError,setLocalError]=useState<string|null>(null);
+  const [recoverySent,setRecoverySent]=useState(false);
 
   // Mensagem vinda de outra tela (ex.: "faça login para continuar").
   const redirectReason = (location.state as { from?: string } | null)?.from;
@@ -39,10 +42,13 @@ export default function LoginPage() {
   }
 
   async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-
+    e.preventDefault(); setLocalError(null);
+    if (mode !== 'signup') {
+      const wait=authAttemptCooldown(mode==='forgot'?'recovery':'login',email);
+      if(wait){setLocalError(`Aguarde ${Math.ceil(wait/60)} min antes de tentar novamente.`);return;}
+    }
     if (mode === 'forgot') {
-      await useAuthStore.getState().resetPassword(email);
+      await useAuthStore.getState().resetPassword(email); setRecoverySent(true);
       return;
     }
 
@@ -177,9 +183,10 @@ export default function LoginPage() {
             </Alert>
           )}
 
-          {error && <Alert variant="error">{error.message}</Alert>}
+          {localError && <Alert variant="error">{localError}</Alert>}
+          {mode==='forgot' && recoverySent ? <Alert variant="success">Se houver uma conta elegível, enviaremos as instruções por e-mail.</Alert> : error && mode!=='forgot' && <Alert variant="error">{error.message}</Alert>}
 
-          {/* Botão Google — sempre visível, é o caminho principal */}
+          {/* Botão Google — o serviço valida o provider e mostra erro compreensível. */}
           {mode !== 'forgot' && (
             <>
               <Button
@@ -229,7 +236,7 @@ export default function LoginPage() {
               <Field
                 label="Senha"
                 htmlFor="password"
-                hint={mode === 'signup' ? 'Mínimo de 6 caracteres.' : undefined}
+                hint={mode === 'signup' ? 'Mínimo de 12 caracteres.' : undefined}
               >
                 <div className="input-group">
                   <input
@@ -239,7 +246,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                     required
-                    minLength={6}
+                    minLength={12}
                     placeholder="••••••••"
                     aria-invalid={Boolean(error && !password)}
                   />
@@ -259,7 +266,7 @@ export default function LoginPage() {
               size="lg"
               block
               loading={loading}
-              disabled={!email || (mode !== 'forgot' && password.length < 6)}
+              disabled={!email || (mode !== 'forgot' && password.length < 12)}
             >
               {submitLabel}
             </Button>

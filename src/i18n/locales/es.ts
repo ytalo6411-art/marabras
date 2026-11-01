@@ -897,5 +897,8 @@ export const es: Record<string,string> = {
   "Não foi possível carregar este treino. Tente novamente.": "No se pudo cargar este entrenamiento. Inténtalo de nuevo.",
   "Não foi possível buscar exercícios. Altere a busca para tentar novamente.": "No se pudieron buscar ejercicios. Cambia la búsqueda para reintentar.",
   "Não foi possível buscar exercícios. Tente novamente.": "No se pudieron buscar ejercicios. Inténtalo de nuevo.",
-  "Seu histórico foi atualizado com as séries que você concluiu e salvou.": "Tu historial se actualizó con las series que completaste y guardaste."
+  "Seu histórico foi atualizado com as séries que você concluiu e salvou.": "Tu historial se actualizó con las series que completaste y guardaste.",
+  "Se houver uma conta elegível, enviaremos as instruções por e-mail.": "Si hay una cuenta elegible, enviaremos las instrucciones por correo.",
+  "Senha atualizada! Entre novamente com sua nova senha.": "¡Contraseña actualizada! Inicia sesión de nuevo con tu nueva contraseña.",
+  "Mínimo de 12 caracteres.": "Mínimo 12 caracteres.",
 };
