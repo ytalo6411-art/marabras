@@ -70,4 +70,15 @@ export const supabase: SupabaseClient = createClient(
 );
 
 /** URL pública do app (usada nos callbacks OAuth e no PWA). */
-export const APP_URL = import.meta.env.VITE_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+/**
+ * URL de retorno do OAuth.
+ *
+ * Usa a origem atual quando há navegador: assim um preview deployment volta
+ * para o próprio preview em vez de mandar o usuário para produção. O domínio
+ * precisa estar na allowlist de Redirect URLs do Supabase Auth.
+ * VITE_APP_URL é o fallback para build/SSR e para forçar um domínio canônico.
+ */
+export const APP_URL =
+  (typeof window !== 'undefined' && window.location?.origin
+    ? window.location.origin
+    : import.meta.env.VITE_APP_URL) || import.meta.env.VITE_APP_URL || '';

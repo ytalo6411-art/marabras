@@ -3,6 +3,7 @@ import LanguageSelector from '@/components/LanguageSelector';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { authAttemptCooldown } from '@/services/auth';
 import { useAuthStore } from '@/stores/auth';
+import { consumeOAuthCallbackError } from '@/services/oauthCallback';
 import { Button, Field, Alert } from '@/components/ui';
 import { IconGoogle, IconEye, IconEyeOff } from '@/components/icons';
 
@@ -32,6 +33,13 @@ export default function LoginPage() {
   useEffect(() => {
     clearError();
   }, [mode, clearError]);
+
+  // Retorno do OAuth: cancelamento ou falha do provedor precisa de mensagem
+  // clara, em vez de abrir o app sem sessão e sem explicação.
+  useEffect(() => {
+    const callbackError = consumeOAuthCallbackError();
+    if (callbackError) setLocalError(callbackError.message);
+  }, []);
 
   if (user) {
     return <Navigate to={typeof redirectReason === 'string' && redirectReason.startsWith('/app/') && !redirectReason.startsWith('/app/login') ? redirectReason : '/app'} replace />;
