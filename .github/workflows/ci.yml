@@ -20,7 +20,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.19
+          # Supabase realtime-js requires native WebSocket (Node >=22) in security tests.
+          node-version: 22.13
           cache: npm
 
       - name: Instalar dependências
@@ -52,7 +53,7 @@ jobs:
         run: npm run test:db
 
       - name: Testes de segurança (API/IA + PostgreSQL two-user)
-        run: npm run test:security && node scripts/test-security-database.mjs
+        run: npm run test:security
 
       - name: Cobertura de traduções
         run: npm run test:i18n

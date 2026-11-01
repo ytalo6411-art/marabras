@@ -5,7 +5,7 @@
   "type": "module",
   "description": "ATHLETIX \u2014 plataforma profissional de treinamento f\u00edsico, nutri\u00e7\u00e3o e evolu\u00e7\u00e3o esportiva",
   "engines": {
-    "node": "^20.19.0 || >=22.13.0"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "dev": "vite",
