@@ -24,7 +24,14 @@ import type {
   GeneratedProgram,
   PlanGenerationProfile,
 } from '@/services/planGenerator';
-import { regenerateDay, validateGeneratedProgram } from '@/services/planGenerator';
+import {
+  allowedDifficultiesFor,
+  isExerciseAvoided,
+  isMinorProfile,
+  prescriptionsFor,
+  regenerateDay,
+  validateGeneratedProgram,
+} from '@/services/planGenerator';
 import { getSchemaCapabilities } from '@/services/dbCapabilities';
 import type { CatalogExercise } from '@/services/catalog';
 import type { MovementPattern } from '@/data/exerciseTaxonomy';
@@ -312,17 +319,36 @@ export async function replacePlanExercise(params: {
 }): Promise<{ ok: boolean; error?: string }> {
   const { itemId, exercise, profile, intensity } = params;
 
+  // A troca é uma escrita: precisa passar pelas mesmas regras do gerador, e não
+  // só pelas do seletor da tela. Antes bastava chamar esta função com qualquer
+  // exercício do catálogo para gravar algo sem equipamento disponível, acima do
+  // nível (inclusive para menor de idade) ou contraindicado pelas limitações.
+  const unavailable = exercise.equipment.filter((eq) => eq !== 'bodyweight' && !profile.equipment.includes(eq));
+  if (unavailable.length > 0) {
+    return { ok: false, error: 'Este exercício exige equipamento que você não tem disponível.' };
+  }
+  if (!allowedDifficultiesFor(profile).includes(exercise.difficulty)) {
+    return { ok: false, error: 'Este exercício não é adequado ao seu nível atual.' };
+  }
+  if (isExerciseAvoided(exercise, profile)) {
+    return { ok: false, error: 'Este exercício conflita com as limitações que você informou.' };
+  }
+
+  // Reaproveita a prescrição do gerador, que já é segura para menores. A versão
+  // anterior tinha uma tabela própria e podia trocar um exercício por 4 séries
+  // de 4–6 reps (faixa de força) para um adolescente de 16 anos.
+  const volume = prescriptionsFor(profile.goal, profile.level, exercise.pattern, isMinorProfile(profile));
   const prescription =
     exercise.pattern === 'mobility'
-      ? { sets: 2, reps: '30–45 s', rest: 20, duration: 40 }
+      ? { sets: volume.sets, reps: volume.reps, rest: volume.restSeconds, duration: 40 }
       : exercise.pattern === 'cardio'
-        ? { sets: 1, reps: '12 min', rest: 0, duration: 720 }
+        ? { sets: volume.sets, reps: volume.reps, rest: volume.restSeconds, duration: 720 }
         : exercise.pattern === 'core'
-          ? { sets: 3, reps: '12–15', rest: 45, duration: 40 }
+          ? { sets: volume.sets, reps: volume.reps, rest: volume.restSeconds, duration: 40 }
           : {
-              sets: profile.level === 'beginner' ? 3 : profile.level === 'intermediate' ? 3 : 4,
-              reps: profile.goal === 'strength' ? '4–6' : '8–12',
-              rest: profile.goal === 'strength' ? 150 : 90,
+              sets: volume.sets,
+              reps: volume.reps,
+              rest: volume.restSeconds,
               duration: null,
             };
 

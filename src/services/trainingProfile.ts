@@ -105,10 +105,10 @@ const preferredTrainingSchema = z.enum([
 
 export const questionnaireSchema = z.object({
   experience: experienceSchema.nullable(),
-  ageRange: ageRangeSchema.nullable(),
-  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']).nullable(),
-  heightCm: z.number().min(90).max(250).nullable(),
-  weightKg: z.number().min(25).max(400).nullable(),
+  ageRange: ageRangeSchema.nullable().default(null),
+  gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']).nullable().default(null),
+  heightCm: z.number().min(90).max(250).nullable().default(null),
+  weightKg: z.number().min(25).max(400).nullable().default(null),
   goals: z.array(goalSchema).max(5),
   goalPriority: goalSchema.nullable(),
   environment: environmentSchema.nullable(),
@@ -116,12 +116,12 @@ export const questionnaireSchema = z.object({
   sessionsPerWeek: z.number().int().min(1).max(7),
   minutesPerSession: z.number().int().min(10).max(180),
   preferredDays: z.array(z.number().int().min(0).max(6)).max(7),
-  sessionLengthPreference: z.enum(['short', 'moderate', 'long']).nullable(),
+  sessionLengthPreference: z.enum(['short', 'moderate', 'long']).nullable().default(null),
   priorityMuscles: z.array(z.string()).max(8),
   avoidedExercises: z.array(z.string().max(80)).max(20),
   preferredTraining: z.array(preferredTrainingSchema).max(5),
-  splitPreference: z.enum(['full_body', 'split', 'coach_choice']).nullable(),
-  guidancePreference: z.enum(['video', 'text', 'both']).nullable(),
+  splitPreference: z.enum(['full_body', 'split', 'coach_choice']).nullable().default(null),
+  guidancePreference: z.enum(['video', 'text', 'both']).nullable().default(null),
   limitations: z.array(z.string()).max(8),
   needsProfessionalGuidance: z.boolean(),
   safetyAcknowledged: z.boolean(),
@@ -185,13 +185,39 @@ export function validateStep(step: number, answers: QuestionnaireAnswers): StepV
     const parsed = questionnaireSchema.safeParse(answers);
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
-        errors.push(`${issue.path.join('.')}: ${issue.message}`);
+        const field = String(issue.path[0] ?? '');
+        // Só reporta o que pertence a esta etapa: um campo inválido da etapa 5
+        // não pode travar a etapa 1 sem o usuário ver onde corrigir.
+        if (!required.includes(field as keyof QuestionnaireAnswers)) continue;
+        errors.push(FIELD_MESSAGES[field] ?? 'Revise os campos destacados e tente novamente.');
       }
     }
   }
 
   return { ok: errors.length === 0, errors: [...new Set(errors)] };
 }
+
+/**
+ * Mensagens por campo.
+ *
+ * Antes, a tela mostrava o texto cru do Zod em inglês e com o nome técnico do
+ * campo ("gender: Invalid option: expected one of ..."). Não dizia o que fazer
+ * e aparecia em campos que a interface chama de opcionais.
+ */
+const FIELD_MESSAGES: Record<string, string> = {
+  experience: 'Conte como está sua experiência atual com exercícios.',
+  ageRange: 'Escolha uma faixa etária válida ou deixe em "Prefiro não informar".',
+  gender: 'Escolha uma opção de gênero válida ou deixe em "Prefiro não informar".',
+  heightCm: 'Informe a altura em centímetros, entre 90 e 250, ou deixe em branco.',
+  weightKg: 'Informe o peso em quilos, entre 25 e 400, ou deixe em branco.',
+  goals: 'Escolha de 1 a 5 objetivos.',
+  goalPriority: 'Defina qual objetivo é a prioridade.',
+  environment: 'Escolha onde você vai treinar.',
+  equipment: 'Marque os equipamentos disponíveis (mesmo que seja só o peso do corpo).',
+  sessionsPerWeek: 'Escolha de 1 a 7 dias por semana.',
+  minutesPerSession: 'Informe de 10 a 180 minutos por sessão.',
+  preferredDays: 'Escolha dias da semana válidos.',
+};
 
 /** Primeira etapa que ainda falta preencher (usada para retomar o wizard). */
 export function firstIncompleteStep(answers: QuestionnaireAnswers): number {
@@ -265,6 +291,8 @@ export function toPlanProfile(answers: QuestionnaireAnswers): PlanGenerationProf
     limitations: answers.limitations,
     guidancePreference: answers.guidancePreference,
     ageRange: answers.ageRange,
+    heightCm: answers.heightCm,
+    weightKg: answers.weightKg,
   });
 }
 

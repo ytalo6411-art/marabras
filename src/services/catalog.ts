@@ -288,12 +288,24 @@ export function findAlternatives(
   opts: { equipment?: string[]; difficulties?: DifficultyLevel[]; limit?: number } = {},
 ): CatalogExercise[] {
   const { equipment, difficulties, limit = 3 } = opts;
+  const available = equipment ? new Set(equipment) : null;
 
   return all
     .filter((candidate) => {
       if (candidate.id === exercise.id) return false;
       if (candidate.pattern !== exercise.pattern) return false;
-      if (equipment && !candidate.equipment.some((eq) => equipment.includes(eq))) return false;
+      // Todo equipamento exigido precisa estar disponível.
+      // Era `.some`: "Supino com barra e banco" entrava como alternativa para
+      // quem só tem banco, e a validação do plano (que exige `.every`) recusava
+      // o programa inteiro. A regra aqui agora é a mesma da seleção principal
+      // e da validação: todo equipamento exigido tem de existir, salvo peso do
+      // corpo, que está sempre disponível.
+      if (
+        available &&
+        !candidate.equipment.every((eq) => eq === 'bodyweight' || available.has(eq))
+      ) {
+        return false;
+      }
       if (difficulties && !difficulties.includes(candidate.difficulty)) return false;
       return true;
     })

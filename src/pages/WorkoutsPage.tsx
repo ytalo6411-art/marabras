@@ -235,7 +235,7 @@ export default function WorkoutsPage() {
         program.rationale.unshift(`Modelo "${template.name}" aplicado ao seu perfil.`);
       }
 
-      const validation = validateGeneratedProgram(program, snapshot.exercises);
+      const validation = validateGeneratedProgram(program, snapshot.exercises, generationProfile);
       if (!validation.ok || program.days.length === 0) {
         setGenerationError(
           validation.errors[0] ??

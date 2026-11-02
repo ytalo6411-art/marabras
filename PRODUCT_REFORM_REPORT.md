@@ -276,3 +276,167 @@ Nada abaixo é código faltando — é configuração externa ou decisão sua:
 
 Não afirmo que o produto está "pronto" ou "seguro": o que está marcado como
 verificado foi executado; o resto está acima.
+
+---
+
+## 10. Rodada 3 — "Não foi possível iniciar" corrigido na causa
+
+Relato: **"Não foi possível iniciar. Verifique os exercícios e a migração V10."**
+A mensagem sugeria V10/catálogo. A investigação mostrou que **nenhum dos dois era
+o problema** — e que a mensagem genérica estava escondendo quatro defeitos
+distintos. Todos foram corrigidos na origem e cobertos por teste.
+
+### 10.1 Causa real nº 1 — `name` ausente no INSERT da sessão
+
+A tabela `public.workout_sessions` tem `name text NOT NULL` com
+`CHECK (length(trim(name)) > 0)`. O `startSession()` montava o payload **sem
+`name`**, então o Postgres recusava com `SQLSTATE 23502`.
+
+Provado no banco real, dentro de transação com rollback (sem deixar dado):
+
+| Momento | Resultado |
+| --- | --- |
+| Payload antigo | `SQLSTATE=23502 · null value in column "name"` |
+| Payload corrigido | `INSERT OK · status=in_progress · started_at preenchido` |
+
+V10 estava aplicada e correta; RLS, grants e catálogo **não** eram a causa.
+
+Dois defeitos na mesma função, que apareceriam logo depois:
+
+- **`status` não era enviado** → nascia `'planned'` (default da coluna). A sessão
+  ficava invisível para retomar, o sincronismo de progresso não a reconhecia e a
+  conclusão falhava com "Session is not active".
+- **`started_at` não era enviado** → duração calculada sempre 0.
+
+Correção: `src/services/workoutSession.ts` reescrito com `sessionName()` (nome
+derivado do plano, com fallback e limite de 120 caracteres) e
+`buildSessionInsert()`, que envia `name`, `status: 'in_progress'` e `started_at`.
+`findOpenSession()` passou a usar `created_at desc` + `limit(1)` + `maybeSingle`,
+e um `23505` (duas abas iniciando juntas) recupera a sessão existente em vez de
+estourar erro.
+
+**Banco:** `supabase/migrations/20261103030000_session_start_fix.sql` cria o
+índice único parcial `workout_sessions_one_open_per_plan` em
+`(user_id, plan_id) where status = 'in_progress' and plan_id is not null`.
+A migração **aborta** se já existirem duplicatas, em vez de apagar dado.
+Nenhum `NOT NULL` ou `CHECK` foi removido — a restrição estava certa; o código
+estava errado. Aplicada e registrada no banco (`session_start_fix`).
+
+### 10.2 Causa real nº 2 — questionário travava na etapa 1
+
+Descoberto pelo novo teste de navegador do fluxo completo. Campos que a tela
+chama de **opcionais** (gênero, altura, peso) chegavam `undefined`: o
+`refreshProfile` cria a profile de fallback só com `id/email/full_name/avatar_url`,
+e o `load()` do onboarding copiava esses `undefined` por cima do `null` seguro.
+O schema aceitava `null`, mas não ausência.
+
+Resultado: a etapa 1 não avançava **para usuário novo**, com o texto cru do Zod
+em inglês na tela (`gender: Invalid option: expected one of ...`).
+
+Correção em três camadas: normalização `?? null` na origem, campos opcionais
+tolerando ausência no schema (`.default(null)`, cobre rascunhos antigos) e
+mensagens por campo em português. **As faixas de valor continuam validadas** —
+altura 90–250, peso 25–400; nada foi afrouxado para o teste passar.
+
+### 10.3 Causa real nº 3 — alternativas com equipamento indisponível
+
+A matriz de perfis (480 combinações) revelou que `findAlternatives` aceitava um
+substituto se **qualquer** equipamento dele existisse no perfil (`.some`),
+enquanto a validação do plano exige **todos** (`.every`). "Supino com barra e
+banco" era oferecido a quem só tem banco — e a validação então recusava o
+programa inteiro: **173 combinações falhavam**.
+
+A troca manual (Treinador → trocar exercício) tinha a mesma regra frouxa na tela
+e **nenhuma** na persistência: dava para gravar exercício sem equipamento,
+acima do nível, ou contraindicado pelas limitações.
+
+Correção: regra única de equipamento em `findAlternatives`, no seletor do
+`CoachPage` e em `replacePlanExercise`, que agora valida **antes** de gravar.
+A prescrição da troca passou a reaproveitar `prescriptionsFor` do gerador — a
+tabela própria anterior podia trocar por 4×4–6 (faixa de força) para um
+adolescente de 16 anos.
+
+### 10.4 Causa real nº 4 — validação sem perfil e erro cru na tela
+
+`validateGeneratedProgram` aceita um `profile` que liga as checagens de
+equipamento, nível, dia e duração, mas os dois fluxos principais chamavam **sem
+ele**: só a saída da IA era conferida contra o perfil. Plano por regras passava
+sem checagem. Além disso, o erro de schema voltava como texto cru do Zod e era
+exibido direto em `errors[0]`.
+
+Correção: `profile` passado nos dois call sites; erro de schema passa a ser
+mensagem acionável em português, com o detalhe técnico no console em DEV.
+
+### 10.5 Personalização — o que passou a ter efeito real
+
+- **Idade:** `ageRange` era coletado, tipado e **nunca lido**. Menor de 18 agora
+  não recebe dificuldade avançada (nem pela troca manual), tem séries limitadas
+  a 3, repetições 10–15, descanso 75 s, no máximo 5 exercícios e aviso de
+  supervisão. Sem promessa de resultado.
+- **Altura e peso:** eram coletados, salvos e **descartados** em `toPlanProfile`.
+  Agora chegam à geração com um efeito limitado e explícito: preferência suave
+  por baixo impacto para iniciante com massa corporal alta para a estatura.
+  É desempate no score (−10), **nunca filtro** — o plano não esvazia, nenhuma
+  meta de peso ou caloria é derivada disso, e **não se aplica a menores** (ponto
+  de corte de IMC adulto não vale para adolescente).
+- **Sexo:** continua com **zero** uso na seleção de exercícios. Não há filtro
+  estereotipado por gênero, e um teste garante isso.
+
+### 10.6 Prévia do plano antes de salvar
+
+`handleGenerate` salvava direto em `workout_plans`. Agora para em
+`src/components/ProgramPreview.tsx`: dias em acordeão, séries × reps, descanso,
+alternativas, grupos trabalhados, avisos e o "porquê" do plano. **Nada é gravado**
+até "Salvar este plano"; descartar volta ao questionário e qualquer resposta
+editada invalida a prévia. O teste de navegador verifica as duas metades: zero
+inserts antes de confirmar, inserts reais depois.
+
+### 10.7 Catálogo — verificado, não precisou de seed
+
+317 exercícios ativos, **0** sem dificuldade/equipamento/músculo, 317 com
+conteúdo em português, 31 músculos, 3 níveis (236 iniciante — 85 só peso do
+corpo —, 74 intermediário, 7 avançado). Cobertura suficiente inclusive para
+quem treina em casa sem equipamento. Nenhum exercício foi inventado.
+
+### 10.8 Testes executados nesta rodada
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm test` (unitário) | **881 testes / 27 arquivos** |
+| Matriz de perfis (objetivo × ambiente × nível × dias × tempo) | **480 combinações**, plano válido em todas |
+| `npm run test:browser` (Playwright) | **13/13 fluxos** |
+| `npm run test:security` (PGlite, migrações reais) | **49 cenários** |
+| `npm run test:i18n` | **750 strings**, 0 faltando |
+| `npm run lint` | 0 avisos |
+| `npx tsc -b --noEmit` + `typecheck:api` | sem erro |
+| `npm run build` | OK, PWA 54 arquivos |
+| Banco real | insert da sessão provado; índice e migração confirmados |
+
+O teste de sessão usa o **payload real do cliente** e o fixture de
+`workout_sessions` agora recusa POST sem `name`/`status`/`started_at`. Como
+controle negativo, remover `name` do código faz o teste de navegador falhar —
+ou seja, ele pega a regressão, não passa por acaso.
+
+### 10.9 Arquivos alterados nesta rodada
+
+Novos: `src/services/dbErrors.ts`, `src/components/ProgramPreview.tsx`,
+`supabase/migrations/20261103030000_session_start_fix.sql` e 6 arquivos de teste
+(`workout-session-start`, `plan-age-safety`, `plan-profile-matrix`,
+`questionnaire-optional-fields`, `exercise-substitution-safety`,
+`plan-anthropometry`).
+
+Alterados: `workoutSession.ts`, `planGenerator.ts`, `planPersistence.ts`,
+`catalog.ts`, `trainingProfile.ts`, `OnboardingPage.tsx`, `CoachPage.tsx`,
+`WorkoutsPage.tsx`, `WorkoutBuilderPage.tsx`, `WorkoutSessionPage.tsx`,
+`NutritionPage.tsx`, `components/training.tsx`, `styles/global.css`,
+`i18n/patterns.ts`, `i18n/locales/{en,es,fr}.ts`,
+`scripts/test-security-database.mjs`, `e2e/app.spec.ts`.
+
+### 10.10 Limite do que foi testado
+
+Os fluxos de navegador rodam contra um Supabase simulado por fixture de rede —
+exercitam o cliente real, o payload real e a interface real, mas não o banco
+remoto. A parte do banco foi verificada separadamente: reprodução e prova do
+insert no projeto real (com rollback) e as 49 verificações de segurança
+reaplicando as migrações de verdade. Conclusão de sessão, RLS e isolamento entre
+usuários estão cobertos por esses dois lados, não por um teste só.

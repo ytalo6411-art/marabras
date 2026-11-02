@@ -44,7 +44,8 @@ import {
   type QuestionnaireAnswers,
 } from '@/services/trainingProfile';
 import { loadExerciseCatalog, type CatalogSnapshot } from '@/services/catalog';
-import { generateProgram, validateGeneratedProgram, type GeneratedProgram } from '@/services/planGenerator';
+import { generateProgram, validateGeneratedProgram, type GeneratedProgram, type PlanGenerationProfile } from '@/services/planGenerator';
+import { ProgramPreview } from '@/components/ProgramPreview';
 import { saveGeneratedProgram } from '@/services/planPersistence';
 import { getAiStatus, requestAiPlan } from '@/services/aiCoach';
 import { SchemaMigrationNotice } from '@/components/SchemaMigrationNotice';
@@ -93,6 +94,13 @@ export default function OnboardingPage() {
   const [savedLocally, setSavedLocally] = useState(false);
   const schemaCapabilities = useSchemaCapabilities();
   const [avoidedInput, setAvoidedInput] = useState('');
+  // Prévia confirmável: o plano só é gravado depois de o usuário conferir.
+  const [preview, setPreview] = useState<{
+    program: GeneratedProgram;
+    profile: PlanGenerationProfile;
+    usedAi: boolean;
+  } | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -111,11 +119,15 @@ export default function OnboardingPage() {
       });
 
       if (!row && profile) {
+        // `?? null` é obrigatório: a profile criada pelo fallback de refreshProfile
+        // só tem id/email/full_name/avatar_url, então estes campos vêm undefined.
+        // Sem a normalização, o schema (que aceita null, não undefined) recusava
+        // a etapa 1 com "gender: Invalid option" mesmo sem o usuário tocar nada.
         setAnswers((prev) => ({
           ...prev,
-          gender: profile.gender,
-          heightCm: profile.height_cm,
-          weightKg: profile.weight_kg,
+          gender: profile.gender ?? null,
+          heightCm: profile.height_cm ?? null,
+          weightKg: profile.weight_kg ?? null,
         }));
       }
 
@@ -147,6 +159,8 @@ export default function OnboardingPage() {
   function update<K extends keyof QuestionnaireAnswers>(key: K, value: QuestionnaireAnswers[K]) {
     setAnswers((prev) => ({ ...prev, [key]: value }));
     setErrors([]);
+    // Resposta mudou: a prévia anterior não representa mais o perfil.
+    setPreview(null);
   }
 
   function toggleGoal(goal: TrainingGoal) {
@@ -263,7 +277,9 @@ export default function OnboardingPage() {
         });
       }
 
-      const validation = validateGeneratedProgram(program, catalog.exercises);
+      // O profile ativa as checagens de equipamento, nivel, dia e duracao.
+      // Sem ele, so a saida da IA era conferida contra o perfil do usuario.
+      const validation = validateGeneratedProgram(program, catalog.exercises, planProfile);
       if (!validation.ok || program.days.length === 0) {
         setErrors([
           validation.errors[0] ??
@@ -272,11 +288,29 @@ export default function OnboardingPage() {
         return;
       }
 
-      setGenerationStage('Salvando o plano…');
+      // Prévia antes de gravar: o usuário confirma o plano que recebeu.
+      // Nada é salvo em workout_plans até handleConfirmPlan().
+      setPreview({ program, profile: planProfile, usedAi });
+    } catch (error) {
+      console.error('[ATHLETIX] Erro ao gerar plano:', error);
+      setErrors(['Algo deu errado ao montar o plano. Tente novamente em instantes.']);
+    } finally {
+      setGenerating(false);
+      setGenerationStage('');
+    }
+  }
+
+  /** Grava o plano que o usuário acabou de conferir na prévia. */
+  async function handleConfirmPlan() {
+    if (!user || !preview || confirming) return;
+    setConfirming(true);
+    setErrors([]);
+
+    try {
       const result = await saveGeneratedProgram({
         userId: user.id,
-        program,
-        profile: planProfile,
+        program: preview.program,
+        profile: preview.profile,
       });
 
       if (!result.ok) {
@@ -285,11 +319,11 @@ export default function OnboardingPage() {
       }
 
       toast.show(
-        usedAi ? 'Plano gerado com IA e validado' : 'Plano personalizado criado',
+        preview.usedAi ? 'Plano gerado com IA e validado' : 'Plano personalizado criado',
         'success',
       );
 
-      if (saved.storage === 'local' || result.degraded) {
+      if (savedLocally || result.degraded) {
         toast.show(
           'Preferências salvas neste dispositivo. Aplique a migração para sincronizar na conta.',
           'info',
@@ -298,11 +332,10 @@ export default function OnboardingPage() {
 
       navigate('/app/workouts?tab=plano');
     } catch (error) {
-      console.error('[ATHLETIX] Erro ao gerar plano:', error);
-      setErrors(['Algo deu errado ao montar o plano. Tente novamente em instantes.']);
+      console.error('[ATHLETIX] Erro ao salvar plano:', error);
+      setErrors(['Não foi possível salvar o plano. Suas respostas continuam aqui; tente novamente.']);
     } finally {
-      setGenerating(false);
-      setGenerationStage('');
+      setConfirming(false);
     }
   }
 
@@ -316,6 +349,40 @@ export default function OnboardingPage() {
         <div style={{ height: 16 }} />
         <Skeleton height={280} />
       </>
+    );
+  }
+
+  // Prévia ocupa a tela inteira: é a decisão do usuário, não um passo do form.
+  if (preview) {
+    return (
+      <div className="wizard">
+        <header className="wizard__header">
+          <div className="row row-between" style={{ marginBottom: 'var(--sp-3)' }}>
+            <div>
+              <p className="eyebrow">Personalização</p>
+              <h1 className="page-title" style={{ marginBottom: 4 }}>Seu plano está pronto</h1>
+              <p className="page-subtitle" style={{ marginBottom: 0 }}>
+                Confira os dias e os exercícios antes de salvar.
+              </p>
+            </div>
+            <Link to="/app" className="btn btn-ghost btn-sm">Sair</Link>
+          </div>
+          <Progress value={100} label="Plano gerado, aguardando sua confirmação" />
+        </header>
+
+        {errors.map((error) => (
+          <Alert key={error} variant="error">{error}</Alert>
+        ))}
+
+        <Card>
+          <ProgramPreview
+            program={preview.program}
+            confirming={confirming}
+            onConfirm={() => void handleConfirmPlan()}
+            onDiscard={() => { setPreview(null); setErrors([]); }}
+          />
+        </Card>
+      </div>
     );
   }
 

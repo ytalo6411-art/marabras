@@ -7,6 +7,7 @@ import { useToast } from '@/components/useToast';
 import { Button, Card, Field, Alert, EmptyState, ConfirmDialog } from '@/components/ui';
 import { IconChevronLeft, IconPlus, IconTrash, IconPlay, IconSearch, IconDumbbell } from '@/components/icons';
 import { WEEKDAY_LABELS } from '@/utils/format';
+import { databaseErrorMessage } from '@/services/dbErrors';
 import type { WorkoutExercise, Exercise } from '@/types/database';
 
 interface PlanExercise extends WorkoutExercise {
@@ -237,7 +238,14 @@ export default function WorkoutBuilderPage() {
     try {
       const { startSession } = await import('@/services/workoutSession');
       navigate(`/app/session/${await startSession(saved, user.id)}`);
-    } catch { toast.show('Não foi possível iniciar a sessão. A migração V10 é necessária.', 'error'); }
+    } catch (cause) {
+      toast.show(
+        cause instanceof Error && !('code' in cause)
+          ? cause.message
+          : databaseErrorMessage(cause, 'Não foi possível iniciar a sessão. Tente novamente.'),
+        'error',
+      );
+    }
   }
 
   async function handleDelete() {

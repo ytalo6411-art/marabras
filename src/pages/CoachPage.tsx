@@ -19,7 +19,6 @@ import {
   ENVIRONMENT_LABELS,
   GOAL_LABELS,
   LEVEL_LABELS,
-  allowedDifficulties,
   muscleLabel,
 } from '@/data/exerciseTaxonomy';
 import { planWeekdayLabel } from '@/services/trainingOverview';
@@ -32,6 +31,7 @@ import {
   type PlanWithExercises,
 } from '@/services/planPersistence';
 import { askCoach, getAiStatus, localCoachAnswer, type AiStatus } from '@/services/aiCoach';
+import { allowedDifficultiesFor, isExerciseAvoided } from '@/services/planGenerator';
 
 interface ChatMessage {
   id: number;
@@ -175,15 +175,20 @@ export default function CoachPage() {
       (catalogState.exercises.find((exercise) => exercise.primaryMuscle === swapTarget.primary_muscle)
         ?.pattern ?? null);
     if (!swapPattern) return [];
-    const allowed = allowedDifficulties(generationProfile.level);
-    const equipment = generationProfile.equipment;
+    // Mesma regra do gerador: nivel considerando idade (menor nao recebe
+    // avanca), TODO equipamento exigido disponivel e limitacoes respeitadas.
+    // Antes usava `.some` no equipamento e so o nivel, entao a troca podia
+    // oferecer algo impossivel de executar ou contraindicado.
+    const allowed = allowedDifficultiesFor(generationProfile);
+    const equipment = new Set(generationProfile.equipment);
 
     return catalogState.exercises
       .filter((exercise) => exercise.inDatabase)
       .filter((exercise) => exercise.id !== swapTarget.id)
       .filter((exercise) => exercise.pattern === swapPattern)
       .filter((exercise) => allowed.includes(exercise.difficulty))
-      .filter((exercise) => exercise.equipment.some((eq) => equipment.includes(eq) || eq === 'bodyweight'))
+      .filter((exercise) => exercise.equipment.every((eq) => eq === 'bodyweight' || equipment.has(eq)))
+      .filter((exercise) => !isExerciseAvoided(exercise, generationProfile))
       .slice(0, 12);
   }, [swapTarget, catalogState, generationProfile]);
 

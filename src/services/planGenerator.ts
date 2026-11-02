@@ -54,6 +54,9 @@ export interface PlanGenerationProfile {
   limitations: string[];
   guidancePreference: GuidancePreference;
   ageRange?: AgeRange | null;
+  /** Opcionais: usados só como sinal suave de impacto articular. */
+  heightCm?: number | null;
+  weightKg?: number | null;
 }
 
 export interface PlanGenerationHistoryEntry {
@@ -183,9 +186,23 @@ export function validateGeneratedProgram(
 ): ValidationResult {
   const parsed = generatedProgramSchema.safeParse(program);
   if (!parsed.success) {
+    // O caller mostra errors[0] na tela. Antes isso vazava o texto cru do Zod
+    // em ingles e com nome tecnico de campo ("goal: Invalid option: expected
+    // one of ..."), sem dizer o que fazer. O detalhe tecnico vai para o console
+    // em DEV; o usuario recebe uma mensagem acionavel em portugues.
+    if (import.meta.env.DEV) {
+      console.warn('[ATHLETIX] Programa fora do schema:', parsed.error.issues);
+    }
+    const emptyDays = parsed.error.issues.some(
+      (issue) => issue.path[0] === 'days' && issue.code === 'too_small',
+    );
     return {
       ok: false,
-      errors: parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`),
+      errors: [
+        emptyDays
+          ? 'Não foi possível montar um plano com esses equipamentos. Tente marcar mais opções na etapa 3.'
+          : 'O plano gerado ficou incompleto. Tente gerar novamente; se persistir, revise as respostas do questionário.',
+      ],
     };
   }
 
@@ -211,7 +228,7 @@ export function validateGeneratedProgram(
         if (isExerciseAvoided(source, profile)) errors.push(`Exercício evitado ou adaptação necessária: ${source.name}`);
         if (exercise.pattern !== source.pattern || exercise.primaryMuscle !== source.primaryMuscle || exercise.name !== source.name) errors.push(`Metadados divergentes: ${source.name}`);
         if (exercise.videoUrl && exercise.videoUrl !== source.videoUrl) errors.push('Vídeo não corresponde à fonte do exercício.');
-        for(const alt of exercise.alternatives){const candidate=catalog?.find(e=>e.id===alt.exerciseId);if(!candidate || candidate.name!==alt.name || isExerciseAvoided(candidate,profile) || candidate.equipment.some(eq=>eq!=='bodyweight'&&!profile.equipment.includes(eq)) || !allowedDifficulties(profile.level).includes(candidate.difficulty))errors.push('Alternativa incompatível com o perfil.');}
+        for(const alt of exercise.alternatives){const candidate=catalog?.find(e=>e.id===alt.exerciseId);if(!candidate || candidate.name!==alt.name || isExerciseAvoided(candidate,profile) || candidate.equipment.some(eq=>eq!=='bodyweight'&&!profile.equipment.includes(eq)) || !allowedDifficultiesFor(profile).includes(candidate.difficulty))errors.push('Alternativa incompatível com o perfil.');}
       }
       if (knownIds && knownIds.size > 0 && !knownIds.has(exercise.exerciseId)) {
         errors.push(`Exercício fora do catálogo no dia ${day.label}: ${exercise.name}`);
@@ -410,12 +427,85 @@ interface VolumePrescription {
   restSeconds: number;
 }
 
-function prescriptionsFor(
+/**
+ * Faixa etária menor de idade.
+ *
+ * `ageRange` era coletado no questionário, tipado no perfil e nunca lido pela
+ * geração: um adolescente de 16 anos recebia exatamente a mesma prescrição de
+ * força máxima (4–6 reps, 5 séries) de um adulto avançado. Aqui a idade passa a
+ * ter efeito real, sem esterótipo de gênero e sem restringir exercícios por sexo.
+ */
+export function isMinorProfile(profile: { ageRange?: AgeRange | null }): boolean {
+  return profile.ageRange === '16_17';
+}
+
+/**
+ * Dificuldade aceita considerando idade e experiência.
+ *
+ * Menor de idade não recebe movimento de dificuldade avançada mesmo que se
+ * declare avançado: a execução sob carga alta exige supervisão presencial que
+ * o aplicativo não tem como garantir.
+ */
+export function allowedDifficultiesFor(profile: PlanGenerationProfile): DifficultyLevel[] {
+  const byLevel = allowedDifficulties(profile.level);
+  return isMinorProfile(profile)
+    ? byLevel.filter((difficulty) => difficulty !== 'advanced')
+    : byLevel;
+}
+
+/**
+ * Preferência por baixo impacto a partir de altura e peso.
+ *
+ * `heightCm`/`weightKg` eram coletados no questionário e descartados antes da
+ * geração. Agora têm um efeito real e limitado: quando a massa corporal é alta
+ * em relação à estatura, movimentos de salto e pliometria perdem prioridade para
+ * quem está começando, porque a carga de impacto no joelho e tornozelo é maior.
+ *
+ * Limites deliberados desta heurística:
+ *  • é um desempate suave no score, nunca um filtro — nenhum exercício é
+ *    proibido por peso, e o plano nunca fica vazio por causa disso;
+ *  • não se aplica a menores de idade: ponto de corte de IMC adulto não vale
+ *    para adolescente, e não cabe ao app induzir preocupação com peso nessa
+ *    faixa (a segurança do menor já é tratada por `isMinorProfile`);
+ *  • não gera meta de peso, não calcula calorias e não emite diagnóstico.
+ *    Composição corporal não é dedutível de altura e peso: uma pessoa muito
+ *    musculosa pode cair na mesma faixa sem qualquer risco articular.
+ */
+export function prefersLowImpact(profile: PlanGenerationProfile): boolean {
+  if (isMinorProfile(profile)) return false;
+  if (profile.level !== 'beginner') return false;
+  const { heightCm, weightKg } = profile;
+  if (!heightCm || !weightKg) return false;
+  if (heightCm < 90 || heightCm > 250 || weightKg < 25 || weightKg > 400) return false;
+  const bmi = weightKg / Math.pow(heightCm / 100, 2);
+  return bmi >= 30;
+}
+
+/** Movimento de salto/pliometria: o que a preferência por baixo impacto evita. */
+const HIGH_IMPACT_NAME = /\b(jump|jumping|salto|saltos|burpee|plyo|plyometric|box jump|tuck|sprint)\b/i;
+
+export function isHighImpact(exercise: CatalogExercise): boolean {
+  return HIGH_IMPACT_NAME.test(exercise.name) || HIGH_IMPACT_NAME.test(exercise.slug);
+}
+
+export function prescriptionsFor(
   goal: TrainingGoal,
   level: DifficultyLevel,
   pattern: MovementPattern,
+  minor = false,
 ): VolumePrescription {
   const levelBump = level === 'advanced' ? 1 : level === 'intermediate' ? 0 : -1;
+
+  if (minor && pattern !== 'mobility' && pattern !== 'cardio') {
+    // Técnica e progressão gradual: nada de faixa de força máxima nem volume
+    // alto. A carga fica subordinada à qualidade da execução.
+    const base = goal === 'strength' || goal === 'sport_performance' ? 3 : 2;
+    return {
+      sets: clamp(base + (level === 'beginner' ? 0 : 1), 2, 3),
+      reps: goal === 'endurance' ? '12–15' : '10–15',
+      restSeconds: 75,
+    };
+  }
 
   if (pattern === 'mobility') {
     return { sets: 2, reps: '30–45 s', restSeconds: 20 };
@@ -462,7 +552,9 @@ function exerciseCountFor(profile: PlanGenerationProfile): number {
               : 8;
 
   const levelCap = profile.level === 'beginner' ? 5 : profile.level === 'intermediate' ? 6 : 8;
-  return clamp(Math.min(byTime, levelCap), 3, 8);
+  // Adolescente: sessão mais curta e focada em técnica, mesmo com tempo sobrando.
+  const ageCap = isMinorProfile(profile) ? 5 : 8;
+  return clamp(Math.min(byTime, levelCap, ageCap), 3, 8);
 }
 
 /* ─── Seleção de exercícios ────────────────────────────────────────────────── */
@@ -530,6 +622,11 @@ function scoreExercise(
   if (profile.goal === 'endurance' && exercise.pattern === 'cardio') score += 8;
   if (profile.goal === 'fat_loss' && exercise.pattern === 'cardio') score += 6;
 
+  // Altura/peso: preferência suave por baixo impacto (ver prefersLowImpact).
+  // É menor que o bônus de músculo prioritário, então nunca domina a escolha
+  // nem esvazia o dia — só desempata entre opções do mesmo padrão.
+  if (isHighImpact(exercise) && prefersLowImpact(profile)) score -= 10;
+
   // Vídeo demonstrativo é útil, mas não decide sozinho.
   if (exercise.videoUrl) score += 2;
 
@@ -546,7 +643,7 @@ function pickForSlot(
   usedIds: Set<string>,
   seed: string,
 ): CatalogExercise | null {
-  const allowed = new Set(allowedDifficulties(profile.level));
+  const allowed = new Set(allowedDifficultiesFor(profile));
   const equipment = new Set(profile.equipment.length ? profile.equipment : ['bodyweight']);
 
   const candidates = filterCatalog(catalog, {
@@ -627,7 +724,7 @@ function buildExercisesForSlots(
     // Evita o mesmo exercício duas vezes no mesmo dia.
     if (exercises.some((item) => item.exerciseId === chosen.id)) continue;
 
-    const prescription = prescriptionsFor(profile.goal, profile.level, chosen.pattern);
+    const prescription = prescriptionsFor(profile.goal, profile.level, chosen.pattern, isMinorProfile(profile));
     const durationSeconds =
       chosen.pattern === 'cardio'
         ? prescription.reps.includes('min')
@@ -639,7 +736,7 @@ function buildExercisesForSlots(
 
     const alternatives = findAlternatives(chosen, available, {
       equipment: profile.equipment.length ? profile.equipment : ['bodyweight'],
-      difficulties: allowedDifficulties(profile.level),
+      difficulties: allowedDifficultiesFor(profile),
       limit: 3,
     }).map((alt) => ({ exerciseId: alt.id, name: alt.name }));
 
@@ -828,6 +925,17 @@ export function generateProgram(options: GeneratePlanOptions): GeneratedProgram 
     );
   }
 
+  if (isMinorProfile(profile)) {
+    // A idade muda a prescrição de verdade (séries, reps, dificuldade máxima).
+    // Aqui explicamos o porquê, em vez de só reduzir números silenciosamente.
+    warnings.push(
+      'Plano adaptado para menor de idade: priorizamos técnica, cargas leves a moderadas e progressão gradual. Treine com acompanhamento de um profissional de educação física e responsável.',
+    );
+    rationale.push(
+      'Por você ter menos de 18 anos: séries limitadas a 2–3, faixa de 10–15 repetições e sem exercícios de dificuldade avançada. O objetivo é aprender o movimento — não levantar o máximo de carga.',
+    );
+  }
+
   if (!profile.equipment.includes('bodyweight') && profile.equipment.length > 0) {
     warnings.push(
       'Adicionamos o peso do corpo como opção: ele é sempre válido e ajuda em dias sem equipamento.',
@@ -992,6 +1100,8 @@ export function toGenerationProfile(input: {
   limitations: string[];
   guidancePreference: GuidancePreference | null;
   ageRange?: AgeRange | null;
+  heightCm?: number | null;
+  weightKg?: number | null;
 }): PlanGenerationProfile {
   const goals = input.goals.length > 0 ? input.goals : (['active_routine'] as TrainingGoal[]);
   const goal = input.goalPriority ?? goals[0] ?? 'active_routine';
@@ -1012,5 +1122,7 @@ export function toGenerationProfile(input: {
     limitations: input.limitations,
     guidancePreference: input.guidancePreference ?? 'both',
     ageRange: input.ageRange ?? null,
+    heightCm: input.heightCm ?? null,
+    weightKg: input.weightKg ?? null,
   };
 }

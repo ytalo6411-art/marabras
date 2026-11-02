@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { isUniqueViolation } from '@/services/dbErrors';
 import type { WorkoutExercise, WorkoutSession, WorkoutSet } from '@/types/database';
 
 export type SessionExercise = WorkoutExercise & { exercise: import('@/types/database').Exercise };
@@ -20,19 +21,83 @@ export function restoreProgress(raw: string | null, count: number): SessionProgr
       paused: p.paused === true, remaining: typeof p.remaining === 'number' ? Math.max(0,Math.min(7200,p.remaining)) : 90 };
   } catch { return { ...initialProgress }; }
 }
+
+/**
+ * Nome da sessão.
+ *
+ * `workout_sessions.name` é NOT NULL + CHECK (length(trim(name)) > 0) e não tem
+ * default. O insert original não enviava `name`, então o Postgres recusava com
+ * SQLSTATE 23502 e a UI mostrava "verifique a migração V10" — a migração estava
+ * aplicada; o campo obrigatório é que faltava. O nome vem do plano, com fallback
+ * não vazio para o caso de o plano ter sido renomeado para espaços.
+ */
+export function sessionName(planName: string | null | undefined): string {
+  const trimmed = (planName ?? '').trim().replace(/\s+/g, ' ');
+  return (trimmed.length ? trimmed : 'Treino').slice(0, 120);
+}
+
+/** Payload de abertura de sessão — exportado para ser testado sem rede. */
+export function buildSessionInsert(params: {
+  planId: string;
+  userId: string;
+  planName: string | null | undefined;
+  exercises: SessionExercise[];
+  startedAt?: string;
+}) {
+  return {
+    user_id: params.userId,
+    plan_id: params.planId,
+    name: sessionName(params.planName),
+    // Sem isto o default do banco é 'planned': a sessão nascia inativa, o
+    // progresso não sincronizava e complete_workout_session recusava com
+    // "Session is not active".
+    status: 'in_progress' as const,
+    // Sem started_at a duração concluída era sempre 0, porque a função calcula
+    // now() - coalesce(started_at, now()).
+    started_at: params.startedAt ?? new Date().toISOString(),
+    exercise_snapshot: params.exercises,
+    client_state: initialProgress,
+  };
+}
+
+async function findOpenSession(planId: string, userId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('workout_sessions')
+    .select('id').eq('user_id', userId).eq('plan_id', planId).eq('status', 'in_progress')
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
+}
+
 export async function startSession(planId: string, userId: string): Promise<string> {
-  const { data: existing, error: readError } = await supabase.from('workout_sessions')
-    .select('id').eq('user_id',userId).eq('plan_id',planId).eq('status','in_progress').maybeSingle();
-  if (readError) throw readError;
-  if (existing) return existing.id;
+  const existing = await findOpenSession(planId, userId);
+  if (existing) return existing;
+
+  // O nome é obrigatório no banco e pertence ao plano: lemos antes de inserir.
+  const { data: plan, error: planError } = await supabase.from('workout_plans')
+    .select('name').eq('id', planId).eq('user_id', userId).maybeSingle();
+  if (planError) throw planError;
+  if (!plan) throw new Error('Treino não encontrado nesta conta. Atualize a lista de treinos.');
+
   const { data: exercises, error } = await supabase.from('workout_exercises')
-    .select('*, exercise:exercises(*)').eq('plan_id',planId).order('position');
+    .select('*, exercise:exercises(*)').eq('plan_id', planId).order('position');
   if (error) throw error;
   if (!exercises?.length) throw new Error('Este treino não tem exercícios. Edite-o antes de iniciar.');
-  const { data, error: insertError } = await supabase.from('workout_sessions').insert({
-    user_id: userId, plan_id: planId, exercise_snapshot: exercises, client_state: initialProgress,
-  }).select('id').single();
-  if (insertError) throw insertError;
+
+  const { data, error: insertError } = await supabase.from('workout_sessions')
+    .insert(buildSessionInsert({
+      planId, userId, planName: plan.name, exercises: exercises as SessionExercise[],
+    }))
+    .select('id').single();
+
+  if (insertError) {
+    // Duas abas abertas ao mesmo tempo: a segunda encontra a sessão da primeira
+    // em vez de falhar ou duplicar.
+    if (isUniqueViolation(insertError)) {
+      const raced = await findOpenSession(planId, userId);
+      if (raced) return raced;
+    }
+    throw insertError;
+  }
   return data.id;
 }
 export async function saveSessionProgress(id: string, userId: string, progress: SessionProgress) {
