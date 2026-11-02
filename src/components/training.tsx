@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
 import { startSession } from '@/services/workoutSession';
+import { databaseErrorMessage } from '@/services/dbErrors';
 import { supabase } from '@/lib/supabase';
 import { useToast } from './useToast';
 import { Tooltip } from './ui';
@@ -191,7 +192,13 @@ export function PlanDayCard({
     if(!user || starting)return;
     setStarting(true);setError('');
     try { navigate(`/app/session/${await startSession(plan.id,user.id)}`); }
-    catch { setError('Não foi possível iniciar. Verifique os exercícios e a migração V10.');toast.show('Não foi possível iniciar a sessão.','error'); }
+    catch (cause) {
+      // Mensagem derivada do erro real do banco, não um palpite sobre migração.
+      const message = cause instanceof Error && cause.message && !('code' in cause)
+        ? cause.message
+        : databaseErrorMessage(cause, 'Não foi possível iniciar a sessão. Tente novamente.');
+      setError(message);toast.show(message,'error');
+    }
     finally {setStarting(false);}
   }
   return (

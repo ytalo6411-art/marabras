@@ -339,5 +339,96 @@ await check(async()=>{
   await as(A,'update public.shared_workouts set is_public=true where id=$1',[W1]);
 });
 
-console.log(`PASS: ${assertions} security scenarios; two isolated users + anon; actual migrations, grants, cross-tenant IDs, public-row writes, admin boundaries, malicious JSON, quotas/replay across separate transactions, account deletion cascade, community privacy, saves, per-type privacy, public progress aggregates, moderation queue and anti-IDOR.`);
+
+/* ─── Regressão: abertura de sessão de treino (bug real de produção) ──────────
+ * O cliente inseria a sessão sem `name`. O Postgres recusava com SQLSTATE 23502
+ * e a interface respondia "verifique os exercícios e a migração V10" — a V10
+ * estava aplicada; o campo obrigatório é que faltava. A constraint NÃO foi
+ * relaxada para "fazer funcionar": estes cenários garantem que ela continua
+ * de pé e que o payload correto passa.
+ */
+const PLAN2='10000000-0000-4000-8000-000000000020';
+const SESS2='10000000-0000-4000-8000-000000000021';
+await db.exec(`insert into public.workout_plans(id,user_id,name) values('${PLAN2}','${A}','Treino B');`);
+
+// 1) Sem `name` o banco continua recusando: a validação não foi desativada.
+await check(async()=>{
+  let failed=false;
+  try{
+    await as(A,"insert into public.workout_sessions(user_id,plan_id,exercise_snapshot,client_state) values($1,$2,'[]'::jsonb,'{}'::jsonb)",[A,PLAN2]);
+  }catch(e){
+    failed=true;
+    assert.match(e.message,/23502|null value|not-null/i,'a falha precisa ser de NOT NULL, não de permissão');
+  }
+  assert.ok(failed,'inserir sessão sem name deve falhar');
+});
+
+// 2) Payload corrigido (name + status + started_at) é aceito e nasce ativo.
+await check(async()=>{
+  await as(A,`insert into public.workout_sessions(id,user_id,plan_id,name,status,started_at,exercise_snapshot,client_state)
+    values($1,$2,$3,$4,'in_progress',now(),'[]'::jsonb,'{"current":0,"restUntil":null,"paused":false,"remaining":90}'::jsonb)`,
+    [SESS2,A,PLAN2,'Treino B']);
+  const row=(await as(A,'select status::text as status, started_at, name from public.workout_sessions where id=$1',[SESS2])).rows[0];
+  assert.equal(row.status,'in_progress','sessão precisa nascer ativa, não no default planned');
+  assert.ok(row.started_at,'started_at é necessário para a duração não fechar em 0');
+  assert.equal(row.name,'Treino B');
+});
+
+// 3) Nome em branco continua proibido pelo CHECK.
+await check(async()=>{
+  await rejects(A,`insert into public.workout_sessions(user_id,plan_id,name,status) values($1,$2,'   ','in_progress')`,[A,PLAN2]);
+});
+
+// 4) Uma única sessão aberta por plano: abertura concorrente não duplica treino.
+await check(async()=>{
+  let code=null;
+  try{
+    await as(A,`insert into public.workout_sessions(user_id,plan_id,name,status,started_at) values($1,$2,'Duplicada','in_progress',now())`,[A,PLAN2]);
+  }catch(e){code=e.code??(/23505|duplicate key|unique/i.test(e.message)?'23505':null);}
+  assert.equal(code,'23505','segunda sessão aberta para o mesmo plano deve violar o índice único');
+  assert.equal((await as(A,"select id from public.workout_sessions where plan_id=$1 and status='in_progress'",[PLAN2])).rows.length,1);
+});
+
+// 5) Outro usuário não abre sessão no plano alheio (anti-IDOR na escrita).
+await check(async()=>{
+  const before=(await db.query('select count(*)::int as n from public.workout_sessions')).rows[0].n;
+  try{
+    await as(B,`insert into public.workout_sessions(user_id,plan_id,name,status) values($1,$2,'Roubo','in_progress')`,[B,PLAN2]);
+  }catch{/* trigger de ownership ou RLS pode recusar de formas diferentes */}
+  const after=(await db.query('select count(*)::int as n from public.workout_sessions')).rows[0].n;
+  assert.equal(after,before,'B não pode criar sessão no plano de A');
+});
+
+// 6) Fluxo completo: série salva -> concluir -> histórico e recorde gerados.
+await check(async()=>{
+  await as(A,`insert into public.workout_sets(session_id,exercise_id,set_number,reps,weight_kg,completed)
+    values($1,$2,1,10,50,true)`,[SESS2,EX]);
+  const done=(await as(A,'select public.complete_workout_session($1) as r',[SESS2])).rows[0].r;
+  assert.equal(done.status,'completed');
+  assert.equal(Number(done.total_volume_kg),500,'volume = reps x carga');
+  assert.ok(done.duration_seconds!==null,'duração calculada a partir de started_at');
+  const hist=(await as(A,'select best_weight_kg,best_reps from public.exercise_history where session_id=$1',[SESS2])).rows;
+  assert.equal(hist.length,1,'histórico do exercício precisa ser gravado na mesma transação');
+  assert.equal(Number(hist[0].best_weight_kg),50);
+  const pr=(await as(A,"select value from public.personal_records where exercise_id=$1 and record_type='weight'",[EX])).rows;
+  assert.equal(Number(pr[0].value),50,'recorde pessoal registrado');
+  // Repetir a conclusão é idempotente, não duplica histórico.
+  await as(A,'select public.complete_workout_session($1)',[SESS2]);
+  assert.equal((await as(A,'select id from public.exercise_history where session_id=$1',[SESS2])).rows.length,1);
+});
+
+// 7) Concluir sem nenhuma série é recusado (não existe treino vazio no histórico).
+await check(async()=>{
+  const empty='10000000-0000-4000-8000-000000000022';
+  await as(A,`insert into public.workout_sessions(id,user_id,name,status,started_at) values($1,$2,'Vazia','in_progress',now())`,[empty,A]);
+  await rejects(A,'select public.complete_workout_session($1)',[empty]);
+});
+
+// 8) B não vê nem conclui a sessão de A.
+await check(async()=>{
+  assert.equal((await as(B,'select id from public.workout_sessions where id=$1',[SESS2])).rows.length,0);
+  await rejects(B,'select public.complete_workout_session($1)',[SESS2]);
+});
+
+console.log(`PASS: ${assertions} security scenarios; two isolated users + anon; actual migrations, grants, cross-tenant IDs, public-row writes, admin boundaries, malicious JSON, quotas/replay across separate transactions, account deletion cascade, community privacy, saves, per-type privacy, public progress aggregates, moderation queue and anti-IDOR, session start constraints and completion lifecycle.`);
 await db.close();

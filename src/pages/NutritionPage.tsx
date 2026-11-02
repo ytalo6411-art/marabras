@@ -9,6 +9,7 @@ import { todayISO, formatNumber } from '@/utils/format';
 import { REFERENCE_FOODS, searchReferenceFoods } from '@/data/foodCatalog';
 import { defaultNutritionPreferences, nutritionPreferencesSchema, suggestMeals, mealTotals, substituteIngredient, foodToResult, type NutritionPreferences, type SuggestedMeal } from '@/services/mealPlanning';
 import { searchFoods, recordMeal, createCustomFood, lookupByBarcode, type NutritionResult } from '@/services/nutrition';
+import { databaseErrorMessage } from '@/services/dbErrors';
 import type { FoodDiary, MealEntry, MealType } from '@/types/database';
 const MEALS:Record<MealType,string>={breakfast:'Café da manhã',lunch:'Almoço',dinner:'Jantar',snack:'Lanche',pre_workout:'Pré-treino',post_workout:'Pós-treino'};
 const ALLERGIES=[['milk','Leite'],['egg','Ovo'],['gluten','Glúten'],['fish','Peixe'],['soy','Soja'],['nuts','Nozes']];
@@ -33,7 +34,7 @@ export default function NutritionPage(){
   const stored=planResult.data?.plan;const valid=Array.isArray(stored)&&stored.length>0&&stored.every(m=>m&&typeof m.id==='string'&&typeof m.name==='string'&&typeof m.instructions==='string'&&['breakfast','lunch','dinner','snack'].includes(m.type)&&typeof m.image==='string'&&m.image.startsWith('/images/food/')&&Number.isFinite(m.minutes)&&Array.isArray(m.ingredients)&&m.ingredients.length>0&&m.ingredients.every((i:{foodId:string;grams:number;substituteIds:string[]})=>Number.isFinite(i.grams)&&i.grams>0&&Array.isArray(i.substituteIds)&&REFERENCE_FOODS.some(f=>f.id===i.foodId)));
   setMeals(valid?stored:suggestMeals(p));setDiary(diaryResult.data);
   if(diaryResult.data){const {data,error:e}=await supabase.from('meal_entries').select('*').eq('diary_id',diaryResult.data.id).order('created_at');if(e)throw e;setEntries(data??[]);}else setEntries([]);
- }catch{setError('Não foi possível carregar a nutrição. A migração V10 precisa estar aplicada. Nenhuma refeição foi marcada como consumida.');}finally{setLoading(false);}},[user,date]);
+ }catch(cause){setError(databaseErrorMessage(cause,'Não foi possível carregar a nutrição. Nenhuma refeição foi marcada como consumida.'));}finally{setLoading(false);}},[user,date]);
  useEffect(()=>{void load();},[load]);
  useEffect(()=>{if(!picker)return;setQuery('');setCategory('Todos');setSelected(null);setResults(searchReferenceFoods('').map(foodToResult) as NutritionResult[]);},[picker]);
  async function savePreferences(){if(!user)return;setBusy(true);setError('');try{const p=nutritionPreferencesSchema.parse(prefs);const plan=suggestMeals(p);const [a,b]=await Promise.all([

@@ -18,7 +18,21 @@ async function fixture(page:Page){
   if(table==='exercises')body=req.method()==='GET'&&url.searchParams.has('id')?[exercise]:exercise;
   if(table==='workout_plans')body=url.searchParams.has('is_active')?[{id:planId,user_id:userId,name:'Treino A',days_of_week:[1],estimated_minutes:30,is_active:true}]:{id:planId,user_id:userId,name:'Treino A',days_of_week:[1],estimated_minutes:30,is_active:true};
   if(table==='workout_exercises')body=[item];
-  if(table==='workout_sessions')body=url.searchParams.has('status')&&req.method()==='GET'&&url.searchParams.has('plan_id')?[]:req.method()==='POST'?{id:sessionId}:({id:sessionId,user_id:userId,plan_id:planId,status:'in_progress',exercise_snapshot:[item],client_state:{},started_at:new Date().toISOString(),total_volume_kg:0});
+  if(table==='workout_sessions'){
+   if(req.method()==='POST'){
+    // O fixture reproduz as constraints reais de public.workout_sessions.
+    // Antes ele devolvia {id} para qualquer payload, e foi assim que 12 testes
+    // de navegador passaram enquanto produção quebrava com SQLSTATE 23502.
+    const payload=req.postDataJSON()??{};
+    const violations:string[]=[];
+    if(typeof payload.name!=='string'||payload.name.trim().length===0)violations.push('23502: null value in column "name" violates not-null constraint');
+    if(payload.status!=='in_progress')violations.push('session must start in_progress');
+    if(typeof payload.started_at!=='string'||Number.isNaN(Date.parse(payload.started_at)))violations.push('started_at missing');
+    if(payload.user_id!==userId)violations.push('42501: row-level security');
+    if(violations.length)return route.fulfill({status:400,json:{code:'23502',message:violations.join('; ')}});
+    body={id:sessionId,...payload};
+   } else body=url.searchParams.has('status')&&url.searchParams.has('plan_id')?[]:({id:sessionId,user_id:userId,plan_id:planId,name:'Treino A',status:'in_progress',exercise_snapshot:[item],client_state:{},started_at:new Date().toISOString(),total_volume_kg:0});
+  }
   if(table==='workout_sets')body=req.method()==='POST'?{id:'set',...req.postDataJSON()}:[];
   if(table==='nutrition_profiles'&&req.method()==='GET')body=nutritionProfile;
   if(table==='nutrition_plans'&&req.method()==='GET')body=nutritionPlan;
@@ -113,6 +127,9 @@ test('card do plano mostra os exercícios reais, não só o título', async ({ p
 });
 
 test('catálogo e telas principais não têm overflow de 320 a 1440', async ({ page }) => {
+  // São 28 navegações (7 larguras x 4 rotas). O padrão de 30 s ficava no limite e
+  // gerava falha intermitente sem overflow real; o orçamento reflete o trabalho.
+  test.setTimeout(90_000);
   await fixture(page);
   for (const width of [320, 360, 390, 430, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -301,6 +318,92 @@ test('programa: reordenar dias grava no servidor e sobrevive ao reload', async (
 
   // Os extremos não oferecem movimento impossível.
   await expect(page.getByRole('button', { name: 'Mover B para cima' })).toBeDisabled();
+
+  expect(errors).toEqual([]);
+});
+
+test('questionário gera prévia, não salva antes de confirmar e persiste ao confirmar', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+
+  // Catálogo próprio: o fixture padrão tem 1 exercício, insuficiente para um
+  // programa semanal. Todos bodyweight/beginner para casar com o perfil abaixo.
+  const muscles = ['quadriceps', 'pectoralis_major', 'lats', 'glutes', 'rectus_abdominis', 'deltoids', 'hamstrings', 'biceps'];
+  const names = ['Agachamento livre', 'Flexão de braço', 'Remada invertida', 'Ponte de glúteos', 'Prancha', 'Elevação lateral', 'Avanço', 'Rosca direta'];
+  const catalog = names.map((name, i) => ({
+    ...exercise,
+    id: `20000000-0000-4000-8000-0000000000${String(i + 10).padStart(2, '0')}`,
+    slug: `cat-${i}`,
+    name,
+    primary_muscle: muscles[i],
+    equipment: ['bodyweight'],
+    difficulty: 'beginner',
+  }));
+
+  let profileSaved = false;
+  const planInserts: Record<string, unknown>[] = [];
+  const exerciseInserts: unknown[] = [];
+
+  await fixture(page);
+  await page.route('https://test.supabase.co/rest/v1/exercises*', (route) =>
+    route.fulfill({ json: catalog, headers: { 'content-range': `0-${catalog.length - 1}/${catalog.length}` } }));
+  await page.route('https://test.supabase.co/rest/v1/training_profiles*', async (route) => {
+    if (['POST', 'PATCH'].includes(route.request().method())) profileSaved = true;
+    return route.fulfill({ status: route.request().method() === 'GET' ? 200 : 201, json: [] });
+  });
+  await page.route('https://test.supabase.co/rest/v1/exercise_history*', (route) => route.fulfill({ json: [] }));
+  await page.route('https://test.supabase.co/rest/v1/workout_plans*', async (route) => {
+    if (route.request().method() === 'POST') {
+      const payload = route.request().postDataJSON();
+      planInserts.push(payload);
+      return route.fulfill({ status: 201, json: [{ id: `30000000-0000-4000-8000-0000000000${String(planInserts.length).padStart(2, '0')}`, user_id: userId, ...payload }] });
+    }
+    return route.fulfill({ json: [] });
+  });
+  await page.route('https://test.supabase.co/rest/v1/workout_exercises*', async (route) => {
+    if (route.request().method() === 'POST') exerciseInserts.push(route.request().postDataJSON());
+    return route.fulfill({ status: 201, json: [] });
+  });
+
+  await page.goto('/app/onboarding?restart=1');
+
+  // Etapa 1 — experiência.
+  await page.getByRole('button', { name: /Nunca treinei/ }).click();
+  await page.getByRole('button', { name: 'Continuar' }).click();
+
+  // Etapa 2 — objetivo.
+  await page.getByRole('button', { name: /Ganhar massa muscular/ }).click();
+  await page.getByRole('button', { name: 'Continuar' }).click();
+
+  // Etapa 3 — casa sem equipamento (não exige marcar equipamento).
+  await page.getByRole('button', { name: /Casa sem equipamentos/ }).click();
+  await page.getByRole('button', { name: 'Continuar' }).click();
+
+  // Etapas 4, 5 e 6 — defaults já válidos.
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByRole('button', { name: 'Continuar' }).click();
+
+  // Etapa 7 — gerar.
+  await page.getByRole('button', { name: 'Gerar plano', exact: true }).click();
+
+  // A prévia aparece e NADA foi gravado em workout_plans ainda.
+  await expect(page.getByRole('heading', { name: 'Seu plano está pronto' })).toBeVisible();
+  await expect(page.getByText('PRÉVIA DO SEU PLANO')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Salvar este plano' })).toBeVisible();
+  expect(profileSaved).toBe(true);
+  expect(planInserts).toHaveLength(0);
+
+  // A prévia mostra exercício real com série/reps, não só o título do dia.
+  await expect(page.getByText(/Agachamento livre|Flexão de braço|Prancha/).first()).toBeVisible();
+  await expect(page.getByText(/^\d+ × /).first()).toBeVisible();
+
+  // Confirmar grava o programa e seus exercícios.
+  await page.getByRole('button', { name: 'Salvar este plano' }).click();
+  // O plano é inserido antes dos exercícios: esperar só o plano criava corrida.
+  await expect.poll(() => planInserts.length).toBeGreaterThan(0);
+  await expect.poll(() => exerciseInserts.length).toBeGreaterThan(0);
+  await expect(page).toHaveURL(/\/app\/workouts/);
 
   expect(errors).toEqual([]);
 });

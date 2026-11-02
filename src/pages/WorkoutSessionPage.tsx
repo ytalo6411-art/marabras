@@ -10,6 +10,7 @@ import { IconCheck, IconChevronLeft, IconTimer } from '@/components/icons';
 import VideoPlayer from '@/components/VideoPlayer';
 import { formatClock, formatNumber } from '@/utils/format';
 import { completeSession, initialProgress, progressStorageKey, restoreProgress, saveSessionProgress, saveSet, sessionExercises, type SessionProgress, type SessionExercise } from '@/services/workoutSession';
+import { databaseErrorMessage } from '@/services/dbErrors';
 import type { WorkoutSession, WorkoutSet } from '@/types/database';
 
 type LocalSet = { reps: number | null; weight: number | null; done: boolean };
@@ -56,7 +57,7 @@ export default function WorkoutSessionPage() {
         }
         const p = restoreProgress(JSON.stringify(row.client_state ?? {}),exercises.length);
         if (active) {setSession(row);setItems(exercises);setSets(restored);setProgress(p);setLoading(false);}
-      } catch { if(active) {setError('Não foi possível carregar a sessão. Verifique a conexão e se a migração V10 foi aplicada.');setLoading(false);} }
+      } catch (cause) { if(active) {setError(cause instanceof Error && !('code' in cause) ? cause.message : databaseErrorMessage(cause,'Não foi possível carregar a sessão. Tente novamente.'));setLoading(false);} }
     })();
     return () => {active=false;};
   },[id,user]);
@@ -97,7 +98,14 @@ export default function WorkoutSessionPage() {
     if(!id || !completed.length || busy) return;
     setBusy(true);setError('');
     try {await saveSessionProgress(id,user!.id,progress);const result=await completeSession(id);setSession(result);toast.show('Treino concluído e salvo!','success');}
-    catch {setError('Não foi possível concluir. As séries continuam salvas. Aplique a migração V10 se necessário e tente novamente.');}
+    catch (cause) {
+      // A RPC tem pré-condições reais (sessão ativa + ao menos uma série). A
+      // mensagem delas é útil; só traduzimos quando o erro é do banco.
+      const detail = cause && typeof cause === 'object' && 'message' in cause ? String((cause as {message:unknown}).message) : '';
+      if (/at least one set/i.test(detail)) setError('Conclua e salve ao menos uma série antes de finalizar o treino.');
+      else if (/not active/i.test(detail)) setError('Esta sessão não está mais ativa. Atualize a página para ver o estado atual.');
+      else setError(databaseErrorMessage(cause,'Não foi possível concluir. As séries continuam salvas; tente novamente.'));
+    }
     finally {setBusy(false);}
   }
   if(loading)return <SkeletonList count={3} height={150}/>;

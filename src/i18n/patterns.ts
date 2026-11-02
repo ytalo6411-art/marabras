@@ -27,5 +27,8 @@ export const patterns: [RegExp, Record<string,string>][] = [
  [/^Mover (.+) para baixo$/, {en:'Move $1 down',es:'Mover $1 hacia abajo',fr:'Déplacer $1 vers le bas'}],
  [/^Editar (.+)$/, {en:'Edit $1',es:'Editar $1',fr:'Modifier $1'}],
  [/^Remover (.+) da lista$/, {en:'Remove $1 from list',es:'Eliminar $1 de la lista',fr:'Retirer $1 de la liste'}],
- [/^ · (.+) min$/, {en:' · $1 min',es:' · $1 min',fr:' · $1 min'}],
+ [/^ · (.+) min$/, {en:' · $1 min',es:' · $1 min',fr:' · $1 min'}], [/^(\d+) sessões por semana · (\d+) exercícios no total$/, {en:'$1 sessions per week · $2 exercises in total',es:'$1 sesiones por semana · $2 ejercicios en total',fr:'$1 séances par semaine · $2 exercices au total'}],
+ [/^Descanso (\d+)s$/, {en:'Rest $1s',es:'Descanso $1s',fr:'Repos $1s'}],
+ [/^(\d+) substituições$/, {en:'$1 substitutions',es:'$1 sustituciones',fr:'$1 substitutions'}],
+ [/^Grupos trabalhados: (.+)$/, {en:'Muscle groups worked: $1',es:'Grupos trabajados: $1',fr:'Groupes musculaires travaillés : $1'}],
 ];
