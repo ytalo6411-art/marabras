@@ -243,3 +243,64 @@ test('moderação: admin vê a fila e resolve com confirmação do servidor', as
 
   expect(errors).toEqual([]);
 });
+
+test('programa: reordenar dias grava no servidor e sobrevive ao reload', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await fixture(page);
+
+  // Programa ABC de verdade: três dias com dias da semana distintos.
+  const dayRows = [
+    { id: 'day-a', user_id: userId, name: 'A · Empurrar', day_label: 'A', days_of_week: [1] },
+    { id: 'day-b', user_id: userId, name: 'B · Puxar', day_label: 'B', days_of_week: [3] },
+    { id: 'day-c', user_id: userId, name: 'C · Pernas', day_label: 'C', days_of_week: [5] },
+  ].map((row) => ({
+    ...row, program_id: 'prog-abc', program_name: 'Programa ABC',
+    estimated_minutes: 45, is_active: true, generated_by: 'rules', focus: 'hypertrophy',
+  }));
+
+  const patches: { id: string; days: number[] }[] = [];
+  await page.route('https://test.supabase.co/rest/v1/workout_plans**', async (route) => {
+    const req = route.request();
+    const url = new URL(req.url());
+    if (req.method() === 'PATCH') {
+      const id = url.searchParams.get('id')?.replace('eq.', '') ?? '';
+      const days = (req.postDataJSON() as { days_of_week: number[] }).days_of_week;
+      patches.push({ id, days });
+      const row = dayRows.find((r) => r.id === id);
+      if (row) row.days_of_week = days;
+      return route.fulfill({ status: 200, json: [] });
+    }
+    // A lista é ordenada pelo servidor; aqui devolvemos na ordem salva.
+    const sorted = [...dayRows].sort((a, b) => a.days_of_week[0] - b.days_of_week[0]);
+    return route.fulfill({ status: 200, json: sorted, headers: { 'content-range': '0-2/3' } });
+  });
+
+  await page.goto('/app/workouts');
+  await page.getByRole('button', { name: 'Reordenar dias' }).click();
+
+  // Ordem inicial: A, B, C. Mover B para cima deve trocá-lo com A.
+  const labels = page.locator('.plan-day-slot__controls .truncate');
+  await expect(labels.nth(0)).toContainText('A');
+  await expect(labels.nth(1)).toContainText('B');
+
+  await page.getByRole('button', { name: 'Mover B para cima' }).click();
+  await expect(page.getByText('Ordem dos dias salva')).toBeVisible();
+
+  // Foram gravados os dois slots que mudaram — não a lista inteira.
+  expect(patches).toEqual([
+    { id: 'day-b', days: [1] },
+    { id: 'day-a', days: [3] },
+  ]);
+
+  // Depois de recarregar, a ordem vem do banco: B antes de A.
+  await page.reload();
+  await page.getByRole('button', { name: 'Reordenar dias' }).click();
+  await expect(labels.nth(0)).toContainText('B');
+  await expect(labels.nth(1)).toContainText('A');
+
+  // Os extremos não oferecem movimento impossível.
+  await expect(page.getByRole('button', { name: 'Mover B para cima' })).toBeDisabled();
+
+  expect(errors).toEqual([]);
+});

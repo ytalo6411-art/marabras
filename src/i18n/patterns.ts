@@ -23,6 +23,8 @@ export const patterns: [RegExp, Record<string,string>][] = [
  [/^Editar observação de (.+)$/, {en:'Edit note for $1',es:'Editar nota de $1',fr:'Modifier la note de $1'}],
  [/^Regenerar o dia (.+)$/, {en:'Regenerate day $1',es:'Regenerar el día $1',fr:'Régénérer le jour $1'}],
  [/^Trocar (.+)$/, {en:'Replace $1',es:'Cambiar $1',fr:'Remplacer $1'}],
+ [/^Mover (.+) para cima$/, {en:'Move $1 up',es:'Mover $1 hacia arriba',fr:'Déplacer $1 vers le haut'}],
+ [/^Mover (.+) para baixo$/, {en:'Move $1 down',es:'Mover $1 hacia abajo',fr:'Déplacer $1 vers le bas'}],
  [/^Editar (.+)$/, {en:'Edit $1',es:'Editar $1',fr:'Modifier $1'}],
  [/^Remover (.+) da lista$/, {en:'Remove $1 from list',es:'Eliminar $1 de la lista',fr:'Retirer $1 de la liste'}],
  [/^ · (.+) min$/, {en:' · $1 min',es:' · $1 min',fr:' · $1 min'}],

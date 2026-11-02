@@ -4,6 +4,7 @@ import LanguageSelector from '@/components/LanguageSelector';
 import { useAuthStore } from '@/stores/auth';
 import { useTheme } from './themeContext';
 import { Avatar, Button, Modal } from '@/components/ui';
+import { BrandMark } from '@/components/BrandMark';
 import {
   IconHome,
   IconDumbbell,
@@ -17,6 +18,7 @@ import {
   IconShield,
   IconSparkles,
   IconUsers,
+  IconMenu,
 } from './icons';
 
 interface NavItem {
@@ -81,7 +83,7 @@ export default function AppShell() {
       <header className="app-header">
         <div className="container app-header__inner">
           <NavLink to="/app" className="brand" aria-label="ATHLETIX — início">
-            <span className="brand-mark">A</span>
+            <span className="brand-mark"><BrandMark size={20} /></span>
             <span>
               ATHLETIX
               <span className="brand-sub">Train. Track. Evolve.</span>
@@ -90,7 +92,7 @@ export default function AppShell() {
 
           <div className="header-actions">
             <LanguageSelector />
-            <button className="btn btn-ghost mobile-menu-button" aria-label="Abrir menu" onClick={() => setMenuOpen(true)}>☰</button>
+            <button className="btn btn-ghost mobile-menu-button" aria-label="Abrir menu" onClick={() => setMenuOpen(true)}><IconMenu size={20} /></button>
 
             <NavLink to="/app/profile" aria-label="Meu perfil">
               <Avatar name={profile?.full_name} src={profile?.avatar_url} />

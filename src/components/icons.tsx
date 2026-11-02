@@ -477,3 +477,63 @@ export const IconAlert = (p: IconProps) => (
     <path d="M12 10v4M12 17h.01" />
   </Base>
 );
+
+/* ─── Objetivos e ambientes (substituem emojis por traço consistente) ──────── */
+
+export const IconBarbell = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 9.5v5M6 7.5v9M18 7.5v9M21 9.5v5M6 12h12" />
+  </Base>
+);
+
+export const IconRun = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="14.5" cy="4.8" r="1.8" />
+    <path d="M12.8 9.2 9 11.5l1.8 3.2-1.6 5.3" />
+    <path d="M10.8 14.7h4l2.4 5.3" />
+    <path d="M12.8 9.2l3.4 1.4 2.6-.6M6.2 12.6h2.2" />
+  </Base>
+);
+
+export const IconMobility = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="4.8" r="1.8" />
+    <path d="M12 8.4v5.2M5.5 10.6h13" />
+    <path d="M12 13.6 7.5 20M12 13.6 16.5 20" />
+  </Base>
+);
+
+export const IconScale = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 4.5v15M7 19.5h10" />
+    <path d="M4 8.5h16M12 6.2 4 8.5M12 6.2l8 2.3" />
+    <path d="M4 8.5 1.8 13.2a2.6 2.6 0 0 0 4.4 0L4 8.5ZM20 8.5l-2.2 4.7a2.6 2.6 0 0 0 4.4 0L20 8.5Z" />
+  </Base>
+);
+
+export const IconBolt = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M13.5 3 5.5 13.5h5L10 21l8.5-10.5h-5L13.5 3Z" />
+  </Base>
+);
+
+export const IconBody = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="4.8" r="1.8" />
+    <path d="M8 9.5h8M12 9.5v5M9.5 20l2.5-5.5 2.5 5.5" />
+  </Base>
+);
+
+export const IconMapPin = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 21s6.5-6.1 6.5-10.5a6.5 6.5 0 0 0-13 0C5.5 14.9 12 21 12 21Z" />
+    <circle cx="12" cy="10.3" r="2.4" />
+  </Base>
+);
+
+export const IconInfo = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5.5M12 7.8h.01" />
+  </Base>
+);

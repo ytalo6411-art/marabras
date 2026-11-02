@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
 import { Button, Card, Field, Alert, EmptyState, ConfirmDialog } from '@/components/ui';
-import { IconChevronLeft, IconPlus, IconTrash, IconPlay, IconSearch } from '@/components/icons';
+import { IconChevronLeft, IconPlus, IconTrash, IconPlay, IconSearch, IconDumbbell } from '@/components/icons';
 import { WEEKDAY_LABELS } from '@/utils/format';
 import type { WorkoutExercise, Exercise } from '@/types/database';
 
@@ -466,7 +466,7 @@ export default function WorkoutBuilderPage() {
 
             {items.length === 0 ? (
               <EmptyState
-                icon="🏋️"
+                icon={<IconDumbbell size={28} />}
                 title="Nenhum exercício adicionado"
                 text="Clique em Adicionar para montar a lista do treino."
               />

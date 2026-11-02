@@ -513,3 +513,81 @@ export async function deleteProgram(programId: string): Promise<{ ok: boolean; e
   if (error) return { ok: false, error: 'Não foi possível excluir o programa agora.' };
   return { ok: true };
 }
+
+/* ─── Ordem dos dias do programa ───────────────────────────────────────────── */
+
+/**
+ * Reordenar dias = trocar os dias da semana entre os planos do programa.
+ *
+ * A ordem exibida vem de `days_of_week` (ver `groupPrograms`), então mover o
+ * dia B para a posição do dia A precisa gravar o dia da semana — não basta
+ * reordenar um array em memória. Os rótulos (A, B, C) e o conteúdo de cada
+ * treino permanecem intactos: o que muda é quando cada um acontece.
+ *
+ * Função pura de propósito: a permutação é testável sem banco.
+ *
+ * @param plans dias do programa na ordem atual
+ * @param from índice de origem
+ * @param to índice de destino
+ * @returns pares {id, daysOfWeek} a gravar, ou null se o movimento é inválido
+ */
+export function planDayReorder(
+  plans: Pick<WorkoutPlan, 'id' | 'days_of_week'>[],
+  from: number,
+  to: number,
+): { id: string; daysOfWeek: number[] }[] | null {
+  if (from === to) return null;
+  if (from < 0 || to < 0 || from >= plans.length || to >= plans.length) return null;
+
+  // Reordenar sem dias da semana definidos não teria efeito persistido.
+  if (plans.some((plan) => plan.days_of_week.length === 0)) return null;
+
+  const ordered = [...plans];
+  const [moved] = ordered.splice(from, 1);
+  if (!moved) return null;
+  ordered.splice(to, 0, moved);
+
+  // Os dias da semana são um conjunto fixo de slots: redistribuídos na nova
+  // ordem. `ordered` é uma permutação de `plans`, então o índice sempre existe.
+  const slots = plans.map((plan) => plan.days_of_week);
+  return ordered.map((plan, index) => ({
+    id: plan.id,
+    daysOfWeek: slots[index] ?? plan.days_of_week,
+  }));
+}
+
+/**
+ * Persiste a nova ordem dos dias. Só declara sucesso quando o servidor
+ * confirmou todas as gravações; em falha parcial informa o que aconteceu.
+ */
+export async function reorderProgramDays(
+  plans: Pick<WorkoutPlan, 'id' | 'days_of_week'>[],
+  from: number,
+  to: number,
+): Promise<{ ok: boolean; error?: string }> {
+  const changes = planDayReorder(plans, from, to);
+  if (!changes) {
+    return { ok: false, error: 'Este programa não tem dias da semana definidos para reordenar.' };
+  }
+
+  // Só grava o que realmente mudou de slot.
+  const pending = changes.filter((change) => {
+    const current = plans.find((plan) => plan.id === change.id)?.days_of_week ?? [];
+    return current.join(',') !== change.daysOfWeek.join(',');
+  });
+  if (pending.length === 0) return { ok: true };
+
+  const results = await Promise.all(
+    pending.map((change) =>
+      supabase.from('workout_plans').update({ days_of_week: change.daysOfWeek }).eq('id', change.id),
+    ),
+  );
+  const failed = results.filter((result) => result.error).length;
+  if (failed > 0) {
+    return {
+      ok: false,
+      error: 'Não foi possível salvar a nova ordem de todos os dias. Recarregue para ver o estado salvo.',
+    };
+  }
+  return { ok: true };
+}

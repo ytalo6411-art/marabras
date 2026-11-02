@@ -1,3 +1,4 @@
+import { BrandMark } from '@/components/BrandMark';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
@@ -53,7 +54,7 @@ export default function ResetPasswordPage() {
       <main className="auth-panel">
         <div className="auth-form">
           <div className="brand" style={{ marginBottom: 'var(--sp-6)', justifyContent: 'center' }}>
-            <span className="brand-mark">A</span>
+            <span className="brand-mark"><BrandMark size={20} /></span>
             <span>
               ATHLETIX
               <span className="brand-sub">Train. Track. Evolve.</span>

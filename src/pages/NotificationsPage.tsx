@@ -2,11 +2,20 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth';
 import { Button, Card, EmptyState, SkeletonList } from '@/components/ui';
-import { IconCheck } from '@/components/icons';
+import { IconCheck, IconBell, IconTrophy, IconAlert, IconBlock, IconInfo } from '@/components/icons';
 import { formatRelative } from '@/utils/format';
 import type { AppNotification } from '@/types/database';
 
 /** Central de notificações. */
+/** Ícone vetorial por tipo — o estado também é comunicado pelo texto do cartão. */
+function NotificationIcon({ type }: { type: string }) {
+  if (type === 'achievement') return <IconTrophy size={18} />;
+  if (type === 'success') return <IconCheck size={18} />;
+  if (type === 'warning') return <IconAlert size={18} />;
+  if (type === 'error') return <IconBlock size={18} />;
+  return <IconInfo size={18} />;
+}
+
 export default function NotificationsPage() {
   const { user, refreshUnreadCount } = useAuthStore();
   const [items, setItems] = useState<AppNotification[]>([]);
@@ -63,7 +72,7 @@ export default function NotificationsPage() {
         <SkeletonList count={4} height={70} />
       ) : items.length === 0 ? (
         <EmptyState
-          icon="🔔"
+          icon={<IconBell size={28} />}
           title="Nenhuma notificação"
           text="Conquistas, lembretes e avisos aparecem aqui."
         />
@@ -81,17 +90,9 @@ export default function NotificationsPage() {
               <div className="row" style={{ alignItems: 'flex-start' }}>
                 <span
                   aria-hidden="true"
-                  style={{ fontSize: '1.2rem', lineHeight: 1.2 }}
+                  style={{ display: 'grid', placeItems: 'center', lineHeight: 1.2 }}
                 >
-                  {n.type === 'achievement'
-                    ? '🏆'
-                    : n.type === 'success'
-                      ? '✅'
-                      : n.type === 'warning'
-                        ? '⚠️'
-                        : n.type === 'error'
-                          ? '⛔'
-                          : 'ℹ️'}
+                  <NotificationIcon type={n.type} />
                 </span>
                 <div className="grow">
                   <div style={{ fontWeight: 600 }}>{n.title}</div>
