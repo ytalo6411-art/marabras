@@ -1096,4 +1096,7 @@ export const es: Record<string,string> = {
   'público': 'público',
   'privado': 'privado',
   'perfil público': 'perfil público',
+  'As instruções deste exercício ainda estão no idioma original da fonte e aguardam tradução revisada. Consulte a demonstração em vídeo e, em caso de dúvida, um profissional.': 'Las instrucciones de este ejercicio siguen en el idioma original de la fuente y esperan una traducción revisada. Consulta la demostración en vídeo y, en caso de duda, a un profesional.',
+  'Respiração': 'Respiración',
+  'Erros comuns': 'Errores comunes',
 };

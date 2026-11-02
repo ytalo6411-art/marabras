@@ -37,10 +37,21 @@ const ENGLISH_MARKERS = /\b(the|your|with|and|then|while|keep|hold|lower|raise|p
  */
 const ACCEPTED_LOANWORDS = /\b(leg\s+press|stiff|crossover|burpee|smith|scott)\b/gi;
 
+/**
+ * O conteúdo publicado é pt-BR: só admite o alfabeto latino (com acentos),
+ * pontuação tipográfica e símbolos monetários. Barramos qualquer outro sistema
+ * de escrita para que um token colado por engano nunca chegue à migration.
+ */
+const NON_LATIN = /[^\u0020-\u024F\u2000-\u206F\u20A0-\u20CF]/;
+
 function checkString(slug, field, en, value) {
   if (typeof value !== 'string' || value.trim().length === 0) {
     errors.push(`${slug}.${field}: tradução vazia`);
     return;
+  }
+  if (NON_LATIN.test(value)) {
+    const hit = value.match(NON_LATIN)?.[0];
+    errors.push(`${slug}.${field}: caractere fora do alfabeto latino ("${hit}") em "${value.slice(0, 70)}"`);
   }
   if (value.trim() === String(en).trim()) {
     errors.push(`${slug}.${field}: idêntico ao inglês ("${value.slice(0, 50)}")`);

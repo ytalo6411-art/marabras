@@ -3836,5 +3836,1506 @@
       "Forçar o alongamento",
       "Prender a respiração"
     ]
+  },
+  "band-standing-crunch-1005": {
+    "description": "Abdominal em pé com elástico, que trabalha abdômen e oblíquos por meio da flexão da coluna.",
+    "steps": [
+      "Prenda o elástico em um ponto fixo mais ou menos na altura da cintura e fique de costas para ele.",
+      "Segure o elástico junto ao peito com as duas mãos e dê um passo à frente até ele ficar tensionado.",
+      "Deixe os pés mais ou menos na largura do quadril e flexione levemente os joelhos.",
+      "Firme o abdômen e leve as costelas para baixo, inclinando o tronco à frente.",
+      "Faça uma breve pausa embaixo, mantendo o quadril praticamente parado.",
+      "Desenrole o tronco devagar e volte à posição ereta com controle."
+    ],
+    "breathing": "Expire ao enrolar o tronco à frente e inspire ao voltar à posição ereta.",
+    "commonMistakes": [
+      "Puxar o elástico com os braços em vez de enrolar o tronco.",
+      "Inclinar a partir do quadril, como uma reverência, em vez de enrolar em abdominal.",
+      "Deixar o elástico puxar o tronco de volta de golpe.",
+      "Ficar perto demais do ponto fixo, deixando o elástico sem tensão."
+    ]
+  },
+  "band-hip-adduction-drv-band-hip-adduction": {
+    "description": "Exercício com elástico que fortalece a parte interna da coxa por meio da adução do quadril.",
+    "steps": [
+      "Prenda o elástico em um ponto fixo firme, na altura do tornozelo.",
+      "Prenda a outra extremidade no tornozelo que vai trabalhar.",
+      "Fique em pé e, se precisar, segure em um apoio.",
+      "Leve a perna que trabalha cruzando à frente do corpo, aproximando-a da linha média.",
+      "Volte devagar à posição inicial e repita."
+    ],
+    "breathing": "Expire ao levar a perna para dentro e inspire ao voltar.",
+    "commonMistakes": [
+      "Usar o impulso",
+      "Girar o quadril para fora",
+      "Flexionar demais a perna de apoio"
+    ]
+  },
+  "seated-wide-angle-pose-sequence-1587": {
+    "description": "Sequência de alongamentos sentado com as pernas bem afastadas, para melhorar a flexibilidade do quadril, dos posteriores da coxa e da lombar.",
+    "steps": [
+      "Sente-se com as pernas estendidas e bem afastadas.",
+      "Mantenha os joelhos e as pontas dos pés voltados para cima.",
+      "Sente-se ereto e incline o tronco à frente a partir do quadril.",
+      "Caminhe com as mãos à frente, mantendo as costas retas.",
+      "Sustente o alongamento ou desloque-se suavemente de um lado para o outro."
+    ],
+    "breathing": "Inspire para se preparar e expire ao alongar à frente.",
+    "commonMistakes": [
+      "Deixar os joelhos girarem para dentro",
+      "Arredondar demais as costas",
+      "Ir além do confortável"
+    ]
+  },
+  "standing-adductor-stretch-drv-stretching-adductor-stretch": {
+    "description": "Alongamento estático da parte interna das coxas, feito com um avanço lateral sustentado.",
+    "steps": [
+      "Fique em pé com os pés bem afastados.",
+      "Passe o peso para uma perna, flexionando esse joelho.",
+      "Mantenha a outra perna estendida e a ponta do pé voltada para frente.",
+      "Incline-se suavemente em direção ao joelho flexionado para alongar bem a parte interna da coxa.",
+      "Sustente e depois troque de lado."
+    ],
+    "breathing": "Respire de forma profunda e constante enquanto sustenta o alongamento.",
+    "commonMistakes": [
+      "Deixar o calcanhar sair do chão",
+      "Girar o quadril",
+      "Inclinar o tronco à frente a partir da cintura"
+    ]
+  },
+  "band-one-arm-front-raise-1017": {
+    "description": "Exercício de isolamento do ombro que eleva um braço à frente contra a resistência do elástico, voltado à porção anterior do deltoide.",
+    "steps": [
+      "Fique em pé com um dos pés sobre o elástico para criar resistência.",
+      "Segure a alça com uma das mãos na altura da coxa, com a palma voltada para baixo.",
+      "Mantenha o braço estendido e eleve-o à frente até a altura do ombro.",
+      "Faça uma breve pausa no alto.",
+      "Desça o braço devagar e repita."
+    ],
+    "breathing": "Expire ao elevar e inspire ao descer.",
+    "commonMistakes": [
+      "Balançar o braço",
+      "Flexionar o cotovelo",
+      "Elevar acima da altura do ombro"
+    ]
+  },
+  "band-standing-calf-raise-0999": {
+    "description": "Elevação de panturrilha em pé com elástico, para fortalecer a panturrilha.",
+    "steps": [
+      "Fique em pé sobre o elástico, com os pés na largura dos ombros.",
+      "Segure as alças ao lado do corpo ou na altura dos ombros para criar resistência.",
+      "Mantenha o tronco ereto e firme o abdômen.",
+      "Eleve os calcanhares até ficar na parte da frente dos pés, contraindo a panturrilha.",
+      "Desça os calcanhares devagar até o chão."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Repetições parciais",
+      "Deixar os calcanhares caírem rápido demais",
+      "Inclinar o tronco à frente ou para trás"
+    ]
+  },
+  "calf-stretch-with-rope-1378": {
+    "description": "Alongamento estático de panturrilha usando uma corda ou faixa para puxar o pé para cima.",
+    "steps": [
+      "Sente-se no chão com uma perna estendida.",
+      "Passe a corda ou o elástico pela parte da frente do pé.",
+      "Segure as pontas da corda e puxe o pé suavemente em sua direção.",
+      "Mantenha o joelho estendido para alongar mais.",
+      "Sustente o alongamento e depois troque de perna."
+    ],
+    "breathing": "Respire fundo e relaxe durante todo o alongamento.",
+    "commonMistakes": [
+      "Flexionar o joelho",
+      "Dar trancos na corda",
+      "Prender a respiração"
+    ]
+  },
+  "calf-stretch-with-strap-1599": {
+    "description": "Alongamento sentado com faixa ou elástico para trabalhar a panturrilha.",
+    "steps": [
+      "Sente-se no chão com as pernas estendidas.",
+      "Passe a faixa pela parte da frente de um dos pés.",
+      "Segure as pontas da faixa e puxe o pé suavemente em sua direção.",
+      "Mantenha o joelho estendido e sustente pelo tempo desejado.",
+      "Troque de lado e repita."
+    ],
+    "breathing": "Respire de forma profunda e constante durante o alongamento; expire suavemente ao aprofundá-lo.",
+    "commonMistakes": [
+      "Flexionar o joelho",
+      "Puxar com força demais",
+      "Deixar as costas arredondarem"
+    ]
+  },
+  "seated-calf-stretch-1390": {
+    "description": "Alongamento feito sentado, com foco em alongar a panturrilha.",
+    "steps": [
+      "Sente-se com as pernas estendidas à frente.",
+      "Passe uma toalha ou elástico pela parte da frente de um dos pés.",
+      "Mantenha o joelho estendido e puxe a ponta do pé em sua direção.",
+      "Sustente a posição, sentindo alongar a panturrilha.",
+      "Repita com a outra perna."
+    ],
+    "breathing": "Respire de forma constante e profunda durante todo o alongamento.",
+    "commonMistakes": [
+      "Flexionar o joelho",
+      "Arredondar as costas",
+      "Puxar a ponta do pé com força demais"
+    ]
+  },
+  "stairs-calf-stretch-drv-stretching-stairs-calf-stretch": {
+    "description": "Alongamento feito em um degrau para trabalhar e aumentar a flexibilidade da panturrilha.",
+    "steps": [
+      "Fique com a parte da frente dos pés sobre um degrau.",
+      "Apoie-se em um corrimão, na parede ou em outro objeto firme.",
+      "Desça os calcanhares devagar abaixo do nível do degrau até sentir alongar a panturrilha.",
+      "Sustente o alongamento de 15 a 30 segundos.",
+      "Suba os calcanhares novamente e repita conforme quiser."
+    ],
+    "breathing": "Expire ao descer para o alongamento e inspire ao voltar.",
+    "commonMistakes": [
+      "Deixar os calcanhares caírem rápido demais",
+      "Arredondar as costas",
+      "Quicar durante o alongamento"
+    ]
+  },
+  "standing-bench-calf-stretch-drv-stretching-standing-bench-calf-stretch": {
+    "description": "Alongamento estático de panturrilha usando um banco como apoio.",
+    "steps": [
+      "Fique de frente para um banco ou outra superfície firme.",
+      "Apoie a parte da frente de um pé na borda, mantendo o calcanhar no chão.",
+      "Incline o corpo à frente mantendo o joelho estendido.",
+      "Sustente o alongamento de 15 a 30 segundos.",
+      "Troque de perna e repita."
+    ],
+    "breathing": "Expire ao relaxar no alongamento e inspire ao aliviar a tensão.",
+    "commonMistakes": [
+      "Flexionar demais o joelho",
+      "Deixar o pé girar para dentro ou para fora",
+      "Forçar o alongamento"
+    ]
+  },
+  "jump-rope-2612": {
+    "description": "Exercício aeróbico em que você gira a corda com as mãos e dá pequenos saltos repetidos enquanto ela passa sob os pés.",
+    "steps": [
+      "Segure uma alça em cada mão, com a corda atrás dos calcanhares.",
+      "Fique em pé com os pés próximos e os cotovelos junto ao corpo.",
+      "Gire a corda com os punhos, passando-a por cima da cabeça.",
+      "Salte apenas o suficiente para a corda passar sob os pés.",
+      "Aterrisse suavemente na parte da frente dos pés, com os joelhos levemente flexionados.",
+      "Mantenha a corda em um ritmo suave e repita os saltos."
+    ],
+    "breathing": "Respire de forma constante e natural, expirando suavemente a cada poucos saltos e mantendo um ritmo relaxado.",
+    "commonMistakes": [
+      "Girar os braços em círculos grandes em vez de usar os punhos",
+      "Saltar alto demais a cada repetição",
+      "Aterrissar com o pé inteiro ou com os joelhos rígidos",
+      "Deixar as mãos se afastarem do quadril"
+    ]
+  },
+  "band-shoulder-warm-up-stretch-drv-stretching-band-warm-up-shoulder-stretch": {
+    "description": "Alongamento e mobilidade de ombro com elástico, para aquecer deltoides e manguito rotador.",
+    "steps": [
+      "Fique em pé e segure o elástico com as mãos mais afastadas que os ombros.",
+      "Mantenha os braços estendidos, com o elástico à frente das coxas.",
+      "Eleve o elástico devagar acima da cabeça, mantendo os braços estendidos.",
+      "Leve o elástico atrás da cabeça e desça até a lombar.",
+      "Inverta o movimento para voltar à posição inicial."
+    ],
+    "breathing": "Respire naturalmente durante todo o alongamento.",
+    "commonMistakes": [
+      "Flexionar os braços",
+      "Fazer o movimento com pressa",
+      "Arquear a lombar"
+    ]
+  },
+  "band-standing-rear-delt-row-1022": {
+    "description": "Remada com elástico e tronco inclinado, abrindo os cotovelos para trabalhar a porção posterior do deltoide e as costas altas.",
+    "steps": [
+      "Pise no meio do elástico com os pés mais ou menos na largura do quadril e segure uma extremidade em cada mão.",
+      "Incline o tronco à frente a partir do quadril, com os joelhos levemente flexionados, até o tronco ficar inclinado e os braços pendidos abaixo dos ombros.",
+      "Abaixe os ombros e mantenha o peito aberto, com as palmas voltadas uma para a outra ou levemente para dentro.",
+      "Leve os cotovelos para fora e para trás até as mãos chegarem mais ou menos à altura da parte baixa do peito.",
+      "Contraia a parte de trás dos ombros e as costas altas no alto, sem encolher os ombros.",
+      "Desça as mãos com controle até estender os braços novamente."
+    ],
+    "breathing": "Inspire ao voltar ao início e expire ao puxar o elástico.",
+    "commonMistakes": [
+      "Ficar ereto demais e transformar o movimento em remada comum",
+      "Encolher os ombros em direção às orelhas no alto",
+      "Puxar as mãos baixo demais, em direção à cintura",
+      "Arredondar as costas ao inclinar o tronco"
+    ]
+  },
+  "barbell-wide-grip-upright-row-0123": {
+    "description": "Remada alta com barra e pegada aberta, movimento composto voltado aos ombros e às costas altas.",
+    "steps": [
+      "Fique em pé com os pés na largura dos ombros.",
+      "Segure a barra com pegada aberta e por cima.",
+      "Deixe a barra apoiada à frente das coxas.",
+      "Puxe a barra em linha reta em direção ao peito, com os cotovelos para os lados.",
+      "Desça a barra devagar até a posição inicial."
+    ],
+    "breathing": "Expire ao puxar e inspire ao descer.",
+    "commonMistakes": [
+      "Encolher demais os ombros",
+      "Usar impulso em excesso",
+      "Deixar as mãos muito próximas"
+    ]
+  },
+  "battling-ropes-0128": {
+    "description": "Exercício de condicionamento com cordas, usando ondas alternadas dos braços para trabalhar ombros, antebraços e core.",
+    "steps": [
+      "Firme a base com os pés mais ou menos na largura dos ombros e flexione levemente os joelhos.",
+      "Segure uma ponta de corda em cada mão, com as palmas voltadas uma para a outra e os braços à frente.",
+      "Firme o abdômen e suba uma mão enquanto desce a outra para iniciar as ondas.",
+      "Continue alternando os braços rapidamente para manter ondas contínuas nas cordas.",
+      "Mantenha os joelhos levemente flexionados e o tronco estável, com ondas regulares."
+    ],
+    "breathing": "Respire de forma constante, expirando ao impulsionar o braço e inspirando na troca.",
+    "commonMistakes": [
+      "Ficar totalmente ereto com os joelhos travados",
+      "Balançar o tronco inteiro em vez dos braços",
+      "Deixar as ondas ficarem irregulares ou pararem",
+      "Elevar os ombros em direção às orelhas"
+    ]
+  },
+  "cable-rear-delt-row-with-rope-0203": {
+    "description": "Remada na polia com corda, voltada à porção posterior do deltoide, levando os cotovelos para fora e para trás.",
+    "steps": [
+      "Prenda a corda na polia baixa e fique de frente para a máquina.",
+      "Segure a corda com as duas mãos, dê um passo para trás para criar tensão e deixe os pés mais ou menos na largura do quadril.",
+      "Flexione levemente os joelhos e incline um pouco o tronco à frente, com as costas retas e os braços estendidos à frente.",
+      "Conduza o movimento pelos cotovelos e puxe a corda em direção à parte alta do peito, afastando as pontas.",
+      "Faça uma breve pausa com os cotovelos para fora e para trás e as escápulas aproximadas.",
+      "Desça a corda com controle até estender os braços, sem arredondar os ombros."
+    ],
+    "breathing": "Inspire ao levar a corda à frente e expire ao puxá-la em direção à parte alta do peito.",
+    "commonMistakes": [
+      "Ficar totalmente ereto e transformar o movimento em remada comum",
+      "Encolher os ombros em direção às orelhas durante a puxada",
+      "Puxar principalmente com as mãos, enrolando a corda para dentro",
+      "Arredondar a parte alta das costas quando a corda vai à frente"
+    ]
+  },
+  "seated-shoulder-flexor-depressor-retractor-stretch-2203": {
+    "description": "Alongamento sentado voltado a melhorar a flexibilidade e a mobilidade da parte da frente, de baixo e de trás dos ombros.",
+    "steps": [
+      "Sente-se ereto com os pés inteiros no chão.",
+      "Eleve os braços acima da cabeça, alongando para cima.",
+      "Abaixe suavemente os ombros, afastando-os das orelhas.",
+      "Aproxime levemente as escápulas.",
+      "Sustente o alongamento, respirando de forma uniforme."
+    ],
+    "breathing": "Inspire para começar e expire ao aprofundar o alongamento.",
+    "commonMistakes": [
+      "Encolher os ombros",
+      "Curvar o tronco à frente",
+      "Prender a respiração"
+    ]
+  },
+  "45-degree-hyperextension-0489": {
+    "description": "Exercício de lombar no banco de hiperextensão a 45 graus, voltado aos eretores da coluna e à cadeia posterior.",
+    "steps": [
+      "Posicione-se no banco de hiperextensão a 45 graus, com os tornozelos presos.",
+      "Cruze os braços sobre o peito ou coloque as mãos atrás da cabeça.",
+      "Desça o tronco à frente a partir do quadril.",
+      "Pare quando o tronco ficar um pouco abaixo da linha paralela ao chão.",
+      "Suba o tronco até alinhá-lo com as pernas."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Arredondar as costas",
+      "Passar do ponto no alto",
+      "Usar o impulso"
+    ]
+  },
+  "lever-back-extension-0573": {
+    "description": "Extensão de tronco em máquina, que trabalha lombar, glúteos e posteriores da coxa movendo o tronco contra a resistência.",
+    "steps": [
+      "Ajuste a máquina para que o encosto apoie confortavelmente a parte alta das costas e os pés fiquem presos na plataforma.",
+      "Sente-se ereto contra o apoio e segure as alças ou as barras laterais.",
+      "Firme o abdômen e incline o tronco à frente com controle, dentro da amplitude da máquina.",
+      "Pare embaixo ao sentir um alongamento confortável, mantendo os pés pressionados na plataforma.",
+      "Empurre o tronco de volta contra o apoio até retornar à posição ereta.",
+      "Repita de forma suave, sem quicar nem dar trancos no apoio."
+    ],
+    "breathing": "Inspire ao inclinar à frente e expire ao estender de volta à posição ereta.",
+    "commonMistakes": [
+      "Usar impulso e quicar para sair da posição mais baixa",
+      "Fazer uma amplitude curta e com pressa",
+      "Deixar os pés saírem ou se deslocarem na plataforma",
+      "Passar muito da posição ereta no alto"
+    ]
+  },
+  "seated-lower-back-stretch-0690": {
+    "description": "Alongamento suave sentado, levando os braços à frente para aliviar a tensão da lombar.",
+    "steps": [
+      "Sente-se com as pernas estendidas ou cruzadas.",
+      "Estenda os dois braços à frente do corpo.",
+      "Incline devagar a partir do quadril, levando o tronco à frente.",
+      "Relaxe as costas e os ombros.",
+      "Sustente o alongamento e volte à posição ereta."
+    ],
+    "breathing": "Inspire fundo antes de inclinar e expire ao estender os braços à frente.",
+    "commonMistakes": [
+      "Arredondar demais a parte alta das costas",
+      "Forçar o alongamento",
+      "Prender a respiração"
+    ]
+  },
+  "smith-machine-deadlift-0752": {
+    "description": "Levantamento terra com barra guiada no Smith, para desenvolver força na lombar, nos glúteos e nos posteriores da coxa.",
+    "steps": [
+      "Posicione os pés na largura dos ombros, sob a barra do Smith.",
+      "Segure a barra com as duas mãos, um pouco por fora dos joelhos.",
+      "Leve o quadril para trás e desça o tronco, mantendo o peito erguido.",
+      "Estenda quadril e joelhos para levantar a barra ao longo das guias.",
+      "Desça a barra com controle até a posição inicial."
+    ],
+    "breathing": "Inspire ao descer a barra e expire ao levantá-la.",
+    "commonMistakes": [
+      "Arredondar a lombar",
+      "Puxar com os braços em vez de usar as pernas",
+      "Deixar a barra se afastar do corpo",
+      "Fazer movimentos com trancos"
+    ]
+  },
+  "spine-stretch-1363": {
+    "description": "Alongamento no chão com foco em alongar a coluna e melhorar a flexibilidade da lombar e dos posteriores da coxa.",
+    "steps": [
+      "Sente-se no chão com as pernas estendidas e os pés flexionados.",
+      "Estenda os braços à frente, na altura dos ombros.",
+      "Inspire e, ao expirar, alcance à frente articulando a coluna.",
+      "Vá à frente até onde for confortável, mantendo as pernas estendidas.",
+      "Sustente e volte devagar ao início."
+    ],
+    "breathing": "Expire ao alongar à frente e inspire ao voltar ao início.",
+    "commonMistakes": [
+      "Arredondar demais os ombros",
+      "Forçar o alongamento",
+      "Flexionar os joelhos"
+    ]
+  },
+  "barbell-reverse-wrist-curl-0082": {
+    "description": "Extensão de punho com barra e pegada pronada, voltada aos extensores do antebraço.",
+    "steps": [
+      "Sente-se no banco e segure a barra com pegada por cima (pronada).",
+      "Apoie os antebraços nas coxas, deixando os punhos um pouco além dos joelhos.",
+      "Comece com os punhos flexionados para baixo.",
+      "Estenda os punhos devagar para cima, levantando a barra.",
+      "Desça com controle até a posição inicial."
+    ],
+    "breathing": "Expire ao subir a barra e inspire ao descer.",
+    "commonMistakes": [
+      "Usar carga excessiva",
+      "Levantar com os cotovelos ou os ombros",
+      "Deixar a barra rolar nas mãos"
+    ]
+  },
+  "barbell-standing-back-wrist-curl-0104": {
+    "description": "Exercício de antebraço em pé, segurando a barra atrás do corpo e elevando-a apenas com o movimento dos punhos.",
+    "steps": [
+      "Fique em pé com os pés mais ou menos na largura do quadril e segure a barra atrás do quadril com pegada por cima.",
+      "Deixe a barra apoiada nos dedos, com as articulações voltadas para o chão e as palmas para trás.",
+      "Mantenha os cotovelos junto ao corpo e estenda os punhos, descendo a barra em direção às pontas dos dedos.",
+      "Flexione os punhos para cima, trazendo a barra de volta para as mãos e elevando-a o máximo que conseguir.",
+      "Faça uma breve pausa no alto e desça a barra com controle até a posição inicial."
+    ],
+    "breathing": "Inspire ao descer a barra em direção às pontas dos dedos e expire ao flexionar os punhos para cima.",
+    "commonMistakes": [
+      "Balançar a barra com os ombros ou o tronco",
+      "Flexionar os cotovelos para levantar a barra",
+      "Deixar a barra escorregar demais para fora das mãos",
+      "Fazer movimentos de punho curtos e com trancos"
+    ]
+  },
+  "dumbbell-behind-the-back-wrist-curl-0364": {
+    "description": "Exercício de isolamento do antebraço feito com o halter atrás do corpo, enfatizando os flexores do antebraço.",
+    "steps": [
+      "Fique em pé com o halter atrás do corpo, o braço estendido e a palma voltada para trás.",
+      "Deixe o halter descer levemente pelos dedos.",
+      "Flexione o punho para subir o halter.",
+      "Contraia no ponto mais alto do movimento.",
+      "Desça o peso devagar."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Usar o braço em vez do punho",
+      "Amplitude incompleta",
+      "Fazer o movimento com trancos"
+    ]
+  },
+  "dumbbell-over-bench-wrist-curl-0369": {
+    "description": "Exercício de isolamento do antebraço feito sentado, flexionando os punhos com os antebraços apoiados no banco.",
+    "steps": [
+      "Sente-se junto ao banco e apoie os antebraços sobre ele, com as palmas voltadas para cima.",
+      "Segure um halter em cada mão e deslize à frente até os punhos passarem um pouco da borda do banco.",
+      "Deixe as mãos descerem para alongar suavemente os punhos embaixo.",
+      "Flexione os punhos para cima, levando as articulações dos dedos em direção aos antebraços.",
+      "Contraia os antebraços brevemente no alto.",
+      "Desça os halteres com controle até estender os punhos novamente."
+    ],
+    "breathing": "Inspire ao descer os punhos e expire ao flexioná-los para cima.",
+    "commonMistakes": [
+      "Tirar os antebraços do banco durante o movimento.",
+      "Balançar os halteres em vez de mover apenas os punhos.",
+      "Usar amplitude parcial e parar antes de descer totalmente os punhos.",
+      "Flexionar os cotovelos para ajudar a subir o peso."
+    ]
+  },
+  "side-wrist-pull-stretch-0721": {
+    "description": "Alongamento de punho e antebraço feito em pé ou sentado, estendendo o braço e puxando suavemente para o lado.",
+    "steps": [
+      "Fique em pé ou sente-se ereto.",
+      "Estenda um braço acima da cabeça ou para o lado.",
+      "Segure o punho com a mão oposta.",
+      "Puxe suavemente para um dos lados.",
+      "Sustente e depois troque de lado."
+    ],
+    "breathing": "Expire ao alongar e inspire ao relaxar ou trocar de lado.",
+    "commonMistakes": [
+      "Puxar com força demais",
+      "Travar o cotovelo",
+      "Encolher o ombro"
+    ]
+  },
+  "jumping-jack-new-low-impact-jumping-jack": {
+    "description": "Movimento dinâmico de corpo inteiro para trabalhar resistência cardiovascular e muscular.",
+    "steps": [
+      "Comece com os pés juntos e os braços relaxados ao lado do corpo.",
+      "Salte afastando os pés até a largura dos ombros enquanto eleva os braços acima da cabeça.",
+      "Toque rapidamente as mãos ou mantenha os braços estendidos acima da cabeça.",
+      "Salte juntando os pés novamente e baixando os braços ao lado do corpo.",
+      "Repita em ritmo acelerado."
+    ],
+    "breathing": "Respire de forma uniforme durante todo o movimento.",
+    "commonMistakes": [
+      "Bater os pés no chão",
+      "Não completar a subida dos braços",
+      "Aterrissar com força nos calcanhares"
+    ]
+  },
+  "band-one-leg-kickback-bent-position-drv-band-one-leg-kickback-bent-position": {
+    "description": "Extensão de quadril para trás com foco no glúteo, feita em quatro apoios com elástico para aumentar a intensidade.",
+    "steps": [
+      "Prenda o elástico em um ponto fixo e passe-o pelo tornozelo que vai trabalhar.",
+      "Comece em quatro apoios, com as mãos abaixo dos ombros e os joelhos flexionados.",
+      "Contraia o abdômen e estenda uma perna para trás contra a resistência do elástico.",
+      "Faça uma pausa no alto e contraia o glúteo.",
+      "Volte à posição inicial, repita pelo número de repetições desejado e troque de perna."
+    ],
+    "breathing": "Expire ao estender a perna para trás e inspire ao trazer o joelho de volta.",
+    "commonMistakes": [
+      "Deixar a lombar afundar",
+      "Girar o quadril",
+      "Usar o impulso"
+    ]
+  },
+  "band-pull-through-0991": {
+    "description": "Dobradiça de quadril com elástico, que trabalha glúteos e posteriores da coxa ao passar o elástico entre as pernas e ficar ereto.",
+    "steps": [
+      "Prenda o elástico na altura do chão e passe-o entre as pernas.",
+      "Fique de costas para o ponto fixo e caminhe à frente até o elástico ficar tensionado.",
+      "Deixe os pés mais ou menos na largura do quadril e flexione levemente os joelhos.",
+      "Leve o quadril para trás e incline o tronco à frente, deixando o elástico passar por trás de você.",
+      "Desça até sentir alongar os posteriores da coxa, mantendo as costas retas.",
+      "Leve o quadril à frente para ficar ereto e contraia os glúteos no alto."
+    ],
+    "breathing": "Inspire ao levar o quadril para trás e expire ao projetá-lo à frente para ficar em pé.",
+    "commonMistakes": [
+      "Agachar para baixo em vez de levar o quadril para trás",
+      "Arredondar a lombar ao inclinar o tronco",
+      "Deixar o elástico puxar o quadril para trás no fim da extensão",
+      "Flexionar demais os joelhos e transferir o esforço para o quadríceps"
+    ]
+  },
+  "kettlebell-deadlift-drv-kettlebell-deadlift": {
+    "description": "Levantamento do chão até a posição em pé com kettlebell, baseado na dobradiça de quadril, que desenvolve a cadeia posterior e a força de preensão.",
+    "steps": [
+      "Coloque o kettlebell entre os pés e fique em pé com os pés na largura do quadril.",
+      "Incline a partir do quadril e flexione os joelhos, mantendo as costas retas e o peito erguido.",
+      "Segure a alça do kettlebell com as duas mãos.",
+      "Empurre com os calcanhares para ficar em pé, estendendo totalmente quadril e joelhos.",
+      "Desça o kettlebell até o chão com controle, inclinando a partir do quadril."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Arredondar a lombar",
+      "Deixar o kettlebell se afastar do corpo",
+      "Travar os joelhos antes do fim",
+      "Encolher os ombros"
+    ]
+  },
+  "band-hip-abduction-3006": {
+    "description": "Movimento lateral de perna com elástico, para ativar e fortalecer os abdutores do quadril.",
+    "steps": [
+      "Coloque o elástico em volta das coxas ou dos tornozelos.",
+      "Fique em pé com os pés na largura do quadril.",
+      "Passe o peso para uma perna.",
+      "Eleve a outra perna para o lado contra a resistência do elástico.",
+      "Volte a perna ao início e repita dos dois lados."
+    ],
+    "breathing": "Expire ao elevar a perna e inspire ao voltar.",
+    "commonMistakes": [
+      "Inclinar o tronco",
+      "Perder o equilíbrio",
+      "Deixar o elástico puxar a perna de volta de golpe"
+    ]
+  },
+  "band-prone-leg-curl-0976": {
+    "description": "Flexão de pernas deitado de bruços contra a resistência do elástico, para isolar os posteriores da coxa.",
+    "steps": [
+      "Prenda o elástico com firmeza na altura do chão.",
+      "Deite-se de bruços com as pernas estendidas.",
+      "Passe o elástico pelo tornozelo.",
+      "Flexione o joelho, levando o calcanhar em direção aos glúteos.",
+      "Volte devagar ao início; repita e troque de perna se quiser."
+    ],
+    "breathing": "Expire ao flexionar e inspire ao descer.",
+    "commonMistakes": [
+      "Tirar o quadril do chão",
+      "Usar o impulso",
+      "Deixar o elástico puxar a perna de volta de golpe"
+    ]
+  },
+  "band-standing-leg-curl-0988": {
+    "description": "Flexão de pernas em pé contra a resistência do elástico, voltada aos posteriores da coxa.",
+    "steps": [
+      "Prenda o elástico atrás de você, na altura do chão.",
+      "Passe o elástico por um dos tornozelos.",
+      "Apoie-se na outra perna e mantenha o equilíbrio.",
+      "Leve o calcanhar em direção aos glúteos flexionando o joelho.",
+      "Desça a perna devagar; repita e troque de lado."
+    ],
+    "breathing": "Expire ao flexionar e inspire ao voltar.",
+    "commonMistakes": [
+      "Deixar os joelhos avançarem à frente",
+      "Usar as costas para ajudar",
+      "Deixar o elástico voltar de golpe"
+    ]
+  },
+  "lever-lying-leg-curl-0586": {
+    "description": "Mesa flexora deitado: exercício de posteriores da coxa em máquina, feito de bruços, flexionando os joelhos para levar a alavanca em direção aos glúteos.",
+    "steps": [
+      "Ajuste a máquina para que os joelhos fiquem alinhados com o eixo de giro e a almofada encoste na parte de trás das pernas, acima dos calcanhares.",
+      "Deite-se de bruços no banco com as pernas estendidas e segure as alças ou as bordas do banco para dar apoio.",
+      "Pressione o quadril contra a almofada e aponte as pontas dos pés para frente para definir a posição inicial.",
+      "Flexione os joelhos para subir a almofada, levando os calcanhares em direção aos glúteos.",
+      "Faça uma breve pausa no alto, mantendo o quadril apoiado e as coxas na almofada.",
+      "Desça a almofada com controle até estender as pernas novamente."
+    ],
+    "breathing": "Expire ao subir a almofada e inspire ao descê-la com controle.",
+    "commonMistakes": [
+      "Tirar o quadril da almofada no alto",
+      "Usar impulso para balançar a almofada para cima",
+      "Parar antes do fim e não descer totalmente a almofada",
+      "Girar bastante os pés para dentro ou para fora durante a flexão"
+    ]
+  },
+  "lever-seated-leg-curl-0599": {
+    "description": "Mesa flexora sentado: exercício de posteriores da coxa em máquina, flexionando os joelhos para puxar a alavanca para baixo.",
+    "steps": [
+      "Ajuste o assento e a almofada para que os joelhos fiquem alinhados com o eixo de giro da máquina.",
+      "Sente-se recostado no encosto e posicione a parte de baixo das pernas sob o rolo, logo acima dos tornozelos.",
+      "Segure as alças e mantenha as coxas pressionadas no assento.",
+      "Flexione os joelhos para levar a almofada para baixo, aproximando os calcanhares do chão.",
+      "Faça uma breve pausa embaixo e contraia os posteriores da coxa.",
+      "Deixe a almofada subir de volta com controle até os joelhos ficarem quase estendidos."
+    ],
+    "breathing": "Expire ao levar a almofada para baixo e inspire ao retornar à posição inicial.",
+    "commonMistakes": [
+      "Tirar o quadril do assento durante a flexão.",
+      "Usar impulso e balançar a almofada ao longo da repetição.",
+      "Travar totalmente os joelhos no alto.",
+      "Deixar a almofada alta nas panturrilhas em vez de acima dos tornozelos."
+    ]
+  },
+  "single-straight-leg-stretch-drv-stretching-single-straight-leg-stretch": {
+    "description": "Alongamento no chão voltado aos posteriores da coxa, elevando e sustentando uma perna estendida em direção ao corpo.",
+    "steps": [
+      "Deite-se de costas com as duas pernas estendidas.",
+      "Eleve uma perna mantendo-a estendida.",
+      "Segure suavemente a parte de trás da coxa ou da panturrilha.",
+      "Puxe a perna levemente em direção ao peito.",
+      "Sustente e troque de perna."
+    ],
+    "breathing": "Expire ao alongar a perna e inspire ao descê-la.",
+    "commonMistakes": [
+      "Flexionar o joelho da perna elevada",
+      "Tirar o quadril do colchonete",
+      "Tensionar o pescoço ou as costas"
+    ]
+  },
+  "standing-hamstring-stretch-1511": {
+    "description": "Alongamento estático voltado aos posteriores da coxa, na parte de trás da perna.",
+    "steps": [
+      "Fique em pé, ereto, com os pés na largura do quadril.",
+      "Mantenha os joelhos levemente flexionados e incline o tronco à frente a partir do quadril.",
+      "Desça o tronco em direção às pernas, buscando alcançar os pés.",
+      "Pare ao sentir um alongamento leve nos posteriores da coxa.",
+      "Sustente pelo tempo desejado e volte à posição em pé."
+    ],
+    "breathing": "Expire ao inclinar à frente e inspire ao voltar à posição ereta.",
+    "commonMistakes": [
+      "Arredondar as costas",
+      "Travar os joelhos",
+      "Forçar o alongamento"
+    ]
+  },
+  "lying-scissor-kick-drv-lying-scissor-kick-female": {
+    "description": "Exercício de core e flexores do quadril feito deitado, alternando a subida e a descida das pernas em movimento de tesoura.",
+    "steps": [
+      "Deite-se de costas com as pernas estendidas e os braços ao lado do corpo.",
+      "Tire as duas pernas alguns centímetros do chão, mantendo-as estendidas.",
+      "Alterne subindo uma perna enquanto desce a outra, em movimento de tesoura.",
+      "Continue alternando as pernas de forma controlada.",
+      "Mantenha a cabeça e os ombros relaxados e o abdômen contraído."
+    ],
+    "breathing": "Expire ao subir as pernas e inspire ao descê-las.",
+    "commonMistakes": [
+      "Arquear a lombar",
+      "Fazer o movimento rápido demais",
+      "Deixar as pernas tocarem o chão"
+    ]
+  },
+  "lying-straight-leg-raise-1002": {
+    "description": "Exercício deitado de costas que isola os flexores do quadril e a parte inferior do abdômen.",
+    "steps": [
+      "Deite-se de costas, com os braços ao lado do corpo.",
+      "Estenda totalmente as pernas, com os pés juntos.",
+      "Eleve as pernas estendidas até a vertical.",
+      "Faça uma breve pausa no alto.",
+      "Desça as pernas devagar, sem tocar o chão."
+    ],
+    "breathing": "Expire ao elevar as pernas e inspire ao descê-las.",
+    "commonMistakes": [
+      "Arquear a lombar",
+      "Usar o impulso",
+      "Afastar as pernas uma da outra"
+    ]
+  },
+  "standing-hip-flexor-and-abdominal-stretch-drv-stretching-ceiling-look-stretch": {
+    "description": "Alongamento em pé que abre o quadril e alonga o abdômen, estendendo os braços acima da cabeça e inclinando o tronco para trás.",
+    "steps": [
+      "Fique em pé com os pés na largura dos ombros.",
+      "Eleve os braços acima da cabeça, com as palmas voltadas para frente.",
+      "Arqueie suavemente as costas, erguendo o peito e olhando para cima.",
+      "Leve o quadril um pouco à frente para intensificar o alongamento do flexor do quadril.",
+      "Sustente e respire pelo tempo desejado."
+    ],
+    "breathing": "Inspire antes de arquear e expire enquanto sustenta o alongamento.",
+    "commonMistakes": [
+      "Arquear demais a lombar",
+      "Travar os joelhos",
+      "Não contrair o abdômen"
+    ]
+  },
+  "standing-knee-raise-stretch-0484": {
+    "description": "Alongamento em pé voltado a flexores do quadril e glúteos, puxando um joelho em direção ao peito.",
+    "steps": [
+      "Fique em pé com os pés juntos.",
+      "Eleve um joelho em direção ao peito.",
+      "Segure o joelho com as duas mãos.",
+      "Puxe o joelho suavemente em direção ao peito, sentindo o alongamento.",
+      "Sustente, desça e repita com a outra perna."
+    ],
+    "breathing": "Expire ao puxar o joelho e inspire ao soltar.",
+    "commonMistakes": [
+      "Arredondar os ombros",
+      "Puxar com força demais",
+      "Perder o equilíbrio"
+    ]
+  },
+  "band-assisted-pull-up-0970": {
+    "description": "Barra fixa com auxílio de elástico, para desenvolver força de puxada no dorsal, bíceps e costas altas.",
+    "steps": [
+      "Passe o elástico pela barra fixa com segurança e apoie um pé ou o joelho na parte de baixo dele.",
+      "Segure a barra um pouco mais aberta que a largura dos ombros, com as palmas voltadas para frente.",
+      "Fique suspenso com os braços estendidos, firme o abdômen e leve os ombros para baixo, longe das orelhas.",
+      "Puxe o corpo levando os cotovelos para baixo e para trás, até o queixo passar da barra.",
+      "Desça com controle até estender os braços novamente, mantendo o tronco firme."
+    ],
+    "breathing": "Inspire embaixo antes de puxar, expire ao subir e inspire novamente ao descer com controle.",
+    "commonMistakes": [
+      "Chutar ou balançar para subir",
+      "Encolher os ombros em direção às orelhas",
+      "Parar antes do fim, com o queixo abaixo da barra",
+      "Descer rápido até embaixo, sem controle"
+    ]
+  },
+  "band-kneeling-one-arm-pulldown-0983": {
+    "description": "Puxada ajoelhada com elástico feita com um braço por vez, que trabalha o dorsal levando o cotovelo para baixo a partir de cima da cabeça.",
+    "steps": [
+      "Prenda o elástico em um ponto alto e ajoelhe-se de frente para ele.",
+      "Segure o elástico com uma das mãos e estenda esse braço para cima e um pouco à frente.",
+      "Firme o tronco e mantenha o peito erguido, sem inclinar para trás.",
+      "Leve o cotovelo para baixo, em direção à lateral do corpo, até a mão chegar mais ou menos à altura do ombro ou das costelas.",
+      "Contraia o dorsal embaixo, mantendo o ombro abaixado.",
+      "Estenda o braço de volta acima da cabeça, devagar e com controle.",
+      "Faça todas as repetições de um lado e depois troque de braço."
+    ],
+    "breathing": "Inspire enquanto o braço volta para cima e expire ao puxar o elástico para baixo.",
+    "commonMistakes": [
+      "Inclinar o tronco para trás para terminar a puxada",
+      "Encolher o ombro em direção à orelha",
+      "Dobrar e estender o punho durante a puxada",
+      "Deixar o elástico puxar o braço de volta de golpe"
+    ]
+  },
+  "band-seated-row-0990": {
+    "description": "Remada sentada com elástico, voltada ao meio das costas e ao dorsal.",
+    "steps": [
+      "Sente-se no chão com as pernas estendidas e passe o elástico pelos pés.",
+      "Segure as alças ou as pontas do elástico com as duas mãos, com os braços estendidos.",
+      "Mantenha as costas retas e o peito erguido.",
+      "Puxe as alças para trás, levando os cotovelos além do tronco e aproximando as escápulas.",
+      "Solte devagar até a posição inicial."
+    ],
+    "breathing": "Expire ao puxar e inspire ao voltar ao início.",
+    "commonMistakes": [
+      "Arredondar as costas",
+      "Usar o impulso",
+      "Deixar o elástico frouxo entre as repetições"
+    ]
+  },
+  "band-straight-back-seated-row-3144": {
+    "description": "Remada sentada com elástico e tronco ereto, que enfatiza as costas altas e o dorsal.",
+    "steps": [
+      "Sente-se no chão e estenda as pernas à frente.",
+      "Passe o elástico pelos pés com segurança.",
+      "Segure as alças com as duas mãos, com os braços estendidos.",
+      "Mantendo as costas retas, puxe as alças em direção à cintura, com os cotovelos junto ao corpo.",
+      "Faça uma pausa, aproxime as escápulas e volte devagar à posição inicial."
+    ],
+    "breathing": "Expire ao puxar e inspire ao voltar ao início.",
+    "commonMistakes": [
+      "Arredondar as costas",
+      "Deixar os braços abrirem para os lados",
+      "Usar impulso em vez da musculatura das costas"
+    ]
+  },
+  "middle-back-stretch-1405": {
+    "description": "Alongamento estático para trabalhar a musculatura da região torácica, no meio das costas.",
+    "steps": [
+      "Sente-se ou fique em pé com os pés na largura do quadril.",
+      "Estenda os braços à frente e una as mãos.",
+      "Arredonde a parte alta das costas e empurre as mãos à frente.",
+      "Leve o queixo levemente em direção ao peito.",
+      "Sustente o alongamento de 20 a 30 segundos e solte."
+    ],
+    "breathing": "Respire de forma lenta e uniforme durante todo o alongamento.",
+    "commonMistakes": [
+      "Arquear a lombar em vez de arredondar a parte alta das costas",
+      "Prender a respiração",
+      "Quicar durante o alongamento"
+    ]
+  },
+  "band-side-bend-0002": {
+    "description": "Flexão lateral de tronco em pé com elástico, para trabalhar e fortalecer os oblíquos.",
+    "steps": [
+      "Prenda o elástico com firmeza na altura do chão.",
+      "Fique ao lado do ponto fixo, com os pés na largura dos ombros.",
+      "Segure a alça com a mão de fora, com o braço estendido ao lado do corpo.",
+      "Mantendo o tronco reto, incline para o lado, afastando-se do ponto fixo.",
+      "Volte à posição inicial, repita pelo número de repetições desejado e troque de lado."
+    ],
+    "breathing": "Expire ao inclinar e inspire ao voltar.",
+    "commonMistakes": [
+      "Girar o tronco em vez de inclinar para o lado",
+      "Inclinar à frente ou para trás",
+      "Deixar o elástico voltar de golpe",
+      "Usar o impulso"
+    ]
+  },
+  "band-standing-lift-1408": {
+    "description": "Movimento diagonal com elástico para trabalhar os oblíquos e os estabilizadores do core.",
+    "steps": [
+      "Prenda o elástico em um ponto baixo, próximo ao chão.",
+      "Fique de lado para o ponto fixo, com os pés na largura dos ombros.",
+      "Segure a alça com as duas mãos na altura do quadril.",
+      "Eleve e gire o tronco na diagonal, para o lado oposto e acima do ombro.",
+      "Volte ao início, repita e depois troque de lado."
+    ],
+    "breathing": "Expire ao elevar e girar, inspire ao voltar.",
+    "commonMistakes": [
+      "Usar os braços em vez do core",
+      "Não girar o tronco",
+      "Flexionar demais os cotovelos"
+    ]
+  },
+  "seated-twist-stretch-straight-arm-drv-stretching-seated-twist-straight-arm": {
+    "description": "Alongamento com rotação de tronco sentado, voltado aos oblíquos e à lombar.",
+    "steps": [
+      "Sente-se ereto com as pernas estendidas à frente.",
+      "Se quiser intensificar, cruze a perna esquerda sobre a direita.",
+      "Estenda o braço direito para trás como apoio.",
+      "Gire o tronco para a direita, usando o outro braço como alavanca.",
+      "Sustente e repita para o outro lado."
+    ],
+    "breathing": "Respire de forma constante enquanto sustenta o alongamento.",
+    "commonMistakes": [
+      "Curvar as costas",
+      "Girar além do confortável",
+      "Prender a respiração"
+    ]
+  },
+  "side-bend-stretch-drv-stretching-slopes-towards-stretch": {
+    "description": "Alongamento lateral em pé com foco em alongar os oblíquos e a musculatura da lateral do tronco.",
+    "steps": [
+      "Fique em pé ou sente-se ereto, com a coluna neutra.",
+      "Eleve o braço direito acima da cabeça.",
+      "Incline devagar o tronco para a esquerda, mantendo o quadril parado.",
+      "Sustente o alongamento pelo tempo indicado, sentindo a lateral do corpo.",
+      "Volte ao início e repita do outro lado."
+    ],
+    "breathing": "Expire ao inclinar e inspire ao voltar à posição ereta.",
+    "commonMistakes": [
+      "Girar o tronco",
+      "Inclinar à frente ou para trás",
+      "Deixar o ombro cair"
+    ]
+  },
+  "standing-back-rotation-stretch-drv-stretching-standing-back-rotation-stretch": {
+    "description": "Alongamento com rotação em pé, voltado aos oblíquos e aos músculos rotadores das costas.",
+    "steps": [
+      "Fique em pé com os pés na largura dos ombros.",
+      "Estenda os braços na altura dos ombros ou coloque as mãos no quadril.",
+      "Gire suavemente o tronco para um lado, sem mover o quadril.",
+      "Sustente o alongamento pelo tempo desejado.",
+      "Volte ao centro e repita do outro lado."
+    ],
+    "breathing": "Expire ao girar e inspire ao voltar ao centro.",
+    "commonMistakes": [
+      "Girar além do confortável",
+      "Deixar o quadril girar junto",
+      "Prender a respiração"
+    ]
+  },
+  "standing-lateral-stretch-0794": {
+    "description": "Alongamento lateral em pé para trabalhar os oblíquos e alongar a musculatura da lateral do tronco.",
+    "steps": [
+      "Fique em pé com os pés na largura do quadril.",
+      "Eleve um braço acima da cabeça, mantendo-o estendido.",
+      "Coloque a outra mão no quadril ou deixe-a ao lado do corpo.",
+      "Incline suavemente para o lado oposto, mantendo o quadril alinhado.",
+      "Sustente, volte ao centro e repita do outro lado."
+    ],
+    "breathing": "Inspire para se alongar e expire ao entrar no alongamento lateral.",
+    "commonMistakes": [
+      "Girar o tronco",
+      "Inclinar à frente ou para trás",
+      "Não manter o braço estendido"
+    ]
+  },
+  "standing-side-bend-stretch-bent-arm-drv-stretching-standing-side-bend-bent-arm": {
+    "description": "Alongamento lateral em pé para trabalhar os oblíquos e o dorsal.",
+    "steps": [
+      "Fique em pé com os pés na largura dos ombros.",
+      "Eleve um braço acima da cabeça, flexionando o cotovelo de forma confortável.",
+      "Incline para o lado oposto ao braço elevado, alongando a lateral do tronco.",
+      "Sustente o alongamento de 15 a 30 segundos.",
+      "Troque de lado e repita."
+    ],
+    "breathing": "Respire fundo durante todo o alongamento.",
+    "commonMistakes": [
+      "Girar o tronco",
+      "Alongar além do confortável",
+      "Prender a respiração"
+    ]
+  },
+  "chest-dips-drv-chest-dips": {
+    "description": "Mergulho nas barras paralelas com o peso do corpo, exercício composto voltado a peito, ombros e tríceps.",
+    "steps": [
+      "Segure as barras paralelas e sustente o corpo para começar.",
+      "Incline o tronco à frente e flexione os cotovelos.",
+      "Desça até a parte de cima dos braços ficar paralela ao chão.",
+      "Faça uma pausa embaixo, sentindo o alongamento.",
+      "Empurre com as palmas para voltar ao início."
+    ],
+    "breathing": "Inspire ao descer e expire ao subir.",
+    "commonMistakes": [
+      "Ficar ereto demais, transferindo o foco para o tríceps",
+      "Descer além do necessário",
+      "Abrir demais os cotovelos"
+    ]
+  },
+  "resistance-band-high-fly-drv-band-high-fly": {
+    "description": "Crucifixo com elástico em que os braços descem em arco, partindo de cima da altura dos ombros, para isolar o peito.",
+    "steps": [
+      "Prenda o elástico em um ponto acima da altura dos ombros.",
+      "Segure as alças e dê um passo à frente para criar tensão.",
+      "Comece com os braços abertos e elevados, alinhados com os ombros.",
+      "Leve os braços para baixo e um em direção ao outro, em um arco amplo.",
+      "Contraia o peito e volte devagar ao início."
+    ],
+    "breathing": "Expire ao aproximar os braços e inspire ao voltar.",
+    "commonMistakes": [
+      "Estender demais os cotovelos",
+      "Deixar os ombros encolherem",
+      "Perder a tensão no alto"
+    ]
+  },
+  "standing-reach-up-back-rotation-stretch-drv-stretching-standing-reach-up-back-rotation-stretch": {
+    "description": "Alongamento dinâmico com braços acima da cabeça e rotação, para abrir o peito e a parte alta das costas.",
+    "steps": [
+      "Fique em pé com os pés na largura dos ombros.",
+      "Eleve os dois braços acima da cabeça.",
+      "Arqueie suavemente a parte alta das costas e o peito.",
+      "Gire o tronco para um lado mantendo o alongamento.",
+      "Volte ao centro e gire para o outro lado."
+    ],
+    "breathing": "Inspire antes de estender os braços para cima e expire ao girar e alongar.",
+    "commonMistakes": [
+      "Arquear demais a lombar",
+      "Não estender totalmente os braços",
+      "Girar de forma brusca"
+    ]
+  },
+  "band-bent-over-rear-lateral-raise-drv-band-bent-over-rear-lateral-raise": {
+    "description": "Exercício para a parte de trás do ombro e as costas altas, com elástico e tronco inclinado à frente.",
+    "steps": [
+      "Pise no elástico com os pés na largura dos ombros.",
+      "Incline o tronco à frente a partir do quadril, mantendo as costas retas.",
+      "Segure o elástico com as duas mãos, deixando os braços pendidos.",
+      "Abra os braços para os lados até ficarem paralelos à linha dos ombros.",
+      "Desça os braços com controle."
+    ],
+    "breathing": "Expire ao elevar os braços e inspire ao descê-los.",
+    "commonMistakes": [
+      "Arredondar as costas",
+      "Encolher os ombros",
+      "Usar o impulso"
+    ]
+  },
+  "rear-deltoid-stretch-0669": {
+    "description": "Alongamento voltado à parte de trás do ombro, para ganhar flexibilidade e reduzir a tensão.",
+    "steps": [
+      "Estenda um braço à frente do peito, na altura do ombro.",
+      "Use a mão oposta para trazer o braço em direção ao corpo.",
+      "Sustente o alongamento de 20 a 30 segundos.",
+      "Solte e volte ao início.",
+      "Repita do outro lado."
+    ],
+    "breathing": "Respire normalmente durante todo o alongamento.",
+    "commonMistakes": [
+      "Elevar o ombro",
+      "Girar o tronco",
+      "Forçar o alongamento"
+    ]
+  },
+  "band-seated-leg-extension-0980": {
+    "description": "Extensão de joelho sentado com elástico, para isolar e fortalecer o quadríceps.",
+    "steps": [
+      "Sente-se ereto em uma cadeira firme, com os pés inteiros no chão.",
+      "Prenda uma extremidade do elástico atrás do pé da cadeira.",
+      "Passe a outra extremidade pelo tornozelo.",
+      "Eleve a parte de baixo da perna até estender totalmente o joelho.",
+      "Desça a perna com controle; repita e troque de perna."
+    ],
+    "breathing": "Expire ao estender e inspire ao voltar.",
+    "commonMistakes": [
+      "Balançar a perna",
+      "Deixar o joelho desviar ou girar",
+      "Arquear as costas"
+    ]
+  },
+  "standing-quadriceps-stretch-drv-stretching-quadriceps-stretch": {
+    "description": "Alongamento de quadríceps em pé, para melhorar a flexibilidade da parte da frente da coxa.",
+    "steps": [
+      "Fique em pé, equilibrando-se em um dos pés.",
+      "Flexione o outro joelho e alcance o pé para trás.",
+      "Puxe o calcanhar suavemente em direção ao glúteo, mantendo os joelhos juntos.",
+      "Mantenha o tronco ereto e o quadril nivelado.",
+      "Sustente o alongamento e depois troque de perna."
+    ],
+    "breathing": "Expire ao puxar o calcanhar e inspire ao soltar.",
+    "commonMistakes": [
+      "Afastar os joelhos",
+      "Inclinar o tronco à frente",
+      "Puxar o pé com força excessiva"
+    ]
+  },
+  "band-resisted-decline-sit-up-drv-band-decline-sit-ups": {
+    "description": "Abdominal no banco declinado com resistência de elástico, para aumentar a tensão sobre o abdômen.",
+    "steps": [
+      "Prenda o elástico com segurança atrás do banco declinado.",
+      "Deite-se no banco com os pés presos, segurando o elástico junto ao peito ou atrás do pescoço.",
+      "Contraia o abdômen e faça o abdominal, levando o tronco em direção aos joelhos.",
+      "Controle a descida até a posição inicial.",
+      "Repita pelo número de repetições desejado."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Usar o impulso",
+      "Deixar o elástico ficar frouxo",
+      "Prender os pés de forma inadequada"
+    ]
+  },
+  "bench-crunch-drv-crunch-on-bench": {
+    "description": "Abdominal supra feito deitado em banco reto ou declinado, para isolar o abdômen.",
+    "steps": [
+      "Deite-se no banco com os joelhos flexionados e os pés presos ou apoiados.",
+      "Cruze os braços sobre o peito ou coloque as mãos atrás da cabeça.",
+      "Contraia o abdômen e eleve os ombros em direção aos joelhos.",
+      "Contraia no alto e sustente brevemente.",
+      "Desça o tronco de volta ao banco de forma controlada."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Puxar o pescoço",
+      "Fazer as repetições com pressa",
+      "Subir alto demais"
+    ]
+  },
+  "chest-lift-with-rotation-drv-chest-lift-with-rotation": {
+    "description": "Abdominal que combina a elevação do tronco com rotação, para trabalhar também os oblíquos.",
+    "steps": [
+      "Deite-se de costas, com os joelhos flexionados e os pés inteiros no chão.",
+      "Coloque as mãos atrás da cabeça, com os cotovelos abertos.",
+      "Contraia o abdômen e tire a cabeça, o pescoço e os ombros do colchonete.",
+      "Gire o tronco para um lado enquanto eleva.",
+      "Volte ao centro e desça; repita alternando o lado."
+    ],
+    "breathing": "Expire ao subir e girar, inspire ao descer.",
+    "commonMistakes": [
+      "Puxar o pescoço",
+      "Usar os braços para ajudar",
+      "Subir alto demais",
+      "Não contrair o abdômen"
+    ]
+  },
+  "floor-crunch-0274": {
+    "description": "Abdominal supra básico feito no chão, para fortalecer o reto abdominal.",
+    "steps": [
+      "Deite-se de costas com os joelhos flexionados e os pés na largura do quadril.",
+      "Coloque as mãos levemente atrás da cabeça ou cruzadas sobre o peito.",
+      "Contraia o abdômen e tire os ombros do chão.",
+      "Faça uma breve pausa no ponto mais alto do movimento.",
+      "Volte devagar à posição inicial."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Puxar o pescoço",
+      "Não contrair o abdômen",
+      "Usar o impulso",
+      "Não respirar corretamente"
+    ]
+  },
+  "jackknife-drv-jackknife-pilates": {
+    "description": "Exercício de core do Pilates que eleva quadril e pernas para cima e além da cabeça, fortalecendo o abdômen.",
+    "steps": [
+      "Deite-se de costas com os braços ao lado do corpo e as pernas estendidas.",
+      "Contraia o abdômen e eleve as pernas em direção ao teto.",
+      "Continue subindo até tirar o quadril do colchonete, alongando os pés para cima.",
+      "Faça uma pausa no alto, com o quadril elevado.",
+      "Desça devagar, enrolando a coluna vértebra por vértebra."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Deixar as pernas caírem rápido demais",
+      "Arquear demais as costas",
+      "Empurrar com os braços"
+    ]
+  },
+  "jackknife-floor-0981": {
+    "description": "Abdominal dinâmico em que pernas e tronco sobem ao mesmo tempo, formando um V.",
+    "steps": [
+      "Deite-se com os braços estendidos acima da cabeça e as pernas estendidas.",
+      "Contraia o abdômen e leve braços e pernas um em direção ao outro.",
+      "Alcance os pés com as mãos, formando um V no alto.",
+      "Faça uma breve pausa no alto, contraindo o abdômen.",
+      "Desça devagar até a posição inicial."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Flexionar demais joelhos ou cotovelos",
+      "Subir no impulso",
+      "Deixar a lombar arquear"
+    ]
+  },
+  "jackknife-split-crunch-drv-jack-split-crunches": {
+    "description": "Variação de abdominal canivete que combina a subida em V com a abertura das pernas, trabalhando abdômen e flexores do quadril.",
+    "steps": [
+      "Deite-se de costas com os braços estendidos acima da cabeça e as pernas estendidas.",
+      "Contraia o abdômen e tire tronco e pernas do chão ao mesmo tempo.",
+      "Ao subir, afaste as pernas em tesoura enquanto alcança os pés com as mãos.",
+      "Faça uma pausa no alto, contraindo o abdômen.",
+      "Desça pernas e tronco com controle, juntando os pés."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Balançar as pernas",
+      "Usar o impulso",
+      "Arquear a lombar"
+    ]
+  },
+  "leg-raise-crunch-0600": {
+    "description": "Abdominal que combina a elevação do tronco com a das pernas, enfatizando as porções superior e inferior do abdômen.",
+    "steps": [
+      "Deite-se de costas e estenda as pernas.",
+      "Coloque as mãos ao lado do corpo ou atrás da cabeça.",
+      "Eleve pernas e tronco ao mesmo tempo, aproximando um do outro.",
+      "Contraia no ponto mais alto do movimento.",
+      "Desça pernas e tronco com controle."
+    ],
+    "breathing": "Expire durante a subida e inspire ao voltar.",
+    "commonMistakes": [
+      "Arquear a lombar",
+      "Usar o impulso",
+      "Tensionar o pescoço ao puxar com as mãos"
+    ]
+  },
+  "leg-raise-with-hip-lift-drv-leg-raise-hip-lift": {
+    "description": "Exercício de core que combina elevação de pernas com elevação do quadril, voltado à parte inferior do abdômen.",
+    "steps": [
+      "Deite-se com os braços ao lado do corpo e as pernas estendidas.",
+      "Eleve as duas pernas juntas em direção ao teto.",
+      "No ponto mais alto, empurre as pernas para cima tirando o quadril do chão.",
+      "Faça uma pausa, contraindo o abdômen.",
+      "Desça quadril e pernas devagar até a posição inicial."
+    ],
+    "breathing": "Expire ao elevar o quadril e inspire durante a descida.",
+    "commonMistakes": [
+      "Usar o impulso",
+      "Arquear a lombar",
+      "Não controlar a descida"
+    ]
+  },
+  "lever-seated-crunch-1452": {
+    "description": "Abdominal sentado em máquina, que isola e fortalece o abdômen por meio da flexão da coluna.",
+    "steps": [
+      "Ajuste o assento e selecione uma resistência adequada.",
+      "Sente-se recostado e prenda os pés e as alças conforme o desenho da máquina.",
+      "Contraia o abdômen e flexione a coluna à frente, em movimento de abdominal.",
+      "Leve o peito em direção aos joelhos enquanto expira.",
+      "Controle a volta ao início e repita."
+    ],
+    "breathing": "Expire ao descer no abdominal e inspire ao voltar.",
+    "commonMistakes": [
+      "Deixar os flexores do quadril dominarem o movimento",
+      "Usar carga excessiva",
+      "Fazer as repetições com pressa",
+      "Amplitude parcial"
+    ]
+  },
+  "lying-leg-raise-0865": {
+    "description": "Exercício com o peso do corpo que trabalha a parte inferior do abdômen elevando as pernas deitado.",
+    "steps": [
+      "Deite-se de costas com as pernas estendidas.",
+      "Mantenha os braços ao lado do corpo ou sob o quadril.",
+      "Eleve as pernas mantendo os joelhos estendidos.",
+      "Suba as pernas até o quadril sair levemente do chão.",
+      "Desça as pernas devagar, sem tocar o chão."
+    ],
+    "breathing": "Expire ao elevar as pernas e inspire ao descê-las.",
+    "commonMistakes": [
+      "Arquear a lombar",
+      "Usar o impulso",
+      "Tocar os pés no chão entre as repetições"
+    ]
+  },
+  "medicine-ball-wall-sit-up-0640": {
+    "description": "Exercício dinâmico de core que combina abdominal com arremesso e recepção de bola medicinal na parede.",
+    "steps": [
+      "Sente-se no chão de frente para a parede, com os joelhos flexionados.",
+      "Segure a bola medicinal junto ao peito.",
+      "Deite-se para trás e depois faça o abdominal.",
+      "No alto, arremesse a bola contra a parede.",
+      "Recepcione o retorno da bola e desça novamente."
+    ],
+    "breathing": "Expire ao subir e arremessar, inspire ao descer.",
+    "commonMistakes": [
+      "Descer o tronco além do necessário",
+      "Usar os braços em vez do core",
+      "Errar a recepção da bola"
+    ]
+  },
+  "otis-up-drv-otis-ups": {
+    "description": "Variação de abdominal segurando um peso com os braços estendidos acima do corpo, para aumentar a exigência sobre o abdômen.",
+    "steps": [
+      "Deite-se de costas com os joelhos flexionados e os pés presos.",
+      "Segure o peso com as duas mãos, com os braços totalmente estendidos acima do peito.",
+      "Contraia o abdômen e sente-se, mantendo os braços estendidos e o peso acima da cabeça.",
+      "Chegue à posição sentada, com o tronco ereto.",
+      "Desça com controle, mantendo os braços estendidos."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Flexionar os braços",
+      "Deixar o peso cair à frente",
+      "Usar o impulso para subir"
+    ]
+  },
+  "sit-up-drv-sit-ups": {
+    "description": "Abdominal clássico que leva o tronco do chão até a posição sentada, para desenvolver força no core.",
+    "steps": [
+      "Deite-se de costas com os joelhos flexionados e os pés presos.",
+      "Coloque as mãos atrás da cabeça ou sobre o peito.",
+      "Contraia o abdômen para levar o tronco até a posição sentada.",
+      "Faça uma pausa no alto e desça devagar até o chão.",
+      "Repita pelo número de repetições desejado."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Dar trancos com o pescoço",
+      "Usar o impulso",
+      "Tirar os pés do chão"
+    ]
+  },
+  "sit-up-rectus-abdominis": {
+    "description": "Abdominal clássico que eleva o tronco a partir da posição deitado.",
+    "steps": [
+      "Deite-se com os joelhos flexionados e os pés inteiros no chão.",
+      "Cruze os braços sobre o peito ou coloque as mãos atrás da cabeça.",
+      "Contraia o abdômen e eleve o tronco em direção aos joelhos.",
+      "Faça uma breve pausa no alto.",
+      "Desça devagar até a posição inicial."
+    ],
+    "breathing": "Expire na subida e inspire na descida.",
+    "commonMistakes": [
+      "Puxar o pescoço",
+      "Arquear a lombar",
+      "Usar o impulso"
+    ]
+  },
+  "stability-ball-leg-elevated-crunch-0271": {
+    "description": "Variação de abdominal com as pernas apoiadas na bola suíça, que aumenta a exigência sobre o core e a instabilidade.",
+    "steps": [
+      "Coloque a bola suíça à sua frente e sente-se.",
+      "Deite-se para trás e apoie panturrilhas e pés sobre a bola, com os joelhos flexionados.",
+      "Coloque as mãos levemente atrás da cabeça ou cruzadas sobre o peito.",
+      "Contraia o abdômen e enrole a parte de cima do corpo em direção aos joelhos.",
+      "Faça uma breve pausa no alto e desça sem perder o controle."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Usar impulso em vez da musculatura",
+      "Tensionar o pescoço",
+      "Deixar a bola rolar para longe",
+      "Arquear a lombar"
+    ]
+  },
+  "straight-leg-up-crunch-drv-crunch-straight-leg-up": {
+    "description": "Variação de abdominal com as pernas estendidas na vertical, que desafia a parte superior do abdômen.",
+    "steps": [
+      "Deite-se de costas com as pernas estendidas para cima e os pés flexionados.",
+      "Deixe os braços ao lado do corpo ou as mãos atrás da cabeça.",
+      "Contraia o abdômen e leve cabeça e ombros em direção às pernas.",
+      "Faça uma pausa no alto, expirando.",
+      "Desça com controle."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Subir com trancos",
+      "Usar o impulso",
+      "Abrir demais os cotovelos"
+    ]
+  },
+  "v-up-drv-v-up": {
+    "description": "Exercício dinâmico de core em que pernas e tronco sobem ao mesmo tempo até se encontrarem em V, ativando o abdômen.",
+    "steps": [
+      "Deite-se de costas com os braços estendidos acima da cabeça e as pernas estendidas.",
+      "Contraia o abdômen para elevar pernas e tronco ao mesmo tempo.",
+      "Alcance os pés com as mãos no alto, formando um V.",
+      "Faça uma breve pausa, contraindo o abdômen.",
+      "Desça devagar até a posição inicial."
+    ],
+    "breathing": "Expire ao subir e inspire ao descer.",
+    "commonMistakes": [
+      "Balançar as pernas",
+      "Arquear a lombar",
+      "Não contrair totalmente o abdômen"
+    ]
+  },
+  "weighted-leg-extension-crunch-0832": {
+    "description": "Exercício de core que combina abdominal com extensão de pernas contra resistência, para trabalhar o abdômen.",
+    "steps": [
+      "Deite-se de costas com os joelhos flexionados, segurando um peso sobre o peito.",
+      "Eleve as pernas até a posição de mesa (joelhos acima do quadril, flexionados a 90 graus).",
+      "Estenda as pernas à frente e suba o tronco ao mesmo tempo.",
+      "Faça uma breve pausa no ponto de maior contração.",
+      "Volte braços e pernas à posição inicial."
+    ],
+    "breathing": "Expire ao subir e estender, inspire ao voltar.",
+    "commonMistakes": [
+      "Usar o impulso",
+      "Deixar a lombar arquear",
+      "Prender a respiração"
+    ]
+  },
+  "scapula-dips-3012": {
+    "description": "Mergulho escapular com o peso do corpo e os braços estendidos, que treina o controle das escápulas e a depressão dos ombros em posição sustentada.",
+    "steps": [
+      "Comece sustentando o corpo nas barras paralelas com os cotovelos travados e os ombros alinhados sobre as mãos.",
+      "Erga o peito e firme o tronco, mantendo as pernas paradas abaixo do corpo.",
+      "Desça alguns centímetros deixando os ombros subirem em direção às orelhas, sem flexionar os cotovelos.",
+      "Empurre as mãos para baixo para afastar os ombros das orelhas e subir o corpo novamente.",
+      "Repita com movimento lento e controlado dos ombros, mantendo os braços estendidos todo o tempo."
+    ],
+    "breathing": "Inspire ao descer no encolhimento e expire ao empurrar para subir o corpo.",
+    "commonMistakes": [
+      "Flexionar os cotovelos como em um mergulho comum",
+      "Balançar pernas ou tronco para criar impulso",
+      "Encolher os ombros e não empurrar de volta para baixo",
+      "Descer demais e perder o controle dos ombros"
+    ]
+  },
+  "band-overhead-triceps-extension-new-band-overhead-triceps-extension": {
+    "description": "Tríceps francês em pé com elástico, estendendo os cotovelos acima da cabeça e mantendo a parte de cima dos braços praticamente fixa.",
+    "steps": [
+      "Pise no meio do elástico com os pés na largura do quadril e segure uma extremidade em cada mão.",
+      "Leve as mãos acima da cabeça e flexione os cotovelos, levando as mãos atrás da cabeça.",
+      "Mantenha a parte de cima dos braços próxima às orelhas e firme o abdômen.",
+      "Estenda os cotovelos para empurrar o elástico acima da cabeça até esticar totalmente os braços.",
+      "Faça uma breve pausa no alto e flexione os cotovelos devagar para voltar atrás da cabeça.",
+      "Repita sem deixar os cotovelos abrirem para os lados."
+    ],
+    "breathing": "Inspire ao levar as mãos atrás da cabeça e expire ao estender os cotovelos acima da cabeça.",
+    "commonMistakes": [
+      "Cotovelos abrindo para os lados",
+      "Lombar arqueando quando o elástico vai acima da cabeça",
+      "Parte de cima dos braços deslocando à frente e atrás",
+      "Fazer só parte do movimento em vez de estender totalmente"
+    ]
+  },
+  "band-triceps-pushdown-new-band-triceps-pushdown": {
+    "description": "Tríceps pushdown com elástico preso acima, para estender os cotovelos contra a resistência.",
+    "steps": [
+      "Prenda o elástico em um ponto alto e fique de frente para ele, com uma alça ou extremidade em cada mão.",
+      "Flexione os cotovelos a cerca de 90 graus e mantenha a parte de cima dos braços junto ao corpo.",
+      "Firme o tronco e empurre as mãos para baixo até estender totalmente os cotovelos.",
+      "Faça uma breve pausa embaixo e contraia o tríceps.",
+      "Deixe o elástico subir devagar até os antebraços voltarem à posição inicial.",
+      "Repita sem deixar os cotovelos avançarem ou abrirem."
+    ],
+    "breathing": "Expire ao empurrar o elástico para baixo e inspire ao voltar ao início.",
+    "commonMistakes": [
+      "Parte de cima dos braços balançando à frente e atrás",
+      "Cotovelos se afastando do tronco",
+      "Jogar o peso do corpo sobre o elástico",
+      "Parar antes de estender totalmente os cotovelos"
+    ]
+  },
+  "barbell-close-grip-bench-press-0030": {
+    "description": "Supino com pegada fechada, voltado ao tríceps e que também trabalha peito e ombros.",
+    "steps": [
+      "Deite-se no banco e segure a barra com pegada fechada.",
+      "Retire a barra do suporte e posicione-a acima da parte baixa do peito.",
+      "Desça a barra devagar, com os cotovelos junto ao corpo.",
+      "Toque brevemente o peito e empurre a barra até a posição inicial.",
+      "Repita pelo número de repetições previsto."
+    ],
+    "breathing": "Expire ao empurrar para cima e inspire ao descer a barra.",
+    "commonMistakes": [
+      "Pegada estreita ou larga demais",
+      "Cotovelos abrindo para os lados",
+      "Quicar a barra no peito"
+    ]
+  },
+  "dumbbell-close-grip-press-0296": {
+    "description": "Supino com halteres unidos, movimento de empurrar que enfatiza a ativação do tríceps.",
+    "steps": [
+      "Deite-se no banco com um halter em cada mão.",
+      "Mantenha os halteres unidos acima do peito, com as palmas voltadas uma para a outra.",
+      "Desça os halteres em direção ao esterno, com os cotovelos junto ao tronco.",
+      "Faça uma pausa quando os cotovelos chegarem a 90 graus.",
+      "Empurre os halteres para cima estendendo os braços."
+    ],
+    "breathing": "Inspire ao descer os halteres e expire ao empurrar para cima.",
+    "commonMistakes": [
+      "Abrir os cotovelos para os lados",
+      "Deixar os halteres se afastarem um do outro",
+      "Arquear demais as costas",
+      "Descer os pesos além do necessário"
+    ]
+  },
+  "cambered-bar-lying-row-0248": {
+    "description": "Remada com barra e peito apoiado, feita de bruços no banco para trabalhar as costas altas praticamente sem usar impulso do corpo.",
+    "steps": [
+      "Coloque a barra no chão sob a ponta de um banco reto e deite-se de bruços, com o peito apoiado e os braços pendidos.",
+      "Firme os pés no chão, contraia o abdômen e segure a barra com pegada por cima, um pouco mais aberta que a largura dos ombros.",
+      "Tire a barra do chão e deixe-a pendida exatamente abaixo dos ombros, com o pescoço neutro.",
+      "Puxe a barra em direção à parte de baixo do banco ou à parte baixa do peito, levando os cotovelos para trás.",
+      "Faça uma breve pausa no alto e aproxime as escápulas.",
+      "Desça a barra com controle até estender os braços e ela voltar a ficar logo acima do chão."
+    ],
+    "breathing": "Inspire ao descer a barra e expire ao puxá-la em direção ao peito.",
+    "commonMistakes": [
+      "Tirar o peito do banco para mover a barra",
+      "Encolher os ombros em direção às orelhas",
+      "Arrancar a barra do chão no impulso",
+      "Abrir os cotovelos totalmente para os lados"
+    ]
+  },
+  "dumbbell-palm-rotational-bent-over-row-1329": {
+    "description": "Remada curvada com halteres e rotação das palmas durante a puxada, para trabalhar costas altas, bíceps e antebraços.",
+    "steps": [
+      "Fique em pé com os pés na largura do quadril, segurando um halter em cada mão, com os braços estendidos e as palmas voltadas uma para a outra.",
+      "Incline o tronco à frente a partir do quadril, flexione levemente os joelhos e mantenha as costas retas.",
+      "Deixe os halteres pendidos abaixo dos ombros e firme o abdômen.",
+      "Puxe os dois halteres em direção às costelas baixas, levando os cotovelos para trás.",
+      "Gire as palmas durante a subida até que fiquem mais voltadas para trás ou para fora no alto.",
+      "Faça uma pausa contraindo as costas altas e desça os halteres com controle, retornando as palmas à posição neutra."
+    ],
+    "breathing": "Inspire embaixo, expire ao puxar e girar os halteres para cima e inspire ao descê-los.",
+    "commonMistakes": [
+      "Arredondar a lombar ao inclinar o tronco",
+      "Ficar mais ereto para balançar os halteres",
+      "Encolher os ombros em direção às orelhas",
+      "Dobrar os punhos em vez de girar os antebraços"
+    ]
+  },
+  "lever-high-row-0581": {
+    "description": "Remada em máquina com peito apoiado, que trabalha as costas altas puxando as alças de à frente em direção ao tronco.",
+    "steps": [
+      "Ajuste o assento para que as alças fiquem mais ou menos na altura da parte alta do peito ao sentar.",
+      "Sente-se com o peito firme no apoio e os pés inteiros na plataforma.",
+      "Segure as alças com pegada por cima e estenda os braços sem tirar o peito do apoio.",
+      "Puxe as alças em direção às costelas altas, levando os cotovelos para baixo e para trás.",
+      "Aproxime as escápulas no fim da puxada.",
+      "Leve as alças à frente com controle até estender os braços novamente."
+    ],
+    "breathing": "Expire ao puxar as alças em sua direção e inspire ao voltar à posição inicial.",
+    "commonMistakes": [
+      "Encolher os ombros em direção às orelhas durante a puxada",
+      "Afastar o peito do apoio para mover a carga",
+      "Deixar as alças baterem à frente entre as repetições",
+      "Dobrar os punhos para trás em vez de mantê-los neutros"
+    ]
+  },
+  "lever-reverse-t-bar-row-1349": {
+    "description": "Remada em máquina articulada com peito apoiado e pegada por cima, para trabalhar costas altas, bíceps e antebraços.",
+    "steps": [
+      "Ajuste o assento ou o apoio de peito para que as alças fiquem mais ou menos na altura do meio do peito ao estender os braços.",
+      "Apoie o peito com firmeza e deixe os pés inteiros na plataforma.",
+      "Segure as alças com pegada por cima e estenda os braços sem arredondar os ombros.",
+      "Puxe as alças em direção ao peito, levando os cotovelos para trás e levemente para fora.",
+      "Aproxime as escápulas no fim da puxada.",
+      "Desça as alças com controle até estender os braços novamente."
+    ],
+    "breathing": "Expire ao puxar as alças em direção ao peito e inspire ao descê-las com controle.",
+    "commonMistakes": [
+      "Encolher os ombros em direção às orelhas",
+      "Quicar o peito no apoio para mover as alças",
+      "Deixar a parte alta das costas arredondar no início",
+      "Arrancar a carga e deixá-la voltar rápido"
+    ]
+  },
+  "seated-cable-row-wide-grip-0218": {
+    "description": "Remada na polia com pegada aberta, voltada às costas altas e à porção posterior do deltoide.",
+    "steps": [
+      "Sente-se e apoie os pés na plataforma.",
+      "Segure a barra de pegada aberta com as duas mãos.",
+      "Mantenha o tronco ereto e os braços totalmente estendidos.",
+      "Puxe a barra em direção à parte alta do abdômen, contraindo as costas altas.",
+      "Solte devagar até a posição inicial."
+    ],
+    "breathing": "Expire ao puxar e inspire ao estender os braços.",
+    "commonMistakes": [
+      "Inclinar o tronco demais para trás",
+      "Deixar os cotovelos caírem",
+      "Arredondar as costas"
+    ]
   }
 }

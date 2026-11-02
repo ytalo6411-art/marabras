@@ -386,8 +386,17 @@ export async function searchExercises(
       .range(offset, offset + limit - 1);
 
     if (query.trim()) {
-      // Busca por full-text quando disponível; o ILIKE cobre o fallback.
-      q = q.or(`name.ilike.%${query.trim().replace(/[,()]/g,' ')}%,instructions.ilike.%${query.trim().replace(/[,()]/g,' ')}%`);
+      // As colunas principais guardam pt-BR e as `*_en` o original. Buscamos nas
+      // duas para que "supino" e "bench press" encontrem o mesmo exercício,
+      // independentemente do idioma escolhido na interface.
+      // `,` e parênteses são separadores da sintaxe do PostgREST: removê-los
+      // evita que o texto do usuário quebre o filtro `or`.
+      const term = query.trim().replace(/[,()%]/g, ' ').replace(/\s+/g, ' ').trim();
+      q = q.or(
+        ['name', 'name_en', 'description', 'instructions', 'instructions_en']
+          .map((column) => `${column}.ilike.%${term}%`)
+          .join(','),
+      );
     }
     if (muscle) q = q.eq('primary_muscle', muscle);
     if (difficulty) q = q.eq('difficulty', difficulty);
@@ -629,6 +638,22 @@ export async function getCategories(): Promise<ExerciseCategory[]> {
 export async function importExercise(result: ExerciseResult): Promise<string | null> {
   if (result.id) return result.id;
 
+  // Um slug que já existe não pode ser sobrescrito por um resultado externo: as
+  // linhas semeadas têm conteúdo revisado em pt-BR e a API devolve o original em
+  // inglês. O upsert por slug substituía a tradução e mantinha
+  // `content_pt_ready = true`, ou seja, mentia sobre o idioma. Reusamos o registro.
+  const { data: existing, error: lookupError } = await supabase
+    .from('exercises')
+    .select('id')
+    .eq('slug', result.slug)
+    .maybeSingle();
+
+  if (lookupError) throw lookupError;
+  if (existing?.id) return existing.id;
+
+  // Registro realmente novo: o texto vem da fonte, em inglês. Guardamos também
+  // nas colunas `*_en` e deixamos `content_pt_ready = false` para que a interface
+  // avise que ainda é o original, em vez de fingir que está traduzido.
   const { data, error } = await supabase
     .from('exercises')
     .upsert(
@@ -636,9 +661,19 @@ export async function importExercise(result: ExerciseResult): Promise<string | n
         external_id: result.key,
         source: result.source,
         name: result.name,
+        name_en: result.name,
         slug: result.slug,
         description: result.description ?? null,
+        description_en: result.description ?? null,
         instructions: result.instructions ?? null,
+        instructions_en: result.instructions ?? null,
+        steps: result.steps ?? null,
+        steps_en: result.steps ?? null,
+        breathing: result.breathing ?? null,
+        breathing_en: result.breathing ?? null,
+        common_mistakes: result.commonMistakes ?? null,
+        common_mistakes_en: result.commonMistakes ?? null,
+        content_pt_ready: false,
         difficulty: result.difficulty,
         primary_muscle: result.primaryMuscle,
         secondary_muscles: result.secondaryMuscles,
