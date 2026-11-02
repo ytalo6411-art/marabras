@@ -93,6 +93,12 @@ export interface ExerciseResult {
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   description?: string;
   instructions?: string;
+  /** Passos segmentados da fonte. Preferidos a dividir `instructions` por linha. */
+  steps?: string[];
+  breathing?: string;
+  commonMistakes?: string[];
+  /** true quando o conteúdo em pt-BR foi revisado; false = original da fonte. */
+  contentPtReady?: boolean;
   videoUrl?: string;
   thumbnailUrl?: string;
   imageUrl?: string;
@@ -259,6 +265,9 @@ function fromFreeExerciseDb(entry: FreeExerciseDbEntry): ExerciseResult {
     difficulty: DIFFICULTY_MAP[entry.difficulty?.toLowerCase() ?? ''] ?? 'beginner',
     description: entry.shortDescription || undefined,
     instructions: entry.instructions || undefined,
+    steps: entry.steps?.length ? entry.steps : undefined,
+    breathing: entry.breathing || undefined,
+    commonMistakes: entry.commonMistakes?.length ? entry.commonMistakes : undefined,
     videoUrl: entry.videos?.male ?? entry.videos?.female,
     thumbnailUrl: entry.thumbnails?.male ?? entry.thumbnails?.female,
     imageUrl: entry.thumbnails?.male ?? entry.thumbnails?.female,
@@ -377,8 +386,17 @@ export async function searchExercises(
       .range(offset, offset + limit - 1);
 
     if (query.trim()) {
-      // Busca por full-text quando disponível; o ILIKE cobre o fallback.
-      q = q.or(`name.ilike.%${query.trim().replace(/[,()]/g,' ')}%,instructions.ilike.%${query.trim().replace(/[,()]/g,' ')}%`);
+      // As colunas principais guardam pt-BR e as `*_en` o original. Buscamos nas
+      // duas para que "supino" e "bench press" encontrem o mesmo exercício,
+      // independentemente do idioma escolhido na interface.
+      // `,` e parênteses são separadores da sintaxe do PostgREST: removê-los
+      // evita que o texto do usuário quebre o filtro `or`.
+      const term = query.trim().replace(/[,()%]/g, ' ').replace(/\s+/g, ' ').trim();
+      q = q.or(
+        ['name', 'name_en', 'description', 'instructions', 'instructions_en']
+          .map((column) => `${column}.ilike.%${term}%`)
+          .join(','),
+      );
     }
     if (muscle) q = q.eq('primary_muscle', muscle);
     if (difficulty) q = q.eq('difficulty', difficulty);
@@ -449,18 +467,41 @@ export function exerciseIllustration(name: string, equipment: string[]): string 
  if (/bicep.*curl|biceps curl/.test(n) && equipment.includes('dumbbell')) return '/images/exercises/curl.jpg';
  return undefined;
 }
+/**
+ * Escolhe o idioma do conteúdo do exercício.
+ *
+ * `name`/`description`/`steps` guardam pt-BR; as colunas `_en` preservam o
+ * original da fonte. Quem navega em inglês recebe o original; os demais idiomas
+ * recebem pt-BR (idioma padrão do produto) e, se ainda não houver tradução
+ * revisada, o original — a tela avisa quando isso acontece.
+ */
+function localizedContent(row: Exercise) {
+  const english = getLocale() === 'en';
+  const pick = <T,>(translated: T | null, original: T | null): T | undefined =>
+    (english ? original ?? translated : translated ?? original) ?? undefined;
+  const steps = pick(row.steps, row.steps_en);
+  const mistakes = pick(row.common_mistakes, row.common_mistakes_en);
+  return {
+    description: pick(row.description, row.description_en),
+    instructions: pick(row.instructions, row.instructions_en),
+    steps: steps?.length ? steps : undefined,
+    breathing: pick(row.breathing, row.breathing_en),
+    commonMistakes: mistakes?.length ? mistakes : undefined,
+  };
+}
+
 function fromDatabase(row: Exercise): ExerciseResult {
   return {
     key: row.id,
     id: row.id,
-    name: row.name,
+    name: getLocale() === 'en' ? (row.name_en ?? row.name) : row.name,
     slug: row.slug,
     primaryMuscle: row.primary_muscle,
     secondaryMuscles: row.secondary_muscles ?? [],
     equipment: row.equipment ?? ['bodyweight'],
     difficulty: row.difficulty,
-    description: row.description ?? undefined,
-    instructions: row.instructions ?? undefined,
+    ...localizedContent(row),
+    contentPtReady: row.content_pt_ready ?? false,
     videoUrl: row.video_url ?? undefined,
     thumbnailUrl: row.thumbnail_url ?? undefined,
     imageUrl: row.image_url ?? exerciseIllustration(row.name,row.equipment ?? []),
@@ -597,6 +638,22 @@ export async function getCategories(): Promise<ExerciseCategory[]> {
 export async function importExercise(result: ExerciseResult): Promise<string | null> {
   if (result.id) return result.id;
 
+  // Um slug que já existe não pode ser sobrescrito por um resultado externo: as
+  // linhas semeadas têm conteúdo revisado em pt-BR e a API devolve o original em
+  // inglês. O upsert por slug substituía a tradução e mantinha
+  // `content_pt_ready = true`, ou seja, mentia sobre o idioma. Reusamos o registro.
+  const { data: existing, error: lookupError } = await supabase
+    .from('exercises')
+    .select('id')
+    .eq('slug', result.slug)
+    .maybeSingle();
+
+  if (lookupError) throw lookupError;
+  if (existing?.id) return existing.id;
+
+  // Registro realmente novo: o texto vem da fonte, em inglês. Guardamos também
+  // nas colunas `*_en` e deixamos `content_pt_ready = false` para que a interface
+  // avise que ainda é o original, em vez de fingir que está traduzido.
   const { data, error } = await supabase
     .from('exercises')
     .upsert(
@@ -604,9 +661,19 @@ export async function importExercise(result: ExerciseResult): Promise<string | n
         external_id: result.key,
         source: result.source,
         name: result.name,
+        name_en: result.name,
         slug: result.slug,
         description: result.description ?? null,
+        description_en: result.description ?? null,
         instructions: result.instructions ?? null,
+        instructions_en: result.instructions ?? null,
+        steps: result.steps ?? null,
+        steps_en: result.steps ?? null,
+        breathing: result.breathing ?? null,
+        breathing_en: result.breathing ?? null,
+        common_mistakes: result.commonMistakes ?? null,
+        common_mistakes_en: result.commonMistakes ?? null,
+        content_pt_ready: false,
         difficulty: result.difficulty,
         primary_muscle: result.primaryMuscle,
         secondary_muscles: result.secondaryMuscles,

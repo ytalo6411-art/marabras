@@ -1,6 +1,7 @@
 # ATHLETIX — Reformulação de produto: relatório
 
-Branch `arena/3d7cd59a-marabras` · PR #7 · 2026-11-01
+Rodada 1: branch `arena/3d7cd59a-marabras` · PR #7 (merged em `595ec9d`)
+Rodada 2: branch `arena/694978dc-marabras` · 2026-11-02 — fecha as lacunas listadas na seção 8 anterior
 
 Trabalho feito **no produto existente**, sem reescrever a stack (React 18 + TS +
 Vite + Supabase + Zustand + PWA). Cada bug crítico foi **reproduzido antes** de
@@ -146,17 +147,15 @@ denúncia, bloqueio e o cartão de privacidade em Configurações.
 
 ## 5. Testes executados
 
-| Suíte | Resultado |
+| Suíte | Resultado (rodada 2) |
 |---|---|
 | `npm run typecheck` / `typecheck:api` | PASS |
 | `npm run lint` (0 warnings) | PASS |
-| `npm test` | **220 passaram** |
-| `npm run test:security` | 10 API/cliente + **36 cenários PostgreSQL** |
-| `npm run test:db` | PASS |
-| `npm run test:i18n` | **714 strings**, 4 idiomas |
-| `npm run test:browser` | **8 fluxos** |
-| `npm run build` | PASS, 50 entradas de precache |
-| GitHub Actions CI | **PASS** |
+| `npm test` | **273 passaram** (21 arquivos) |
+| `npm run test:security` | 10 API/cliente + **41 cenários PostgreSQL** |
+| `npm run test:i18n` | **745 strings**, 4 idiomas |
+| `npm run test:browser` | **12 fluxos** |
+| `npm run build` | PASS, 53 entradas de precache, **0 scripts inline** |
 
 Cobertura nova: 12 casos de taxonomia, 3 de catálogo pt-BR, 7 de geração com
 perfis distintos, 10 de conta/foto, 7 de retorno OAuth, 7 cenários de
@@ -199,28 +198,81 @@ não mocks.
 2. **Supabase Auth (painel)** — senha mínima 12 no servidor (hoje 6), HIBP,
    CAPTCHA, reautenticação para trocar senha, timeouts de sessão e SMTP próprio.
    A UI já exige 12, mas isso é UX, não fronteira de segurança.
-3. **Produção** — o banco já está atualizado; o frontend/API precisa ser
-   promovido. **Produção segue em `5bdfae9`** até você aprovar.
+3. **Produção** — a rodada 1 já foi merged e promovida (`595ec9d`). O banco
+   desta rodada está aplicado; o frontend da rodada 2 precisa ser merged.
 4. **`AI_API_KEY`** — ausente na Vercel; a IA responde 503 e o app usa o gerador
    por regras, que funciona sozinho.
 
 ---
 
-## 8. O que **não** foi feito nesta rodada
+## 8. Rodada 2 — lacunas da rodada 1 fechadas
 
-Sendo explícito para não dar falsa impressão de conclusão:
+Tudo abaixo estava listado como "não feito" e agora está implementado e testado.
 
-- **Identidade visual nova** (logotipo/símbolo originais, nova tipografia): não
-  foi criada. O design system existente foi estendido de forma consistente
-  (novos componentes seguem os mesmos tokens), mas o logo continua o atual.
-- **Instruções passo a passo em português**: os exercícios têm `steps`,
-  `breathing` e `common_mistakes` da fonte, ainda **em inglês**. Traduzi os
-  **nomes**; traduzir 317 conjuntos de instruções exige revisão técnica e não foi
-  feito — não inventei texto para preencher.
-- **Moderação administrativa de denúncias**: a tabela e a captura existem; a
-  tela de fila para o moderador, não.
-- **Reordenar dias do programa por arrastar**: dá para editar, trocar exercício
-  e regenerar o dia; arrastar-e-soltar não foi implementado.
+### 8.1 Comunidade completada
 
-Não afirmo que o produto está "pronto" ou "seguro": o que está escrito acima como
-verificado foi testado; o resto está listado como pendente.
+| Item | Estado |
+|---|---|
+| Salvar treino de outro atleta | `workout_saves` + aba **Salvos**. Lista **privada**: nem o autor descobre quem salvou. |
+| Perfil público do atleta | Rota `/app/community/atleta/:handle`, com treinos publicados e denúncia do atleta. |
+| Privacidade por tipo | `show_workouts` e `show_progress` agora têm efeito **em RLS**, não só na tela. Desligar esconde na hora. |
+| Progresso público | View `athlete_public_progress`: **só contagens agregadas** (concluídos, últimos 30d). Nunca carga, peso, medida, volume ou dieta. |
+| Denunciar atleta | Botão no perfil; grava `reported_user_id`. |
+| Paginação do feed | Cursor por `created_at` + "Carregar mais treinos". |
+| Fila de moderação | Aba **Denúncias** no admin. `resolve_content_report()` é admin-only, valida a decisão, retorna o id e deixa trilha em `audit_logs`. |
+
+Publicar agora exige perfil público **e** `show_workouts` no `WITH CHECK` — o
+servidor recusa publicação feita por fora da interface, não só o botão.
+
+### 8.2 Instruções dos exercícios em pt-BR — 317/317
+
+`description`, `steps`, `breathing` e `common_mistakes` traduzidos e revisados
+movimento por movimento. O original da fonte foi **preservado antes** de qualquer
+UPDATE, em `description_en`, `instructions_en`, `steps_en`, `breathing_en` e
+`common_mistakes_en`. A coluna `content_pt_ready` marca o que tem tradução
+revisada, para a interface dizer a verdade sobre o idioma em vez de adivinhar.
+Verificado ao vivo: **317 traduzidos, 317 com original preservado**.
+
+### 8.3 Identidade visual
+
+- **Marca original** (`BrandMark.tsx`): "A" de ascensão cuja travessa é uma barra
+  de halteres, com o ápice marcando o próximo degrau. Mesmo laranja/lima do
+  produto. Aplicada no shell, login, cadastro e recuperação; favicon, OG image e
+  os 3 PNGs do PWA regenerados por `scripts/build-brand-icons.mjs` (sem
+  dependência nova — o ambiente não tem rasterizador SVG).
+- **Emojis eliminados**: eram 47 ocorrências em 16 arquivos; hoje **0** no código
+  da aplicação. Objetivos e ambientes do questionário usam chaves de ícone
+  resolvidas para vetor (`optionIcons.tsx`); chips e toasts usam `IconCheck`.
+- **Tooltip acessível**: portal (não é cortado por `overflow` de card/modal),
+  abre em hover **e** foco, fecha com Escape, ligado por `aria-describedby`.
+  Substituiu o `title=` nativo do badge de origem do plano, que teclado e toque
+  não alcançavam.
+- **Reordenar dias do programa**: arrastar para ponteiro **e** botões
+  cima/baixo com alvo 44×44 para teclado/toque. Reordenar troca os slots de
+  `days_of_week` no banco — não é ordem só em memória. A lista é recarregada do
+  servidor e falha parcial é reportada como falha.
+
+### 8.4 Cobertura nova
+
+`community.test.ts`, `exercise-content-pt.test.ts` (15), `admin-role-race.test.ts`
+(5), `program-day-order.test.ts` (11, incluindo falha parcial de gravação) e 4
+fluxos de navegador: salvar/aba Salvos/perfil, progresso público com e sem
+opt-in, fila de moderação, e reordenar dias com reload.
+
+---
+
+## 9. O que continua pendente
+
+Nada abaixo é código faltando — é configuração externa ou decisão sua:
+
+1. **Google OAuth** — `external_google_enabled: false`. Falta Client ID/Secret
+   (`docs/GOOGLE_OAUTH_SETUP.md`). Não inventei credenciais.
+2. **Supabase Auth** — servidor ainda com senha mínima **6** (a UI exige 12),
+   HIBP/CAPTCHA/reautenticação/timeouts desligados e sem SMTP próprio. Posso
+   aplicar via conector se você autorizar.
+3. **`AI_API_KEY`** — ausente na Vercel; `/api/ai/*` responde 503 e o gerador por
+   regras cobre o fluxo sozinho.
+4. **Tipografia** — a marca é nova; a família tipográfica continua a mesma.
+
+Não afirmo que o produto está "pronto" ou "seguro": o que está marcado como
+verificado foi executado; o resto está acima.

@@ -12,6 +12,7 @@ import {
   IconEdit,
   IconSend,
   IconShield,
+  IconCompass,
 } from '@/components/icons';
 import type { TrainingProfile, WorkoutPlan } from '@/types/database';
 import {
@@ -156,7 +157,7 @@ export default function CoachPage() {
         return;
       }
 
-      toast.show('Dia regenerado mantendo o restante do plano ✓', 'success');
+      toast.show('Dia regenerado mantendo o restante do plano', 'success');
       if (openPlanId === plan.id) {
         const detail = await loadPlanWithExercises(plan.id);
         setPlanDetail(detail);
@@ -200,7 +201,7 @@ export default function CoachPage() {
       return;
     }
 
-    toast.show('Exercício trocado ✓', 'success');
+    toast.show('Exercício trocado', 'success');
     setSwapTarget(null);
     setSwapItemId(null);
     if (openPlanId) {
@@ -312,7 +313,7 @@ export default function CoachPage() {
 
       {!hasProgram ? (
         <EmptyState
-          icon="🧭"
+          icon={<IconCompass size={28} />}
           title="Nenhum plano para analisar ainda"
           text="Gere seu plano personalizado e volte aqui para ver a justificativa de cada escolha."
           action={

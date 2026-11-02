@@ -1,11 +1,11 @@
-import { t, hasTranslation } from '@/i18n/runtime';
+import { t, getLocale } from '@/i18n/runtime';
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getExerciseBySlug, importExercise, type ExerciseResult } from '@/services/exercises';
 import { useToast } from '@/components/useToast';
 import { Button, Skeleton, Alert } from '@/components/ui';
 import VideoPlayer from '@/components/VideoPlayer';
-import { IconChevronLeft, IconPlus } from '@/components/icons';
+import { IconChevronLeft, IconPlus, IconAlert } from '@/components/icons';
 
 const MUSCLE_LABELS: Record<string, string> = {
   chest: 'Peito',
@@ -116,9 +116,14 @@ export default function ExerciseDetailPage() {
     );
   }
 
-  const instructions = exercise.instructions
-    ? exercise.instructions.split('\n').filter((l) => l.trim())
-    : [];
+  // A fonte entrega `steps` já segmentado. O campo `instructions` é um parágrafo
+  // único, sem quebras de linha: dividi-lo por '\n' rendia um passo só com o
+  // texto inteiro. Preferimos os passos reais e só então caímos no parágrafo.
+  const instructions = exercise.steps?.length
+    ? exercise.steps
+    : exercise.instructions
+      ? exercise.instructions.split('\n').filter((l) => l.trim())
+      : [];
 
   return (
     <>
@@ -143,7 +148,12 @@ export default function ExerciseDetailPage() {
         ))}
       </div>
 
-      {![exercise.name,exercise.instructions??'',exercise.description??''].every(text=>hasTranslation(text)) && <Alert variant="info">Alguns nomes ou instruções ainda não têm tradução revisada e são exibidos no idioma original da fonte. Consulte a demonstração e um profissional se houver dúvida.</Alert>}
+      {exercise.inDatabase && exercise.contentPtReady === false && getLocale() === 'pt-BR' && (
+        <Alert variant="info">
+          As instruções deste exercício ainda estão no idioma original da fonte e aguardam
+          tradução revisada. Consulte a demonstração em vídeo e, em caso de dúvida, um profissional.
+        </Alert>
+      )}
       {exercise.imageUrl?.startsWith('/images/exercises/') && <p className="photo-credit">Foto ilustrativa do movimento: Free Exercise DB (yuhonas), Unlicense. Não pressupõe a carga ou a variação exata.</p>}
       {/* Vídeo sob demanda */}
       <div style={{ marginBottom: 'var(--sp-5)' }}>
@@ -200,6 +210,31 @@ export default function ExerciseDetailPage() {
               </li>
             ))}
           </ol>
+        </div>
+      )}
+
+      {/* Respiração: campo da fonte que antes nunca era exibido. */}
+      {exercise.breathing && (
+        <div className="card" style={{ marginBottom: 'var(--sp-4)' }}>
+          <h2 className="card-title" style={{ marginBottom: 'var(--sp-2)' }}>
+            Respiração
+          </h2>
+          <p className="text-muted">{t(exercise.breathing)}</p>
+        </div>
+      )}
+
+      {/* Erros comuns: orientação de segurança, não diagnóstico. */}
+      {exercise.commonMistakes && exercise.commonMistakes.length > 0 && (
+        <div className="card" style={{ marginBottom: 'var(--sp-4)' }}>
+          <h2 className="card-title" style={{ marginBottom: 'var(--sp-3)' }}>
+            <IconAlert size={17} />
+            Erros comuns
+          </h2>
+          <ul className="stack stack-2 exercise-mistakes">
+            {exercise.commonMistakes.map((mistake, i) => (
+              <li key={i} className="text-muted">{t(mistake)}</li>
+            ))}
+          </ul>
         </div>
       )}
 

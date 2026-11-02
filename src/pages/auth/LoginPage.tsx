@@ -5,7 +5,8 @@ import { authAttemptCooldown } from '@/services/auth';
 import { useAuthStore } from '@/stores/auth';
 import { consumeOAuthCallbackError } from '@/services/oauthCallback';
 import { Button, Field, Alert } from '@/components/ui';
-import { IconGoogle, IconEye, IconEyeOff } from '@/components/icons';
+import { IconGoogle, IconEye, IconEyeOff, IconVideo, IconChart } from '@/components/icons';
+import { BrandMark } from '@/components/BrandMark';
 
 /**
  * Página de entrada.
@@ -75,7 +76,7 @@ export default function LoginPage() {
         <div className="auth-panel">
           <div className="auth-form">
             <div className="brand" style={{ marginBottom: 'var(--sp-5)' }}>
-              <span className="brand-mark">A</span>
+              <span className="brand-mark"><BrandMark size={20} /></span>
               <span>
                 ATHLETIX
                 <span className="brand-sub">Train. Track. Evolve.</span>
@@ -108,7 +109,7 @@ export default function LoginPage() {
       {/* Painel de apresentação — escondido no mobile para focar no formulário */}
       <aside className="auth-hero">
         <div className="brand">
-          <span className="brand-mark">A</span>
+          <span className="brand-mark"><BrandMark size={20} /></span>
           <span>
             ATHLETIX
             <span className="brand-sub">Train. Track. Evolve.</span>
@@ -137,14 +138,14 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="auth-feature">
-              <span className="auth-feature__icon">🎬</span>
+              <span className="auth-feature__icon"><IconVideo size={18} /></span>
               <div>
                 <strong style={{ fontSize: '0.92rem' }}>Exercícios com vídeo real</strong>
                 <div className="text-sm text-muted">Demonstração de execução e erros comuns.</div>
               </div>
             </div>
             <div className="auth-feature">
-              <span className="auth-feature__icon">📊</span>
+              <span className="auth-feature__icon"><IconChart size={18} /></span>
               <div>
                 <strong style={{ fontSize: '0.92rem' }}>Progresso mensurável</strong>
                 <div className="text-sm text-muted">Cargas, volume, recordes e evolução.</div>
@@ -165,7 +166,7 @@ export default function LoginPage() {
             className="brand"
             style={{ marginBottom: 'var(--sp-6)', justifyContent: 'center' }}
           >
-            <span className="brand-mark">A</span>
+            <span className="brand-mark"><BrandMark size={20} /></span>
             <span>
               ATHLETIX
               <span className="brand-sub">Train. Track. Evolve.</span>

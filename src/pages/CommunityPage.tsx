@@ -1,26 +1,38 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
-import { Alert, Avatar, Button, Card, EmptyState, Field, SkeletonList } from '@/components/ui';
-import { IconSearch, IconUsers, IconHeart, IconComment } from '@/components/icons';
+import { Alert, Button, EmptyState, Field, SkeletonList } from '@/components/ui';
+import { IconSearch, IconUsers, IconBookmark } from '@/components/icons';
+import { AthleteResultCard, SharedWorkoutCard } from '@/components/community';
 import {
   loadFeed,
   loadMyLikes,
+  loadMySaves,
+  loadSavedWorkouts,
   searchAthletes,
   toggleLike,
+  toggleSave,
   type AthleteCard,
   type SharedWorkout,
 } from '@/services/community';
-import { formatDate } from '@/utils/format';
 
-type Tab = 'feed' | 'atletas';
+type Tab = 'feed' | 'salvos' | 'atletas';
+
+const PAGE_SIZE = 20;
+
+const TABS: { value: Tab; label: string }[] = [
+  { value: 'feed', label: 'Treinos publicados' },
+  { value: 'salvos', label: 'Salvos' },
+  { value: 'atletas', label: 'Atletas' },
+];
 
 /**
  * Comunidade.
  *
  * Só aparece conteúdo que o autor publicou voluntariamente. Perfis privados e
  * treinos não publicados nunca chegam ao cliente — a filtragem é do servidor.
+ * "Salvos" é uma lista privada: ninguém vê o que você guardou.
  */
 export default function CommunityPage() {
   const { user } = useAuthStore();
@@ -28,11 +40,15 @@ export default function CommunityPage() {
 
   const [tab, setTab] = useState<Tab>('feed');
   const [feed, setFeed] = useState<SharedWorkout[]>([]);
+  const [saved, setSaved] = useState<SharedWorkout[]>([]);
   const [athletes, setAthletes] = useState<AthleteCard[]>([]);
   const [liked, setLiked] = useState<Set<string>>(new Set());
+  const [saves, setSaves] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -47,8 +63,20 @@ export default function CommunityPage() {
     setError('');
     try {
       if (tab === 'feed') {
-        const items = await loadFeed();
+        const items = await loadFeed(PAGE_SIZE);
         setFeed(items);
+        setHasMore(items.length === PAGE_SIZE);
+        const ids = items.map((item) => item.id);
+        const [likes, mySaves] = await Promise.all([
+          loadMyLikes(user.id, ids),
+          loadMySaves(user.id, ids),
+        ]);
+        setLiked(likes);
+        setSaves(mySaves);
+      } else if (tab === 'salvos') {
+        const items = await loadSavedWorkouts(user.id);
+        setSaved(items);
+        setSaves(new Set(items.map((item) => item.id)));
         setLiked(await loadMyLikes(user.id, items.map((item) => item.id)));
       } else {
         setAthletes(await searchAthletes(debounced));
@@ -62,6 +90,35 @@ export default function CommunityPage() {
 
   useEffect(() => { void load(); }, [load]);
 
+  /** Cursor por data: continua de onde parou, sem repetir nem pular publicações. */
+  async function loadMore() {
+    if (loadingMore || feed.length === 0) return;
+    setLoadingMore(true);
+    try {
+      const cursor = feed[feed.length - 1]?.created_at;
+      if (!cursor) return;
+      const items = await loadFeed(PAGE_SIZE, cursor);
+      setHasMore(items.length === PAGE_SIZE);
+      setFeed((prev) => {
+        const seen = new Set(prev.map((item) => item.id));
+        return [...prev, ...items.filter((item) => !seen.has(item.id))];
+      });
+      if (user && items.length > 0) {
+        const ids = items.map((item) => item.id);
+        const [likes, mySaves] = await Promise.all([
+          loadMyLikes(user.id, ids),
+          loadMySaves(user.id, ids),
+        ]);
+        setLiked((prev) => new Set([...prev, ...likes]));
+        setSaves((prev) => new Set([...prev, ...mySaves]));
+      }
+    } catch {
+      toast.show('Não foi possível carregar mais treinos.', 'error');
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   async function handleLike(workout: SharedWorkout) {
     if (!user || busyId) return;
     const wasLiked = liked.has(workout.id);
@@ -73,9 +130,11 @@ export default function CommunityPage() {
       if (wasLiked) next.delete(workout.id); else next.add(workout.id);
       return next;
     });
-    setFeed((prev) => prev.map((item) => item.id === workout.id
+    const bump = (item: SharedWorkout) => item.id === workout.id
       ? { ...item, like_count: item.like_count + (wasLiked ? -1 : 1) }
-      : item));
+      : item;
+    setFeed((prev) => prev.map(bump));
+    setSaved((prev) => prev.map(bump));
 
     const result = await toggleLike(workout.id, user.id, wasLiked);
     if (!result.ok) {
@@ -84,19 +143,39 @@ export default function CommunityPage() {
         if (wasLiked) next.add(workout.id); else next.delete(workout.id);
         return next;
       });
-      setFeed((prev) => prev.map((item) => item.id === workout.id
+      const revert = (item: SharedWorkout) => item.id === workout.id
         ? { ...item, like_count: item.like_count + (wasLiked ? 1 : -1) }
-        : item));
+        : item;
+      setFeed((prev) => prev.map(revert));
+      setSaved((prev) => prev.map(revert));
       toast.show(result.error ?? 'Não foi possível curtir.', 'error');
     }
     setBusyId(null);
   }
 
-  const exerciseCount = useMemo(
-    () => (workout: SharedWorkout) =>
-      (workout.snapshot?.days ?? []).reduce((total, day) => total + (day.exercises?.length ?? 0), 0),
-    [],
-  );
+  async function handleSave(workout: SharedWorkout) {
+    if (!user || busyId) return;
+    const wasSaved = saves.has(workout.id);
+    setBusyId(workout.id);
+
+    const result = await toggleSave(workout.id, user.id, wasSaved);
+    if (!result.ok) {
+      toast.show(result.error ?? 'Não foi possível salvar.', 'error');
+      setBusyId(null);
+      return;
+    }
+    setSaves((prev) => {
+      const next = new Set(prev);
+      if (wasSaved) next.delete(workout.id); else next.add(workout.id);
+      return next;
+    });
+    // Na aba Salvos, remover tira o card da lista imediatamente.
+    if (wasSaved) setSaved((prev) => prev.filter((item) => item.id !== workout.id));
+    toast.show(wasSaved ? 'Removido dos salvos' : 'Treino salvo', 'success');
+    setBusyId(null);
+  }
+
+  const list = tab === 'salvos' ? saved : feed;
 
   return (
     <>
@@ -106,16 +185,16 @@ export default function CommunityPage() {
       </p>
 
       <div className="chips" role="tablist" aria-label="Seções da comunidade" style={{ marginBottom: 'var(--sp-4)' }}>
-        {([['feed', 'Treinos publicados'], ['atletas', 'Atletas']] as [Tab, string][]).map(([value, label]) => (
+        {TABS.map((item) => (
           <button
-            key={value}
+            key={item.value}
             type="button"
             role="tab"
             className="chip"
-            aria-selected={tab === value}
-            onClick={() => setTab(value)}
+            aria-selected={tab === item.value}
+            onClick={() => setTab(item.value)}
           >
-            {label}
+            {item.label}
           </button>
         ))}
       </div>
@@ -141,84 +220,62 @@ export default function CommunityPage() {
 
       {loading ? (
         <SkeletonList count={3} height={120} />
-      ) : tab === 'feed' ? (
-        feed.length === 0 ? (
+      ) : tab === 'atletas' ? (
+        athletes.length === 0 ? (
+          <EmptyState
+            icon={<IconUsers size={28} />}
+            title={debounced ? 'Nenhum atleta encontrado' : 'Nenhum perfil público ainda'}
+            text={debounced
+              ? 'Tente outro nome ou @usuário.'
+              : 'Perfis são privados por padrão. Crie o seu em Perfil para aparecer aqui.'}
+            action={<Link to="/app/profile" className="btn btn-primary">Configurar meu perfil</Link>}
+          />
+        ) : (
+          <div className="stack stack-3">
+            {athletes.map((athlete) => (
+              <AthleteResultCard key={athlete.user_id} athlete={athlete} />
+            ))}
+          </div>
+        )
+      ) : list.length === 0 ? (
+        tab === 'salvos' ? (
+          <EmptyState
+            icon={<IconBookmark size={28} />}
+            title="Nenhum treino salvo"
+            text="Toque em Salvar em qualquer treino publicado para guardá-lo aqui. Sua lista é privada."
+            action={<Button variant="secondary" onClick={() => setTab('feed')}>Ver treinos publicados</Button>}
+          />
+        ) : (
           <EmptyState
             icon={<IconUsers size={28} />}
             title="Ainda não há treinos publicados"
             text="Seja o primeiro: publique um treino seu em Treinos e ele aparece aqui. Nada é compartilhado automaticamente."
             action={<Link to="/app/workouts" className="btn btn-primary">Ver meus treinos</Link>}
           />
-        ) : (
+        )
+      ) : (
+        <>
           <div className="stack stack-4">
-            {feed.map((workout) => (
-              <Card key={workout.id}>
-                <div className="row row-wrap" style={{ gap: 'var(--sp-3)', marginBottom: 'var(--sp-3)' }}>
-                  <Avatar name={workout.author?.display_name} src={workout.author?.avatar_url} size="md" />
-                  <div className="grow" style={{ minWidth: 0 }}>
-                    <strong className="truncate">{workout.author?.display_name ?? 'Atleta'}</strong>
-                    <p className="text-xs text-dim">
-                      {workout.author?.handle ? `@${workout.author.handle} · ` : ''}
-                      {formatDate(workout.created_at)}
-                    </p>
-                  </div>
-                </div>
-
-                <h2 className="card-title">{workout.title}</h2>
-                {workout.description && (
-                  <p className="text-sm text-muted" style={{ marginTop: 6 }}>{workout.description}</p>
-                )}
-
-                <div className="row row-wrap" style={{ gap: 6, marginTop: 'var(--sp-3)' }}>
-                  <span className="badge">{workout.snapshot?.days?.length ?? 0} dia(s)</span>
-                  <span className="badge">{exerciseCount(workout)} exercícios</span>
-                </div>
-
-                <div className="row row-wrap" style={{ gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void handleLike(workout)}
-                    disabled={busyId === workout.id}
-                    aria-pressed={liked.has(workout.id)}
-                    aria-label={liked.has(workout.id) ? 'Remover curtida' : 'Curtir treino'}
-                  >
-                    <IconHeart size={15} />
-                    {workout.like_count}
-                  </Button>
-                  <Link to={`/app/community/${workout.id}`} className="btn btn-secondary btn-sm">
-                    <IconComment size={15} />
-                    Ver treino · {workout.comment_count}
-                  </Link>
-                </div>
-              </Card>
+            {list.map((workout) => (
+              <SharedWorkoutCard
+                key={workout.id}
+                workout={workout}
+                liked={liked.has(workout.id)}
+                saved={saves.has(workout.id)}
+                busy={busyId === workout.id}
+                onLike={() => void handleLike(workout)}
+                onSave={() => void handleSave(workout)}
+              />
             ))}
           </div>
-        )
-      ) : athletes.length === 0 ? (
-        <EmptyState
-          icon={<IconUsers size={28} />}
-          title={debounced ? 'Nenhum atleta encontrado' : 'Nenhum perfil público ainda'}
-          text={debounced
-            ? 'Tente outro nome ou @usuário.'
-            : 'Perfis são privados por padrão. Crie o seu em Perfil para aparecer aqui.'}
-          action={<Link to="/app/profile" className="btn btn-primary">Configurar meu perfil</Link>}
-        />
-      ) : (
-        <div className="stack stack-3">
-          {athletes.map((athlete) => (
-            <Card key={athlete.user_id}>
-              <div className="row" style={{ gap: 'var(--sp-3)' }}>
-                <Avatar name={athlete.display_name} src={athlete.avatar_url} size="md" />
-                <div className="grow" style={{ minWidth: 0 }}>
-                  <strong className="truncate">{athlete.display_name}</strong>
-                  <p className="text-xs text-dim">@{athlete.handle}</p>
-                  {athlete.goals && <p className="text-sm text-muted" style={{ marginTop: 4 }}>{athlete.goals}</p>}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+          {tab === 'feed' && hasMore && (
+            <div style={{ marginTop: 'var(--sp-4)', textAlign: 'center' }}>
+              <Button variant="secondary" onClick={() => void loadMore()} loading={loadingMore}>
+                Carregar mais treinos
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </>
   );

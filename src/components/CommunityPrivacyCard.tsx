@@ -178,7 +178,20 @@ export function CommunityPrivacyCard({ userId }: { userId: string }) {
           />
           <span>
             Permitir que eu publique treinos
-            <span className="field-hint">Cada treino ainda precisa ser publicado individualmente por você.</span>
+            <span className="field-hint">Cada treino ainda precisa ser publicado individualmente por você. Desligar esconde os já publicados.</span>
+          </span>
+        </label>
+
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={form.show_progress}
+            onChange={(event) => setForm({ ...form, show_progress: event.target.checked })}
+            disabled={!form.is_public}
+          />
+          <span>
+            Mostrar minha consistência
+            <span className="field-hint">Compartilha apenas a contagem de treinos concluídos. Nunca carga, peso, medidas ou dieta.</span>
           </span>
         </label>
 

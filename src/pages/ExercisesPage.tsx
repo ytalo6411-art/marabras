@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { searchExercises, getCategories, type ExerciseResult } from '@/services/exercises';
 import { Button, EmptyState, SkeletonList, Field } from '@/components/ui';
-import { IconSearch, IconX } from '@/components/icons';
+import { IconSearch, IconX, IconDumbbell } from '@/components/icons';
 import type { ExerciseCategory } from '@/types/database';
 
 const DIFFICULTY_LABELS: Record<string, string> = {
@@ -224,7 +224,7 @@ export default function ExercisesPage() {
         <SkeletonList count={6} height={120} />
       ) : results.length === 0 ? (
         <EmptyState
-          icon="🔍"
+          icon={<IconSearch size={28} />}
           title="Nenhum exercício encontrado"
           text="Tente outro termo ou limpe os filtros."
           action={
@@ -252,8 +252,8 @@ export default function ExercisesPage() {
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <span style={{ fontSize: '1.6rem' }} aria-hidden="true">
-                      🏋️
+                    <span style={{ display: 'grid', placeItems: 'center', color: 'var(--text-dim)' }} aria-hidden="true">
+                      <IconDumbbell size={26} />
                     </span>
                   )}
                 </div>

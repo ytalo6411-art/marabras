@@ -2,15 +2,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
-import { Alert, Avatar, Button, Card, EmptyState, Field, Modal, SkeletonList } from '@/components/ui';
+import { Alert, Avatar, Button, Card, EmptyState, Field, SkeletonList } from '@/components/ui';
 import { ExerciseLine } from '@/components/training';
-import { IconChevronLeft, IconTrash, IconFlag, IconBlock, IconComment } from '@/components/icons';
+import { IconChevronLeft, IconTrash, IconFlag, IconBlock, IconComment, IconBookmark, IconBookmarkFilled } from '@/components/icons';
+import { ReportDialog, WorkoutAuthor } from '@/components/community';
 import {
   addComment,
   blockAthlete,
   deleteComment,
   loadComments,
   loadSharedWorkout,
+  loadMySaves,
+  toggleSave,
   reportContent,
   unpublishWorkout,
   type ReportReason,
@@ -18,14 +21,6 @@ import {
   type WorkoutComment,
 } from '@/services/community';
 import { formatDate } from '@/utils/format';
-
-const REPORT_REASONS: { value: ReportReason; label: string }[] = [
-  { value: 'spam', label: 'Spam ou propaganda' },
-  { value: 'harassment', label: 'Assédio ou ofensa' },
-  { value: 'inappropriate', label: 'Conteúdo inadequado' },
-  { value: 'dangerous', label: 'Orientação perigosa' },
-  { value: 'other', label: 'Outro motivo' },
-];
 
 /** Treino publicado por outro atleta: leitura, comentários e denúncias. */
 export default function SharedWorkoutPage() {
@@ -41,9 +36,9 @@ export default function SharedWorkoutPage() {
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [reason, setReason] = useState<ReportReason>('spam');
-  const [details, setDetails] = useState('');
   const [reporting, setReporting] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -53,12 +48,15 @@ export default function SharedWorkoutPage() {
       const [item, list] = await Promise.all([loadSharedWorkout(id), loadComments(id)]);
       setWorkout(item);
       setComments(list);
+      if (item && user) {
+        setSaved((await loadMySaves(user.id, [item.id])).has(item.id));
+      }
     } catch {
       setError('Não foi possível carregar este treino.');
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -98,7 +96,17 @@ export default function SharedWorkoutPage() {
     navigate('/app/community');
   }
 
-  async function handleReport() {
+  async function handleSave() {
+    if (!user || !workout || saving) return;
+    setSaving(true);
+    const result = await toggleSave(workout.id, user.id, saved);
+    setSaving(false);
+    if (!result.ok) { toast.show(result.error ?? 'Não foi possível salvar.', 'error'); return; }
+    setSaved(!saved);
+    toast.show(saved ? 'Removido dos salvos' : 'Treino salvo', 'success');
+  }
+
+  async function handleReport(reason: ReportReason, details: string) {
     if (!user || !workout || reporting) return;
     setReporting(true);
     const result = await reportContent({
@@ -110,7 +118,6 @@ export default function SharedWorkoutPage() {
     setReporting(false);
     if (!result.ok) { toast.show(result.error ?? 'Erro ao denunciar.', 'error'); return; }
     setReportOpen(false);
-    setDetails('');
     toast.show('Denúncia enviada. Nossa equipe vai analisar.', 'success');
   }
 
@@ -140,15 +147,8 @@ export default function SharedWorkoutPage() {
       </Link>
 
       <Card style={{ marginBottom: 'var(--sp-4)' }}>
-        <div className="row row-wrap" style={{ gap: 'var(--sp-3)', marginBottom: 'var(--sp-3)' }}>
-          <Avatar name={workout.author?.display_name} src={workout.author?.avatar_url} size="md" />
-          <div className="grow" style={{ minWidth: 0 }}>
-            <strong className="truncate">{workout.author?.display_name ?? 'Atleta'}</strong>
-            <p className="text-xs text-dim">
-              {workout.author?.handle ? `@${workout.author.handle} · ` : ''}
-              {formatDate(workout.created_at)}
-            </p>
-          </div>
+        <div style={{ marginBottom: 'var(--sp-3)' }}>
+          <WorkoutAuthor workout={workout} />
         </div>
 
         <h1 className="page-title" style={{ fontSize: '1.4rem' }}>{workout.title}</h1>
@@ -162,6 +162,16 @@ export default function SharedWorkoutPage() {
             </Button>
           ) : (
             <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void handleSave()}
+                loading={saving}
+                aria-pressed={saved}
+              >
+                {saved ? <IconBookmarkFilled size={15} /> : <IconBookmark size={15} />}
+                {saved ? 'Salvo' : 'Salvar'}
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => setReportOpen(true)}>
                 <IconFlag size={15} />
                 Denunciar
@@ -245,36 +255,13 @@ export default function SharedWorkoutPage() {
         </Card>
       </div>
 
-      <Modal
+      <ReportDialog
         open={reportOpen}
         onClose={() => setReportOpen(false)}
-        title="Denunciar publicação"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setReportOpen(false)}>Cancelar</Button>
-            <Button variant="danger" onClick={() => void handleReport()} loading={reporting}>Enviar denúncia</Button>
-          </>
-        }
-      >
-        <div className="stack stack-3">
-          <Field label="Motivo" htmlFor="report-reason">
-            <select id="report-reason" value={reason} onChange={(event) => setReason(event.target.value as ReportReason)}>
-              {REPORT_REASONS.map((item) => (
-                <option key={item.value} value={item.value}>{item.label}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Detalhes (opcional)" htmlFor="report-details" hint="Máximo de 500 caracteres.">
-            <textarea
-              id="report-details"
-              value={details}
-              onChange={(event) => setDetails(event.target.value)}
-              maxLength={500}
-              rows={3}
-            />
-          </Field>
-        </div>
-      </Modal>
+        onSubmit={(reason, details) => void handleReport(reason, details)}
+        loading={reporting}
+        target="workout"
+      />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { Card, EmptyState, SkeletonList, Progress as ProgressBar } from '@/compo
 import { formatDate, formatDecimal, formatNumber } from '@/utils/format';
 import type { WorkoutSession, BodyMeasurement, PersonalRecord, Exercise } from '@/types/database';
 
+import { IconChart, IconRuler, IconTarget } from '@/components/icons';
 /**
  * Evolução: gráficos de treino, medidas corporais e recordes.
  *
@@ -85,7 +86,7 @@ export default function ProgressPage() {
           </h2>
           {sessions.length === 0 ? (
             <EmptyState
-              icon="📊"
+              icon={<IconChart size={28} />}
               title="Sem sessões concluídas"
               text="Finalize treinos para ver seu volume acumulado."
             />
@@ -125,7 +126,7 @@ export default function ProgressPage() {
           </h2>
           {measurements.length === 0 ? (
             <EmptyState
-              icon="📏"
+              icon={<IconRuler size={28} />}
               title="Nenhuma medida registrada"
               text="Registre peso e medidas para acompanhar a evolução do composição corporal."
             />
@@ -141,7 +142,7 @@ export default function ProgressPage() {
           </h2>
           {records.length === 0 ? (
             <EmptyState
-              icon="🎯"
+              icon={<IconTarget size={28} />}
               title="Nenhum recorde ainda"
               text="Seus melhores resultados aparecem aqui automaticamente."
             />

@@ -585,6 +585,10 @@ h1, h2, h3, h4, h5 {
 }
 
 .chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   flex-shrink: 0;
   min-height: 36px;
   padding: 0 var(--sp-3);
@@ -1604,9 +1608,15 @@ table.data tr:last-child td {
 }
 
 .option-card__icon {
-  font-size: 1.15rem;
-  line-height: 1.3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.option-card--selected .option-card__icon {
+  color: var(--accent);
 }
 
 .option-card__body {
@@ -2478,3 +2488,132 @@ label.row:has(input[type="checkbox"]) { min-height:44px; gap:10px; }
   color: var(--text-dim);
   pointer-events: none;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Comunidade: autoria e cards navegáveis
+   O link inteiro é o alvo de toque, com foco visível pelo :focus-visible global.
+   ───────────────────────────────────────────────────────────────────────────── */
+.community-author {
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--r-md, 10px);
+  min-height: 44px;
+}
+.community-author:hover strong { text-decoration: underline; }
+
+.community-athlete-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.community-athlete-card:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+.community-athlete-card:hover .card-title { text-decoration: underline; }
+
+/* Lista de erros comuns do exercício: marcador próprio, texto que quebra linha. */
+.exercise-mistakes { list-style: none; }
+.exercise-mistakes li {
+  position: relative;
+  padding-left: 18px;
+  overflow-wrap: anywhere;
+}
+.exercise-mistakes li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warning);
+}
+
+/* ─── Reordenação dos dias do programa ─────────────────────────────────────── */
+.plan-day-slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  border-radius: var(--r-md);
+  transition: opacity var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.plan-day-slot--editing {
+  outline: 1px dashed var(--border-strong);
+  outline-offset: 3px;
+}
+
+.plan-day-slot--dragging { opacity: 0.5; }
+
+.plan-day-slot--over {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.plan-day-slot__controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.plan-day-slot__grip {
+  display: inline-flex;
+  color: var(--text-dim);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+/* Alvo de toque de 44×44: reordenar também funciona sem arrastar. */
+.plan-day-slot__move {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.plan-day-slot__move:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.plan-day-slot__move:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Tooltip ──────────────────────────────────────────────────────────────── */
+.tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-sm);
+}
+
+.tooltip-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: var(--z-toast);
+  transform: translate(-50%, -100%);
+  max-width: 220px;
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-3, var(--surface-2));
+  color: var(--text);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  font-weight: 500;
+  pointer-events: none;
+  box-shadow: var(--shadow-sm, 0 2px 8px rgb(0 0 0 / 0.18));
+}
+
+.tooltip--bottom { transform: translate(-50%, 0); }

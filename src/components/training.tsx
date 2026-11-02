@@ -12,9 +12,10 @@ import { useAuthStore } from '@/stores/auth';
 import { startSession } from '@/services/workoutSession';
 import { supabase } from '@/lib/supabase';
 import { useToast } from './useToast';
+import { Tooltip } from './ui';
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import { IconChevronRight, IconClock, IconDumbbell, IconPlay, IconSparkles } from './icons';
+import { IconChevronRight, IconClock, IconDumbbell, IconPlay, IconSparkles, IconCheck } from './icons';
 import type { WorkoutPlan } from '@/types/database';
 import { WEEKDAYS_SHORT, planWeekdayLabel } from '@/services/trainingOverview';
 
@@ -132,7 +133,7 @@ export function OptionCard({
         {hint && <span className="option-card__hint">{hint}</span>}
       </span>
       <span className="option-card__check" aria-hidden="true">
-        {selected ? '✓' : ''}
+        {selected ? <IconCheck size={12} /> : null}
       </span>
     </button>
   );
@@ -147,16 +148,18 @@ export function OptionGrid({ children }: { children: ReactNode }) {
 export function PlanSourceBadge({ source }: { source: WorkoutPlan['generated_by'] }) {
   if (source === 'ai') {
     return (
-      <span className="badge badge-cyan" title="Plano revisado e validado a partir de uma sugestão de IA">
-        <IconSparkles size={12} style={{ verticalAlign: '-2px' }} /> IA validada
-      </span>
+      <Tooltip label="Plano revisado e validado a partir de uma sugestão de IA">
+        <span className="badge badge-cyan">
+          <IconSparkles size={12} style={{ verticalAlign: '-2px' }} /> IA validada
+        </span>
+      </Tooltip>
     );
   }
   if (source === 'rules') {
     return (
-      <span className="badge badge-lime" title="Plano montado por regras de treinamento e catálogo do ATHLETIX">
-        Plano por regras
-      </span>
+      <Tooltip label="Plano montado por regras de treinamento e catálogo do ATHLETIX">
+        <span className="badge badge-lime">Plano por regras</span>
+      </Tooltip>
     );
   }
   if (source === 'template') {

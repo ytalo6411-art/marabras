@@ -15,6 +15,8 @@ import {
   IconPlay,
   IconClock,
   IconChevronRight,
+  IconClipboard,
+  IconCalendar,
 } from '@/components/icons';
 import type {
   DashboardSummary,
@@ -287,7 +289,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <EmptyState
-            icon="📋"
+            icon={<IconClipboard size={28} />}
             title="Nenhum treino programado"
             text="Gere seu plano semanal para ter um treino recomendado todos os dias."
             action={
@@ -314,7 +316,7 @@ export default function DashboardPage() {
 
         {plans.length === 0 ? (
           <EmptyState
-            icon="🗓️"
+            icon={<IconCalendar size={28} />}
             title="Sua semana ainda está livre"
             text="Escolha um modelo ou personalize para receber a divisão semanal."
             action={
@@ -422,7 +424,7 @@ export default function DashboardPage() {
 
           {recentSessions.length === 0 ? (
             <EmptyState
-              icon="💪"
+              icon={<IconDumbbell size={28} />}
               title="Nenhum treino concluído ainda"
               text="Seu primeiro treino aparece aqui assim que você finalizar."
             />
@@ -457,7 +459,7 @@ export default function DashboardPage() {
 
           {records.length === 0 ? (
             <EmptyState
-              icon="🎯"
+              icon={<IconTarget size={28} />}
               title="Sem recordes ainda"
               text="Seus melhores pesos e repetições aparecem aqui."
             />

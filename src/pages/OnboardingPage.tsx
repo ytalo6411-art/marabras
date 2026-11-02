@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/useToast';
 import { Alert, Button, Card, Field, Progress, Skeleton } from '@/components/ui';
 import { OptionCard, OptionGrid } from '@/components/training';
+import { OptionIcon } from '@/components/optionIcons';
 import {
   IconChevronLeft,
   IconCheck,
@@ -14,6 +15,7 @@ import {
   IconHeart,
   IconShield,
   IconEdit,
+  IconX,
 } from '@/components/icons';
 import {
   AGE_RANGE_OPTIONS,
@@ -283,7 +285,7 @@ export default function OnboardingPage() {
       }
 
       toast.show(
-        usedAi ? 'Plano gerado com IA e validado ✓' : 'Plano personalizado criado ✓',
+        usedAi ? 'Plano gerado com IA e validado' : 'Plano personalizado criado',
         'success',
       );
 
@@ -467,7 +469,7 @@ export default function OnboardingPage() {
               {GOAL_OPTIONS.map((option) => (
                 <OptionCard
                   key={option.value}
-                  icon={<span aria-hidden="true">{option.icon}</span>}
+                  icon={<OptionIcon name={option.icon} />}
                   label={option.label}
                   hint={option.hint}
                   multiple
@@ -512,7 +514,7 @@ export default function OnboardingPage() {
               {ENVIRONMENT_OPTIONS.map((option) => (
                 <OptionCard
                   key={option.value}
-                  icon={<span aria-hidden="true">{option.icon}</span>}
+                  icon={<OptionIcon name={option.icon} />}
                   label={option.label}
                   hint={option.hint}
                   selected={answers.environment === option.value}
@@ -789,7 +791,7 @@ export default function OnboardingPage() {
                       )
                     }
                   >
-                    {item} ✕
+                    {item} <IconX size={12} />
                   </button>
                 ))}
               </div>

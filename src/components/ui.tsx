@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -9,7 +10,7 @@ import {
 import { createPortal } from 'react-dom';
 import { ToastContext } from './toastContext';
 import { translate } from '@/i18n/runtime';
-import { IconCheck, IconX } from './icons';
+import { IconCheck, IconX, IconInbox } from './icons';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Button
@@ -146,7 +147,7 @@ export function SkeletonList({ count = 3, height = 80 }: { count?: number; heigh
    ───────────────────────────────────────────────────────────────────────────── */
 
 export function EmptyState({
-  icon = '📭',
+  icon = <IconInbox size={28} />,
   title,
   text,
   action,
@@ -417,5 +418,94 @@ export function ClickableCard({
     <button className={`card card-interactive ${className}`} onClick={onClick} {...rest}>
       {children}
     </button>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Tooltip
+
+   Dica curta e não essencial. Regras que o componente respeita:
+   • nunca guarda informação única — o conteúdo precisa existir em outro lugar
+     (rótulo, hint ou texto), porque tooltip não é lido por leitor de tela em
+     navegação por toque;
+   • abre no hover E no foco do teclado, fecha com Escape;
+   • renderiza em portal, então não é cortado por `overflow` de card/modal;
+   • `aria-describedby` liga a dica ao gatilho sem duplicar o rótulo acessível.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+export function Tooltip({
+  label,
+  children,
+  side = 'top',
+}: {
+  label: string;
+  children: ReactNode;
+  side?: 'top' | 'bottom';
+}) {
+  const id = useId();
+  const triggerRef = useRef<HTMLSpanElement>(null);
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState<{ left: number; top: number } | null>(null);
+
+  const place = useCallback(() => {
+    const node = triggerRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    // Clamp para a dica não sair da viewport em telas estreitas.
+    const half = 110;
+    const left = Math.min(
+      Math.max(rect.left + rect.width / 2, half + 8),
+      window.innerWidth - half - 8,
+    );
+    setCoords({
+      left,
+      top: side === 'top' ? rect.top - 8 : rect.bottom + 8,
+    });
+  }, [side]);
+
+  const show = useCallback(() => { place(); setOpen(true); }, [place]);
+  const hide = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') hide(); };
+    // Reposicionar em vez de deixar a dica flutuando longe do gatilho.
+    const onMove = () => place();
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onMove, true);
+    window.addEventListener('resize', onMove);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onMove, true);
+      window.removeEventListener('resize', onMove);
+    };
+  }, [open, hide, place]);
+
+  return (
+    <>
+      <span
+        ref={triggerRef}
+        className="tooltip-trigger"
+        tabIndex={0}
+        aria-describedby={open ? id : undefined}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+      >
+        {children}
+      </span>
+      {open && coords && createPortal(
+        <span
+          role="tooltip"
+          id={id}
+          className={`tooltip tooltip--${side}`}
+          style={{ left: coords.left, top: coords.top }}
+        >
+          {translate(label)}
+        </span>,
+        document.body,
+      )}
+    </>
   );
 }

@@ -13,6 +13,7 @@ import {
   SkeletonList,
 } from '@/components/ui';
 import { PlanDayCard, PlanSourceBadge } from '@/components/training';
+import { ProgramDayList } from '@/components/ProgramDayList';
 import {
   IconPlus,
   IconDumbbell,
@@ -22,7 +23,10 @@ import {
   IconChevronRight,
   IconPlay,
   IconClock,
-  IconTarget, IconShare,
+  IconTarget,
+  IconShare,
+  IconSearch,
+  IconChart,
 } from '@/components/icons';
 import { formatRelative } from '@/utils/format';
 import { LEVEL_LABELS, ENVIRONMENT_LABELS, EQUIPMENT_LABELS } from '@/data/exerciseTaxonomy';
@@ -258,7 +262,7 @@ export default function WorkoutsPage() {
           'info',
         );
       } else {
-        toast.show('Plano criado com sucesso ✓', 'success');
+        toast.show('Plano criado com sucesso', 'success');
       }
 
       changeTab('plano');
@@ -386,7 +390,7 @@ export default function WorkoutsPage() {
           {!hasPlan ? (
             <>
               <EmptyState
-                icon="🎯"
+                icon={<IconTarget size={28} />}
                 title="Você ainda não tem um plano"
                 text="Responda ao questionário de personalização e receba um programa semanal montado a partir do seu objetivo, equipamentos e tempo disponível."
                 action={
@@ -464,11 +468,7 @@ export default function WorkoutsPage() {
                     </div>
                   </div>
 
-                  <div className="plan-days">
-                    {group.plans.map((plan) => (
-                      <PlanDayCard key={plan.id} plan={plan} compact />
-                    ))}
-                  </div>
+                  <ProgramDayList plans={group.plans} onChanged={load} />
                 </Card>
               ))}
 
@@ -551,7 +551,7 @@ export default function WorkoutsPage() {
 
           {filteredTemplates.length === 0 ? (
             <EmptyState
-              icon="🔎"
+              icon={<IconSearch size={28} />}
               title="Nenhum modelo com esses filtros"
               text="Tente combinar outro objetivo, nível ou ambiente."
               action={
@@ -629,7 +629,7 @@ export default function WorkoutsPage() {
         <section aria-label="Histórico de sessões">
           {sessions.length === 0 ? (
             <EmptyState
-              icon="📊"
+              icon={<IconChart size={28} />}
               title="Sem sessões registradas"
               text="Finalize um treino para começar seu histórico."
             />

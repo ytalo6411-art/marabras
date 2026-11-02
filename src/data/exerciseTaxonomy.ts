@@ -244,6 +244,15 @@ export function inferMovementPattern(name: string, primaryMuscle: string): Movem
 
 /* ─── Rótulos de opções do questionário ────────────────────────────────────── */
 
+/**
+ * Chave de ícone, não glifo. A camada de dados não depende de React: quem
+ * renderiza resolve a chave para o componente vetorial em `optionIcons`.
+ * Assim o questionário usa o mesmo traço do resto do produto, sem emoji.
+ */
+export type OptionIconName =
+  | 'dumbbell' | 'barbell' | 'flame' | 'run' | 'mobility' | 'scale'
+  | 'calendar' | 'bolt' | 'building' | 'home' | 'body' | 'tree' | 'map-pin';
+
 export const EXPERIENCE_OPTIONS: {
   value: TrainingExperience;
   label: string;
@@ -259,16 +268,16 @@ export const GOAL_OPTIONS: {
   value: TrainingGoal;
   label: string;
   hint: string;
-  icon: string;
+  icon: OptionIconName;
 }[] = [
-  { value: 'hypertrophy', label: 'Ganhar massa muscular', hint: 'Volume e progressão de carga', icon: '💪' },
-  { value: 'strength', label: 'Desenvolver força', hint: 'Cargas altas, poucas repetições', icon: '🏋️' },
-  { value: 'conditioning', label: 'Melhorar o condicionamento', hint: 'Fôlego e capacidade de trabalho', icon: '🔥' },
-  { value: 'endurance', label: 'Aumentar a resistência', hint: 'Aguentar mais tempo e mais séries', icon: '🏃' },
-  { value: 'mobility', label: 'Melhorar a mobilidade', hint: 'Amplitude e controle articular', icon: '🧘' },
-  { value: 'fat_loss', label: 'Reduzir gordura corporal', hint: 'Com hábitos sustentáveis, sem dieta milagrosa', icon: '⚖️' },
-  { value: 'active_routine', label: 'Manter uma rotina ativa', hint: 'Consistência acima de intensidade', icon: '📅' },
-  { value: 'sport_performance', label: 'Desempenho esportivo', hint: 'Força e potência para o seu esporte', icon: '⚡' },
+  { value: 'hypertrophy', label: 'Ganhar massa muscular', hint: 'Volume e progressão de carga', icon: 'dumbbell' },
+  { value: 'strength', label: 'Desenvolver força', hint: 'Cargas altas, poucas repetições', icon: 'barbell' },
+  { value: 'conditioning', label: 'Melhorar o condicionamento', hint: 'Fôlego e capacidade de trabalho', icon: 'flame' },
+  { value: 'endurance', label: 'Aumentar a resistência', hint: 'Aguentar mais tempo e mais séries', icon: 'run' },
+  { value: 'mobility', label: 'Melhorar a mobilidade', hint: 'Amplitude e controle articular', icon: 'mobility' },
+  { value: 'fat_loss', label: 'Reduzir gordura corporal', hint: 'Com hábitos sustentáveis, sem dieta milagrosa', icon: 'scale' },
+  { value: 'active_routine', label: 'Manter uma rotina ativa', hint: 'Consistência acima de intensidade', icon: 'calendar' },
+  { value: 'sport_performance', label: 'Desempenho esportivo', hint: 'Força e potência para o seu esporte', icon: 'bolt' },
 ];
 
 export const GOAL_LABELS: Record<TrainingGoal, string> = Object.fromEntries(
@@ -279,13 +288,13 @@ export const ENVIRONMENT_OPTIONS: {
   value: TrainingEnvironment;
   label: string;
   hint: string;
-  icon: string;
+  icon: OptionIconName;
 }[] = [
-  { value: 'gym', label: 'Academia completa', hint: 'Máquinas, barras e halteres', icon: '🏢' },
-  { value: 'home_equipment', label: 'Casa com equipamentos', hint: 'Halteres, elásticos, barra', icon: '🏠' },
-  { value: 'home_bodyweight', label: 'Casa sem equipamentos', hint: 'Só o peso do corpo e um espaço', icon: '🛋️' },
-  { value: 'outdoor', label: 'Parque / área externa', hint: 'Barras, escadas, pista', icon: '🌳' },
-  { value: 'other', label: 'Outro ambiente', hint: 'Hotel, trabalho, espaço pequeno', icon: '📍' },
+  { value: 'gym', label: 'Academia completa', hint: 'Máquinas, barras e halteres', icon: 'building' },
+  { value: 'home_equipment', label: 'Casa com equipamentos', hint: 'Halteres, elásticos, barra', icon: 'home' },
+  { value: 'home_bodyweight', label: 'Casa sem equipamentos', hint: 'Só o peso do corpo e um espaço', icon: 'body' },
+  { value: 'outdoor', label: 'Parque / área externa', hint: 'Barras, escadas, pista', icon: 'tree' },
+  { value: 'other', label: 'Outro ambiente', hint: 'Hotel, trabalho, espaço pequeno', icon: 'map-pin' },
 ];
 
 export const ENVIRONMENT_LABELS: Record<TrainingEnvironment, string> = Object.fromEntries(

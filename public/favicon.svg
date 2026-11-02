@@ -1,5 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ATHLETIX">
-  <rect width="64" height="64" rx="16" fill="#05070a"/>
-  <path d="M16 42V22h6.5l9.5 12.5V22H38v20h-6.5L22 29.5V42h-6Z" fill="#ff4d2e"/>
-  <circle cx="46" cy="24" r="5" fill="#c6f432"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="ATHLETIX">
+  <rect width="32" height="32" rx="8" fill="#05070a"/>
+  <!-- A de ascensão: pernas + travessa em barra de halteres. -->
+  <g fill="#ff4d2e">
+    <path d="M16 5.2 26.2 27.4h-5.5L16 16.2l-4.7 11.2H5.8L16 5.2Z"/>
+    <path d="M11.4 19.6h9.2v3.1h-9.2z"/>
+    <path d="M8.9 18.1h1.9v6.1H8.9zM21.2 18.1h1.9v6.1h-1.9z"/>
+  </g>
+  <!-- Ápice: o próximo degrau. -->
+  <circle cx="16" cy="7.6" r="2.4" fill="#c6f432"/>
 </svg>

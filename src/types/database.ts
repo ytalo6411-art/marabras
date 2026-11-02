@@ -150,6 +150,14 @@ export interface Exercise {
   steps: string[] | null;
   breathing: string | null;
   common_mistakes: string[] | null;
+  /** true quando o conteúdo tem tradução pt-BR revisada. */
+  content_pt_ready: boolean;
+  /** Texto original da fonte, preservado antes da tradução para pt-BR. */
+  description_en: string | null;
+  instructions_en: string | null;
+  steps_en: string[] | null;
+  breathing_en: string | null;
+  common_mistakes_en: string[] | null;
   difficulty: DifficultyLevel;
   primary_muscle: string;
   secondary_muscles: string[] | null;

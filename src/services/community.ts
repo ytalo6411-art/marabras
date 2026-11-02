@@ -388,3 +388,157 @@ export async function reportContent(params: {
   if (error) return { ok: false, error: 'Não foi possível enviar a denúncia.' };
   return { ok: true };
 }
+
+/* ─── Salvar treinos de outros atletas ──────────────────────────────────────── */
+
+/**
+ * A lista de salvos é privada: a RLS só devolve as linhas do próprio usuário.
+ * Salvar exige que o treino esteja visível — o servidor recusa id adivinhado.
+ */
+export async function toggleSave(
+  workoutId: string,
+  userId: string,
+  saved: boolean,
+): Promise<CommunityResult> {
+  if (saved) {
+    const { error } = await supabase
+      .from('workout_saves')
+      .delete()
+      .eq('workout_id', workoutId)
+      .eq('user_id', userId);
+    if (error) return { ok: false, error: 'Não foi possível remover dos salvos.' };
+    return { ok: true };
+  }
+  const { error } = await supabase
+    .from('workout_saves')
+    .insert({ workout_id: workoutId, user_id: userId });
+  if (error) {
+    return { ok: false, error: 'Não foi possível salvar este treino. Ele pode ter se tornado privado.' };
+  }
+  return { ok: true };
+}
+
+export async function loadMySaves(userId: string, workoutIds: string[]): Promise<Set<string>> {
+  if (workoutIds.length === 0) return new Set();
+  const { data } = await supabase
+    .from('workout_saves')
+    .select('workout_id')
+    .eq('user_id', userId)
+    .in('workout_id', workoutIds);
+  return new Set((data ?? []).map((row) => String(row.workout_id)));
+}
+
+/** Aba "Salvos": treinos que o usuário guardou, do mais recente ao mais antigo. */
+export async function loadSavedWorkouts(userId: string): Promise<SharedWorkout[]> {
+  const { data } = await supabase
+    .from('workout_saves')
+    .select('workout_id, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const ids = (data ?? []).map((row) => String(row.workout_id));
+  if (ids.length === 0) return [];
+
+  // A leitura passa pela RLS de shared_workouts: o que ficou privado depois de
+  // salvo simplesmente não volta, em vez de aparecer quebrado.
+  const { data: workouts } = await supabase.from('shared_workouts').select('*').in('id', ids);
+  const rows = (workouts ?? []) as SharedWorkout[];
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const ordered = ids.map((id) => byId.get(id)).filter((row): row is SharedWorkout => Boolean(row));
+
+  const authorIds = [...new Set(ordered.map((row) => row.user_id))];
+  const { data: authors } = await supabase
+    .from('athlete_directory')
+    .select('user_id, handle, display_name, bio, goals, avatar_url, show_workouts, show_progress')
+    .in('user_id', authorIds);
+  const authorById = new Map((authors ?? []).map((a) => [a.user_id, a as AthleteCard]));
+  return ordered.map((row) => ({ ...row, author: authorById.get(row.user_id) ?? null }));
+}
+
+/* ─── Perfil público de um atleta ───────────────────────────────────────────── */
+
+export interface PublicAthleteProgress {
+  user_id: string;
+  sessions_completed: number;
+  sessions_last_30d: number;
+  athlete_since: string;
+}
+
+export async function loadAthleteByHandle(handle: string): Promise<AthleteCard | null> {
+  const clean = normalizeHandle(handle);
+  if (!clean) return null;
+  const { data } = await supabase
+    .from('athlete_directory')
+    .select('user_id, handle, display_name, bio, goals, avatar_url, show_workouts, show_progress')
+    .eq('handle', clean)
+    .maybeSingle();
+  return (data as AthleteCard) ?? null;
+}
+
+/** Só agregados. A view não expõe carga, peso, medidas, datas ou nomes de planos. */
+export async function loadPublicProgress(userId: string): Promise<PublicAthleteProgress | null> {
+  const { data } = await supabase
+    .from('athlete_public_progress')
+    .select('user_id, sessions_completed, sessions_last_30d, athlete_since')
+    .eq('user_id', userId)
+    .maybeSingle();
+  return (data as PublicAthleteProgress) ?? null;
+}
+
+export async function loadAthleteWorkouts(userId: string, limit = 20): Promise<SharedWorkout[]> {
+  const { data } = await supabase
+    .from('shared_workouts')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_public', true)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  return (data ?? []) as SharedWorkout[];
+}
+
+/* ─── Moderação (admin) ─────────────────────────────────────────────────────── */
+
+export type ReportStatus = 'open' | 'reviewed' | 'dismissed';
+
+export interface ModerationReport {
+  id: string;
+  reason: ReportReason;
+  details: string | null;
+  status: ReportStatus;
+  created_at: string;
+  workout_id: string | null;
+  reported_user_id: string | null;
+  workout_title: string | null;
+  workout_is_public: boolean | null;
+  workout_author_id: string | null;
+  reporter_handle: string | null;
+  reported_handle: string | null;
+}
+
+export async function loadReportQueue(status: ReportStatus = 'open'): Promise<ModerationReport[]> {
+  const { data } = await supabase
+    .from('admin_content_reports')
+    .select('*')
+    .eq('status', status)
+    .order('created_at', { ascending: true })
+    .limit(50);
+  return (data ?? []) as ModerationReport[];
+}
+
+/** Só confirma sucesso quando o servidor devolve o id resolvido. */
+export async function resolveReport(
+  reportId: string,
+  decision: 'reviewed' | 'dismissed',
+  hideContent: boolean,
+): Promise<CommunityResult> {
+  const { data, error } = await supabase.rpc('resolve_content_report', {
+    p_report_id: reportId,
+    p_decision: decision,
+    p_hide_content: hideContent,
+  });
+  if (error || data !== reportId) {
+    return { ok: false, error: 'Não foi possível resolver a denúncia. Tente novamente.' };
+  }
+  return { ok: true };
+}

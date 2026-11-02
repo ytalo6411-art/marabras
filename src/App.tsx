@@ -21,6 +21,7 @@ const WorkoutSessionPage = lazy(() => import('@/pages/WorkoutSessionPage'));
 const NutritionPage = lazy(() => import('@/pages/NutritionPage'));
 const CommunityPage = lazy(() => import('@/pages/CommunityPage'));
 const SharedWorkoutPage = lazy(() => import('@/pages/SharedWorkoutPage'));
+const AthleteProfilePage = lazy(() => import('@/pages/AthleteProfilePage'));
 const ProgressPage = lazy(() => import('@/pages/ProgressPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -52,11 +53,17 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/** Restringe uma rota a administradores. */
+/**
+ * Restringe uma rota a administradores.
+ *
+ * Espera o papel resolver: a sessão fica pronta antes da consulta em
+ * `admin_users`, e redirecionar nesse intervalo expulsava o admin que abria
+ * /app/admin por link direto ou recarregava a página.
+ */
 function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { isAdmin, initializing } = useAuthStore();
+  const { isAdmin, initializing, roleResolved } = useAuthStore();
 
-  if (initializing) {
+  if (initializing || !roleResolved) {
     return (
       <div className="offline-page">
         <Spinner size={28} />
@@ -118,6 +125,7 @@ export default function App() {
               <Route path="session/:id" element={<WorkoutSessionPage />} />
               <Route path="nutrition" element={<NutritionPage />} />
               <Route path="community" element={<CommunityPage />} />
+              <Route path="community/atleta/:handle" element={<AthleteProfilePage />} />
               <Route path="community/:id" element={<SharedWorkoutPage />} />
               <Route path="progress" element={<ProgressPage />} />
               <Route path="profile" element={<ProfilePage />} />
