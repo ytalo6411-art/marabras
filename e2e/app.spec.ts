@@ -407,3 +407,74 @@ test('questionário gera prévia, não salva antes de confirmar e persiste ao co
 
   expect(errors).toEqual([]);
 });
+
+test('treinos: usar modelo mostra prévia, não salva antes de confirmar e persiste ao confirmar', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+
+  // Mesmo catálogo do teste do questionário: bodyweight/beginner, músculos
+  // distintos, suficiente para o modelo "Primeiro treino em casa" (3 dias).
+  const muscles = ['quadriceps', 'pectoralis_major', 'lats', 'glutes', 'rectus_abdominis', 'deltoids', 'hamstrings', 'biceps'];
+  const names = ['Agachamento livre', 'Flexão de braço', 'Remada invertida', 'Ponte de glúteos', 'Prancha', 'Elevação lateral', 'Avanço', 'Rosca direta'];
+  const catalog = names.map((name, i) => ({
+    ...exercise,
+    id: `20000000-0000-4000-8000-0000000000${String(i + 10).padStart(2, '0')}`,
+    slug: `cat-${i}`,
+    name,
+    primary_muscle: muscles[i],
+    equipment: ['bodyweight'],
+    difficulty: 'beginner',
+  }));
+
+  const planInserts: Record<string, unknown>[] = [];
+  const exerciseInserts: unknown[] = [];
+
+  await fixture(page);
+  await page.route('https://test.supabase.co/rest/v1/exercises*', (route) =>
+    route.fulfill({ json: catalog, headers: { 'content-range': `0-${catalog.length - 1}/${catalog.length}` } }));
+  await page.route('https://test.supabase.co/rest/v1/training_profiles*', (route) =>
+    route.fulfill({ json: [] }));
+  await page.route('https://test.supabase.co/rest/v1/exercise_history*', (route) => route.fulfill({ json: [] }));
+  await page.route('https://test.supabase.co/rest/v1/workout_plans*', async (route) => {
+    if (route.request().method() === 'POST') {
+      const payload = route.request().postDataJSON();
+      planInserts.push(payload);
+      return route.fulfill({ status: 201, json: [{ id: `31000000-0000-4000-8000-0000000000${String(planInserts.length).padStart(2, '0')}`, user_id: userId, ...payload }] });
+    }
+    return route.fulfill({ json: [] });
+  });
+  await page.route('https://test.supabase.co/rest/v1/workout_exercises*', async (route) => {
+    if (route.request().method() === 'POST') exerciseInserts.push(route.request().postDataJSON());
+    return route.fulfill({ status: 201, json: [] });
+  });
+
+  await page.goto('/app/workouts?tab=modelos');
+
+  // O modelo é aplicado ao perfil, mas o resultado passa pela prévia.
+  const card = page.locator('.card').filter({ hasText: 'Primeiro treino em casa' }).first();
+  await card.getByRole('button', { name: 'Usar este modelo' }).click();
+
+  await expect(page.getByText('PRÉVIA DO SEU PLANO')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Salvar este plano' })).toBeVisible();
+  // Regra central: nada gravado antes da confirmação.
+  expect(planInserts).toHaveLength(0);
+  expect(exerciseInserts).toHaveLength(0);
+
+  // Voltar sem confirmar devolve a tela de treinos sem gravar nada.
+  await page.getByRole('button', { name: 'Voltar e ajustar' }).click();
+  await expect(page.getByText('PRÉVIA DO SEU PLANO')).toHaveCount(0);
+  expect(planInserts).toHaveLength(0);
+
+  // Gerar de novo e confirmar: agora grava plano + exercícios.
+  await page.goto('/app/workouts?tab=modelos');
+  await page.locator('.card').filter({ hasText: 'Primeiro treino em casa' }).first()
+    .getByRole('button', { name: 'Usar este modelo' }).click();
+  await page.getByRole('button', { name: 'Salvar este plano' }).click();
+
+  await expect.poll(() => planInserts.length).toBeGreaterThan(0);
+  await expect.poll(() => exerciseInserts.length).toBeGreaterThan(0);
+  await expect(page.getByText('PRÉVIA DO SEU PLANO')).toHaveCount(0);
+  await expect(page).toHaveURL(/tab=plano/);
+
+  expect(errors).toEqual([]);
+});

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui';
 import { PlanDayCard, PlanSourceBadge } from '@/components/training';
 import { ProgramDayList } from '@/components/ProgramDayList';
+import { ProgramPreview } from '@/components/ProgramPreview';
 import {
   IconPlus,
   IconDumbbell,
@@ -49,7 +50,7 @@ import {
 } from '@/services/trainingOverview';
 import { answersFromRow, loadTrainingProfile, toPlanProfile } from '@/services/trainingProfile';
 import { loadExerciseCatalog, type CatalogSnapshot } from '@/services/catalog';
-import { generateProgram, validateGeneratedProgram } from '@/services/planGenerator';
+import { generateProgram, validateGeneratedProgram, type GeneratedProgram, type PlanGenerationProfile } from '@/services/planGenerator';
 import { deleteProgram, loadPlanWithExercises, saveGeneratedProgram } from '@/services/planPersistence';
 import { SchemaMigrationNotice } from '@/components/SchemaMigrationNotice';
 import { useSchemaCapabilities } from '@/components/useSchemaCapabilities';
@@ -121,6 +122,14 @@ export default function WorkoutsPage() {
   const [applyingTemplate, setApplyingTemplate] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  // Prévia antes de gravar: mesmo comportamento do questionário. Gerar e salvar
+  // eram a mesma ação, então o usuário só via o plano depois de estar na conta.
+  const [preview, setPreview] = useState<{
+    program: GeneratedProgram;
+    profile: PlanGenerationProfile;
+    templateSlug: string | null;
+  } | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const [deletedDegraded, setDeletedDegraded] = useState<string | null>(null);
   const [deleteProgramTarget, setDeleteProgramTarget] = useState<string | null>(null);
@@ -162,6 +171,9 @@ export default function WorkoutsPage() {
   }, [load]);
 
   function changeTab(next: Tab) {
+    // A prévia ocupa o lugar do conteúdo. Sem descartar aqui, as abas ficariam
+    // clicáveis sem nenhum efeito visível enquanto ela estivesse aberta.
+    setPreview(null);
     setTab(next);
     const params = new URLSearchParams(searchParams);
     params.set('tab', next);
@@ -244,11 +256,26 @@ export default function WorkoutsPage() {
         return;
       }
 
+      // Para na prévia. Nada é gravado em workout_plans até a confirmação.
+      setPreview({ program, profile: generationProfile, templateSlug: template?.slug ?? null });
+    } finally {
+      setGenerating(false);
+      setApplyingTemplate(null);
+    }
+  }
+
+  /** Grava o programa que o usuário acabou de conferir na prévia. */
+  async function handleConfirmPlan() {
+    if (!user || !preview || confirming) return;
+    setConfirming(true);
+    setGenerationError(null);
+
+    try {
       const result = await saveGeneratedProgram({
         userId: user.id,
-        program,
-        profile: generationProfile,
-        templateSlug: template?.slug ?? null,
+        program: preview.program,
+        profile: preview.profile,
+        templateSlug: preview.templateSlug,
       });
 
       if (!result.ok) {
@@ -265,11 +292,11 @@ export default function WorkoutsPage() {
         toast.show('Plano criado com sucesso', 'success');
       }
 
+      setPreview(null);
       changeTab('plano');
       await load();
     } finally {
-      setGenerating(false);
-      setApplyingTemplate(null);
+      setConfirming(false);
     }
   }
 
@@ -383,7 +410,14 @@ export default function WorkoutsPage() {
         />
       </div>
 
-      {loading ? (
+      {preview ? (
+        <ProgramPreview
+          program={preview.program}
+          confirming={confirming}
+          onConfirm={handleConfirmPlan}
+          onDiscard={() => setPreview(null)}
+        />
+      ) : loading ? (
         <SkeletonList count={3} height={110} />
       ) : tab === 'plano' ? (
         <section aria-label="Meu plano">

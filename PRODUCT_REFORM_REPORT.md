@@ -387,9 +387,16 @@ mensagem acionável em português, com o detalhe técnico no console em DEV.
 `handleGenerate` salvava direto em `workout_plans`. Agora para em
 `src/components/ProgramPreview.tsx`: dias em acordeão, séries × reps, descanso,
 alternativas, grupos trabalhados, avisos e o "porquê" do plano. **Nada é gravado**
-até "Salvar este plano"; descartar volta ao questionário e qualquer resposta
-editada invalida a prévia. O teste de navegador verifica as duas metades: zero
-inserts antes de confirmar, inserts reais depois.
+até "Salvar este plano"; voltar sem confirmar retorna ao questionário e qualquer
+resposta editada invalida a prévia.
+
+A mesma regra vale na tela **Treinos**: gerar pelo perfil e "Usar este modelo"
+também passavam direto para o salvamento, então a prévia foi ligada nos dois
+caminhos — a mesma ação não pode ter dois comportamentos. Trocar de aba com a
+prévia aberta a descarta, para as abas não ficarem clicáveis sem efeito.
+
+Dois testes de navegador cobrem as duas metades em cada fluxo: zero inserts antes
+de confirmar, inserts reais depois; e voltar sem confirmar não grava nada.
 
 ### 10.7 Catálogo — verificado, não precisou de seed
 
@@ -404,7 +411,7 @@ quem treina em casa sem equipamento. Nenhum exercício foi inventado.
 | --- | --- |
 | `npm test` (unitário) | **881 testes / 27 arquivos** |
 | Matriz de perfis (objetivo × ambiente × nível × dias × tempo) | **480 combinações**, plano válido em todas |
-| `npm run test:browser` (Playwright) | **13/13 fluxos** |
+| `npm run test:browser` (Playwright) | **14/14 fluxos** |
 | `npm run test:security` (PGlite, migrações reais) | **49 cenários** |
 | `npm run test:i18n` | **750 strings**, 0 faltando |
 | `npm run lint` | 0 avisos |
